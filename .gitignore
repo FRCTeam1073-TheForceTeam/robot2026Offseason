@@ -41,6 +41,7 @@
 
 # Log file
 *.log
+reports
 
 # BlueJ files
 *.ctxt
