@@ -1,0 +1,33 @@
+# Robot Network IPs
+
+|       Location       |     IP     | Cameras on Server |
+| -------------------- | ---------- | ----------------- |
+| Radio                | 10.10.73.1 |       N/A         |
+| RoboRio              | 10.10.73.2 |       N/A         |
+| 1st Vision Server    | 10.10.73.3 |   FR, FL, BR, BL  |
+| 2nd Vision Server    | 10.10.73.7 | Turret, Collector |
+| Home AP (Plank)      | 10.10.73.4 |       N/A         |
+| Driver Station (FMS) | 10.10.73.5 |       N/A         |
+
+# CANBus Configuration
+
+This season we're going to leave lower CANBus IDs for system-wide / special
+components and start CANBus IDs for subsystem hardware at ID 5.
+
+
+| Device Name                    | CANBusID |   CanBus   |
+| ------------------------------ | -------- | ---------- |
+| Pigeon2 IMU                    |    5     |  Canivore  |
+| Swerve 0: Encoder              |    6     |  Canivore  |
+| Swerve 0: Drive                |    7     |  Canivore  |
+| Swerve 0: Steer                |    8     |  Canivore  |
+| Swerve 1: Encoder              |    9     |  Canivore  |
+| Swerve 1: Drive                |    10    |  Canivore  |
+| Swerve 1: Steer                |    11    |  Canivore  |
+| Swerve 2: Encoder              |    12    |  Canivore  |
+| Swerve 2: Drive                |    13    |  Canivore  |
+| Swerve 2: Steer                |    14    |  Canivore  |
+| Swerve 3: Encoder              |    15    |  Canivore  |
+| Swerve 3: Drive                |    16    |  Canivore  |
+| Swerve 3: Steer                |    17    |  Canivore  |
+| CANdle                         |    30    |    rio     |
