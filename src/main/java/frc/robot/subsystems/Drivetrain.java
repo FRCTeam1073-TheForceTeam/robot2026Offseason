@@ -48,7 +48,7 @@ public class Drivetrain extends SubsystemBase
   {
     super.setSubsystem("Drivetrain");
 
-    pigeon2 = new Pigeon2(13, kCANbus);
+    pigeon2 = new Pigeon2(5, kCANbus);
     var error = pigeon2.getConfigurator().apply(new Pigeon2Configuration());
     if (!error.isOK()) 
     {
@@ -61,7 +61,7 @@ public class Drivetrain extends SubsystemBase
     modulePositions = new SwerveModulePosition[4];
 
     //front left
-    SwerveModuleIDConfig moduleIDConfig = new SwerveModuleIDConfig(5, 6, 1);
+    SwerveModuleIDConfig moduleIDConfig = new SwerveModuleIDConfig(7, 8, 6);
 
     SwerveModuleConfig moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 0;
@@ -71,7 +71,7 @@ public class Drivetrain extends SubsystemBase
     modulePositions[0] = new SwerveModulePosition();
 
     //front right
-    moduleIDConfig = new SwerveModuleIDConfig(7, 8, 2);
+    moduleIDConfig = new SwerveModuleIDConfig(10, 11, 9);
 
     moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 1;
@@ -81,7 +81,7 @@ public class Drivetrain extends SubsystemBase
     modulePositions[1] = new SwerveModulePosition();
 
     //back left
-    moduleIDConfig = new SwerveModuleIDConfig(9, 10, 3);
+    moduleIDConfig = new SwerveModuleIDConfig(13, 14, 12);
 
     moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 2;
@@ -91,7 +91,7 @@ public class Drivetrain extends SubsystemBase
     modulePositions[2] = new SwerveModulePosition();
 
     //back right
-    moduleIDConfig = new SwerveModuleIDConfig(11, 12, 4);
+    moduleIDConfig = new SwerveModuleIDConfig(16, 17, 15);
     moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 3;
     moduleConfig.position = new Translation2d(-0.289, -0.289);
