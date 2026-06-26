@@ -14,10 +14,8 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.AprilTagFinder;
-import frc.robot.subsystems.CANdleControl;
 import frc.robot.subsystems.CommandStates;
 import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.Lidar;
 import frc.robot.subsystems.Localizer;
 import frc.robot.subsystems.OI;
 import frc.robot.subsystems.SwerveModule;
@@ -40,7 +38,6 @@ public class TeleopDrive extends Command
   boolean pointAtTarget;
   AprilTagFinder aprilTagFinder;
   Localizer localizer;
-  Lidar lidar;
 
   PIDController snapPidProfile;
 
@@ -66,8 +63,7 @@ public class TeleopDrive extends Command
   double torqueGate = 65; 
 
   /** Creates a new Teleop. */
-  public TeleopDrive(Drivetrain drivetrain, OI oi, AprilTagFinder finder, Localizer localizer, Lidar lidar){
-    this.lidar = lidar;
+  public TeleopDrive(Drivetrain drivetrain, OI oi, AprilTagFinder finder){
     this.drivetrain = drivetrain;
     this.localizer = localizer;
     m_OI = oi;

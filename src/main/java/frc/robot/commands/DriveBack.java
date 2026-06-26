@@ -6,7 +6,6 @@ package frc.robot.commands;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.CoralEndeffector;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Localizer;
 
@@ -44,6 +43,6 @@ public class DriveBack extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return CoralEndeffector.getHasCoral();
+    return true;
   }
 }
