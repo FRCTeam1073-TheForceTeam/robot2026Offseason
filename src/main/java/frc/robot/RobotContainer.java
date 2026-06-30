@@ -32,54 +32,15 @@ public class RobotContainer implements Consumer<String> // need the interface fo
 {
   private final Drivetrain m_drivetrain = new Drivetrain();
   private final OI m_OI = new OI();
-  private final AprilTagFinder m_aprilTagFinder = new AprilTagFinder();
-  private final Field2d m_field = new Field2d();
-  private final FieldMap m_fieldMap = new FieldMap();
-  private final Localizer m_localizer = new Localizer(m_drivetrain, m_fieldMap, m_aprilTagFinder);
-  private final MapDisplay m_MapDisplay = new MapDisplay(m_drivetrain, m_localizer, m_fieldMap);
+  // private final AprilTagFinder m_aprilTagFinder = new AprilTagFinder();
+  // private final Field2d m_field = new Field2d();
+  // private final FieldMap m_fieldMap = new FieldMap();
+  // private final Localizer m_localizer = new Localizer(m_drivetrain, m_fieldMap, m_aprilTagFinder);
+  // private final MapDisplay m_MapDisplay = new MapDisplay(m_drivetrain, m_localizer, m_fieldMap);
   //private final Lidar m_lidar = null; // Disabled temporarily.
 
-
-  // private final ZeroElevator cmd_zeroElevator = new ZeroElevator(m_coralElevator);
-  // private final CoralElevatorTeleop cmd_coralElevatorTeleop = new CoralElevatorTeleop(m_coralElevator, m_OI);
-  // private final CoralEndeffectorTeleop cmd_coralEndeffectorTeleop = new CoralEndeffectorTeleop(m_coralEndeffector, m_OI);
-  // private final LoadCoral cmd_loadCoral = new LoadCoral(m_coralEndeffector);
-  // private final ScoreCoral cmd_scoreCoral = new ScoreCoral(m_coralEndeffector);
-  // private final CoralElevatorToHeight cmd_coralElevatorToL2 = new CoralElevatorToHeight(m_coralElevator, 2, false);
-  // private final CoralElevatorToHeight cmd_coralElevatorToL3 = new CoralElevatorToHeight(m_coralElevator, 3, false);
-  // private final CoralElevatorToHeight cmd_troughRaiseElevator = new CoralElevatorToHeight(m_coralElevator, 1, false);
-  // private final CoralElevatorToHeight cmd_coralElevatorToL4 = new CoralElevatorToHeight(m_coralElevator, 4, false);
-  // private final CoralElevatorToHeight cmd_coralElevatorToHighA = new CoralElevatorToHeight(m_coralElevator, 6, false);
-  // private final CoralElevatorToHeight cmd_coralElevatorToBarge = new CoralElevatorToHeight(m_coralElevator, 7, false);
-  // private final CancelLoadCoral cmd_cancelLoadCoral = new CancelLoadCoral(m_coralEndeffector);
-  // private final ClimberTeleop cmd_climberTeleop = new ClimberTeleop(m_climber, m_OI);
-  // private final ZeroClimber cmd_zeroClimber = new ZeroClimber(m_climber);
-  // private final EngageClimber cmd_engageClimber = new EngageClimber(m_climber);
-  // private final DisengageClimber cmd_disengageClimber = new DisengageClimber(m_climber);
-  // private final CANdleObserver cmd_candleObserver = new CANdleObserver(m_CANdleControl, m_coralEndeffector, m_climber, m_OI, m_commandStates, m_drivetrain);
-  // private final LidarAlign cmd_lidarAlign = new LidarAlign(m_lidar, m_drivetrain, m_commandStates);
-  // private final StowElevator cmd_stowElevator = new StowElevator(m_coralElevator);
-  // private final AlgaeGrab cmd_algaeGrab = new AlgaeGrab(m_coralEndeffector, false);
-  // private final AlgaeEject cmd_algaeEject = new AlgaeEject(m_coralEndeffector, m_algaePivot);
-  // private final AlgaePivotTeleop cmd_algaePivotTeleop = new AlgaePivotTeleop(m_OI, m_algaePivot);
-  // private final ZeroAlgaePivot cmd_zeroAlgaePivot = new ZeroAlgaePivot(m_algaePivot);
-  private final TeleopDrive cmd_teleopDrive = new TeleopDrive(m_drivetrain, m_OI, m_aprilTagFinder);
-  // private final SmartAlign cmd_smartAlignReefLeft = new SmartAlign(m_drivetrain, m_localizer, m_commandStates, m_fieldMap, m_MapDisplay, m_coralElevator, m_lidar, m_aprilTagFinder, -1);
-  // private final SmartAlign cmd_smartAlignReefRight = new SmartAlign(m_drivetrain, m_localizer, m_commandStates, m_fieldMap, m_MapDisplay, m_coralElevator, m_lidar, m_aprilTagFinder, 1);
-  // private final SmartAlign cmd_smartAlignSource = new SmartAlign(m_drivetrain, m_localizer, m_commandStates, m_fieldMap, m_MapDisplay, m_coralElevator, m_lidar, m_aprilTagFinder, 2);
-  // private final Command cmd_algaeAutoGrab = AlgaeAutoGrab.create(m_algaePivot, m_coralEndeffector);
-  // private final Command cmd_algaeAutoEject = AlgaeAutoEject.create(m_coralEndeffector, m_algaePivot);
-  // private final Command cmd_algaeOpen = AlgaeOpen.create(m_algaePivot,m_coralEndeffector, m_OI);
-  // private final Command cmd_algaeHold = AlgaeHold.create(m_algaePivot, m_coralEndeffector);
-  // private final SmartAlign cmd_smartAlignReefCenter = new SmartAlign(m_drivetrain, m_localizer, m_commandStates, m_fieldMap, m_MapDisplay, m_coralElevator, m_lidar, m_aprilTagFinder, 0);
-  // private final FloorPickupCollectTeleop cmd_floorPickupCollectTeleop = new FloorPickupCollectTeleop(m_floorPickupCollect);
-  // private final FloorPickupPivotTeleop cmd_floorPickupPivotTeleop = new FloorPickupPivotTeleop(m_floorPickupPivot, m_OI);
-  // private final ZeroFloorPivotPos cmd_zeroFloorPivotPos = new ZeroFloorPivotPos(m_floorPickupPivot, m_floorPickupCollect);
-  // private final FloorScoreCoral cmd_floorScoreCoral = new FloorScoreCoral(m_floorPickupCollect, m_floorPickupPivot);
-  // private final FloorLoadCoral cmd_floorLoadCoral = new FloorLoadCoral(m_floorPickupPivot, m_floorPickupCollect);
-  // private final FloorAlgaeCollect cmd_floorAlgaeCollect = new FloorAlgaeCollect(m_floorPickupCollect, m_floorPickupPivot);
-  // private final ProcessorScore cmd_processorScore = new ProcessorScore(m_floorPickupCollect, m_floorPickupPivot);
-  // private final StowSequence cmd_stowSequence = new StowSequence(m_coralElevator);
+  // private final TeleopDrive cmd_teleopDrive = new TeleopDrive(m_drivetrain, m_OI, m_aprilTagFinder);
+  
 
 
   private boolean isRed;
@@ -89,57 +50,20 @@ public class RobotContainer implements Consumer<String> // need the interface fo
   public boolean haveInitStartPos = false;
 
   private final SendableChooser<String> m_positionChooser = new SendableChooser<>();
-  private static final String noPosition = "No Position";
-  private static final String rightPosition = "Right Auto";
-  private static final String leftPosition = "Left Auto";
-  private static final String centerPosition = "Center Auto";
-  private static final String centerPositionX = "Center Auto X";
   private static final String testAuto = "Test Auto";
-  
-  private final SendableChooser<String> m_levelChooser = new SendableChooser<>();
-  private static final String noLevelAuto = "No Level";
-  private static final String leave = "Leave";
-  private static final String scoreL1 = "Score L1";
-  private static final String scoreL2 = "Score L2";
-  private static final String scoreL3 = "Score L3";
-  private static final String scoreL4 = "Score L4";
-  private static final String score2L4 = "Score 2 L4";
-  private static final String score3L4 = "Score 3 L4";
-  private static final String algaeGrab = "Algae Grab";
-  private static final String bargeScore = "Barge Score";
-  
-  private static final String zeroClawAndLift = "Zero Claw And Lift";
 
   public RobotContainer() 
   {
-    CommandScheduler.getInstance().setDefaultCommand(m_drivetrain, cmd_teleopDrive);
+    // CommandScheduler.getInstance().setDefaultCommand(m_drivetrain, cmd_teleopDrive);
 
     SmartDashboard.putData(m_drivetrain);
     SmartDashboard.putData(m_OI);
-    SmartDashboard.putData("Field", m_field);
-    SmartDashboard.putData(m_localizer);
+    // SmartDashboard.putData("Field", m_field);
+    // SmartDashboard.putData(m_localizer);
 
-    m_positionChooser.setDefaultOption("No Position", noPosition);
-    m_positionChooser.addOption("Right Position", rightPosition);
-    m_positionChooser.addOption("Left Position", leftPosition);
-    m_positionChooser.addOption("Center Position", centerPosition);
-    m_positionChooser.addOption("Center Position X", centerPositionX);
-    m_positionChooser.addOption("Zero Claw and Lift", zeroClawAndLift);
-    m_positionChooser.addOption("Test Auto", testAuto);
-
-    m_levelChooser.setDefaultOption("No Level", noLevelAuto);
-    m_levelChooser.addOption("Leave", leave);
-    m_levelChooser.addOption("Score L1", scoreL1);
-    m_levelChooser.addOption("Score L2", scoreL2);
-    m_levelChooser.addOption("Score L3", scoreL3);
-    m_levelChooser.addOption("Score L4", scoreL4);
-    m_levelChooser.addOption("Score 2 L4", score2L4);
-    m_levelChooser.addOption("Score 3 L4", score3L4);
-    m_levelChooser.addOption("Algae Grab", algaeGrab);
-    m_levelChooser.addOption("Barge Score", bargeScore);
+    m_positionChooser.setDefaultOption("Test Auto", testAuto);
 
     SmartDashboard.putData("Position Chooser", m_positionChooser);
-    SmartDashboard.putData("Level Chooser", m_levelChooser);
 
     m_positionChooser.onChange(this::accept); // this is so we can reset the start position
 
@@ -240,53 +164,18 @@ public class RobotContainer implements Consumer<String> // need the interface fo
   {
    // return Commands.print("No autonomous command configured");
    // -1 to indicate no auto select
-    switch(m_levelChooser.getSelected())
-    {
-      case noLevelAuto:
-        level = -1;
-        break;
-      case leave:
-        level = 0;
-        break;
-      case scoreL1:
-        level = 1;
-        break;
-      case scoreL2:
-        level = 2;
-        break;
-      case scoreL3:
-        level = 3;
-        break;
-      case scoreL4:
-        level = 4;                  
-        break;
-      case score2L4:
-        level = 5;
-        break;
-      case score3L4:
-        level = 11;
-        break;
-      case algaeGrab:
-        level = 6;
-        break;
-      case bargeScore:
-        level = 7;
-        break;
-      default:
-        level = -1;
-        break;
-    }
 
 
-    switch(m_positionChooser.getSelected())
-    {
-      // case zeroClawAndLift:
-      //   return ZeroClawAndLift.create(m_climberClaw, m_climberLift);
-      case testAuto:
-        return TestAuto.create(m_drivetrain, m_localizer, m_fieldMap);
-      default:
-        return null;
-    }
+    // switch(m_positionChooser.getSelected())
+    // {
+    //   // case zeroClawAndLift:
+    //   //   return ZeroClawAndLift.create(m_climberClaw, m_climberLift);
+    //   case testAuto:
+    //     return TestAuto.create(m_drivetrain, m_localizer, m_fieldMap);
+    //   default:
+    //     return null;
+    // }
+    return null;
   }
 
   public void printAllFalseDiagnostics()
@@ -321,7 +210,7 @@ public class RobotContainer implements Consumer<String> // need the interface fo
       if(!DriverStation.getAlliance().isPresent() || m_positionChooser.getSelected().equals("No Position")) {
         return false;
       }
-
+      /*
       //create a bool for pose is set
       double centerY = 4.026;
       int allianceSign = 1;
@@ -372,7 +261,7 @@ public class RobotContainer implements Consumer<String> // need the interface fo
         SmartDashboard.putNumber("RobotContainer/Start Pose Rotation", startPos.getRotation().getRadians());
         SmartDashboard.putBoolean("Alliance", isRed); //True = Red, False = Blue ***NEED TO EDIT ON ELASTIC
         return true;
-      }
+      }*/
       return false;
   }
 
