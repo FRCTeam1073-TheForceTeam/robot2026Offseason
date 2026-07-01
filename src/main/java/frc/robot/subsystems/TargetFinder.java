@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class TargetFinder extends SubsystemBase
 {
@@ -124,8 +125,8 @@ public class TargetFinder extends SubsystemBase
         double angle = Math.atan2(relativeTargetPos.getY(), relativeTargetPos.getX());
         turretToTargetAngle = angle;
         rangeToTarget = relativeTargetPos.getNorm();
-        SmartDashboard.putNumber("TargetFinder/Turret Angle", turretToTargetAngle);
-        SmartDashboard.putNumber("TargetFinder/Turret Range", rangeToTarget);
+        SmartDashboard.putNumber(DashboardNames.TARGET_FINDER_TURRET_ANGLE.getKey(), turretToTargetAngle);
+        SmartDashboard.putNumber(DashboardNames.TARGET_FINDER_TURRET_RANGE.getKey(), rangeToTarget);
     }
 
     public double getTurretToTargetAngleRadians()

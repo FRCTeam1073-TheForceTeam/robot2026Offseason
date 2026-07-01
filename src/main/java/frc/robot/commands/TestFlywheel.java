@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Flywheel;
 import frc.robot.subsystems.OI;
+import frc.robot.utilities.DashboardNames;
 
 /**
  * Flywheel Test command for shot tuning.
@@ -56,8 +57,8 @@ public class TestFlywheel extends Command
     level = (int) MathUtil.clamp(level, 0, maxLevel);
 
     flywheel.setVelocity(level * scaleFactor);
-    SmartDashboard.putNumber("TestFlywheel/level", level);
-    SmartDashboard.putNumber("TestFlywheel/speed", level * scaleFactor);
+    SmartDashboard.putNumber(DashboardNames.TEST_FLYWHEEL_LEVEL.getKey(), level);
+    SmartDashboard.putNumber(DashboardNames.TEST_FLYWHEEL_SPEED.getKey(), level * scaleFactor);
 
     // Change detector:
     lastDPadDown = dPadDown;

@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.utilities.DashboardNames;
 
 public class Robot extends TimedRobot
 {
@@ -51,7 +52,7 @@ public class Robot extends TimedRobot
     } else {
       switch (gameData.charAt(0)) {
         case 'B':
-          SmartDashboard.putString("Auto Winners", "Blue");
+          SmartDashboard.putString(DashboardNames.AUTO_WINNERS.getKey(), "Blue");
           break;
         case 'R':
           SmartDashboard.putString("Auto Winners", "Red");
@@ -61,11 +62,11 @@ public class Robot extends TimedRobot
           break;
       }
 
-      SmartDashboard.putBoolean("Hub Active", isHubActive());
+      SmartDashboard.putBoolean(DashboardNames.HUB_ACTIVE.getKey(), isHubActive());
       container.setHubActive(isHubActive());
 
       int seconds = (int) shiftTime;
-      SmartDashboard.putNumber("Shift Time", seconds);
+      SmartDashboard.putNumber(DashboardNames.DRIVE_SHIFT_TIME.getKey(), seconds);
     }
   }
 
@@ -87,8 +88,8 @@ public class Robot extends TimedRobot
   public void disabledPeriodic()
   {
     try {
-      SmartDashboard.putBoolean("Autos/Have Trajectory", container.getHaveTraj());
-      SmartDashboard.putString("Autos/Trajectory", container.getAutoTraj());
+      SmartDashboard.putBoolean(DashboardNames.AUTO_HAVE_TRAJECTORY.getKey(), container.getHaveTraj());
+      SmartDashboard.putString(DashboardNames.AUTO_TRAJECTORY.getKey(), container.getAutoTraj());
       // Delegate to container function:
       if (!container.getSelectedAuto().equals(container.getAutoTraj())) {
         container.setHaveTraj(container.disabledPeriodic());

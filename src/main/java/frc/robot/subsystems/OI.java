@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class OI extends SubsystemBase
 {
@@ -46,7 +47,7 @@ public class OI extends SubsystemBase
     }
     lastOperatorAButton = aButton;
 
-    SmartDashboard.putBoolean("OI/BallisticShot", ballisticShot);
+    SmartDashboard.putBoolean(DashboardNames.OI_BALLISTIC_SHOT.getKey(), ballisticShot);
   }
 
   public boolean ballisticShotMode()

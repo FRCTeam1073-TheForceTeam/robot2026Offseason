@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.TargetFinder;
 import frc.robot.subsystems.Turret;
+import frc.robot.utilities.DashboardNames;
 
 public class TrackTurret extends Command
 {
@@ -37,8 +38,8 @@ public class TrackTurret extends Command
     targetPosition = targetFinder.getTurretToTargetAngleRadians();
     turret.setPosition(targetPosition);
 
-    SmartDashboard.putNumber("Turret/position", position);
-    SmartDashboard.putNumber("Turret/targetPosition", targetPosition);
+    SmartDashboard.putNumber(DashboardNames.TRACK_TURRET_POSITION.getKey(), position);
+    SmartDashboard.putNumber(DashboardNames.TRACK_TURRET_TARGET_POSITION.getKey(), targetPosition);
   }
 
   @Override

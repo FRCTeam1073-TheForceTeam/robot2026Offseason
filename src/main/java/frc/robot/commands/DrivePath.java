@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Localizer;
+import frc.robot.utilities.DashboardNames;
 
 public class DrivePath extends Command
 {
@@ -56,14 +57,14 @@ public class DrivePath extends Command
 
     quit = false;
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
-    SmartDashboard.putString("DrivePath/Status", "Idle");
+    SmartDashboard.putString(DashboardNames.DRIVE_PATH_STATUS.getKey(), "Idle");
     addRequirements(drivetrain);
   }
 
   @Override
   public void initialize()
   {
-    SmartDashboard.putBoolean("Has Trajectory", trajectory.isPresent());
+    SmartDashboard.putBoolean(DashboardNames.DRIVE_HAS_TRAJECTORY.getKey(), trajectory.isPresent());
 
     startTime = Timer.getFPGATimestamp();
 
@@ -96,8 +97,8 @@ public class DrivePath extends Command
     currentTime = Timer.getFPGATimestamp() - startTime;
     robotPose = localizer.getPose();
 
-    SmartDashboard.putNumber("DrivePath/CurrentTime", currentTime);
-    SmartDashboard.putBoolean("DrivePath/Trajectory", trajectory.isPresent());
+    SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_CURRENT_TIME.getKey(), currentTime);
+    SmartDashboard.putBoolean(DashboardNames.DRIVE_PATH_TRAJECTORY.getKey(), trajectory.isPresent());
 
     if (trajectory.isPresent()) {
       Trajectory<SwerveSample> traj = trajectory.get();
@@ -105,7 +106,7 @@ public class DrivePath extends Command
       // fetch current sample
       currentSample = traj.sampleAt(currentTime, isRedAlliance());
 
-      SmartDashboard.putBoolean("DrivePath/Current Sample", currentSample.isPresent());
+      SmartDashboard.putBoolean(DashboardNames.DRIVE_PATH_CURRENT_SAMPLE.getKey(), currentSample.isPresent());
 
       if (currentSample.isPresent()) {
         SwerveSample trajSample = currentSample.get();
@@ -123,15 +124,15 @@ public class DrivePath extends Command
         yVelocity = MathUtil.clamp(yVelocity, -maxVelocity, maxVelocity);
         thetaVelocity = MathUtil.clamp(thetaVelocity, -maxAngularVelocity, maxAngularVelocity);
 
-        SmartDashboard.putNumber("DrivePath/TargetX", trajectorySpeeds.vxMetersPerSecond);
-        SmartDashboard.putNumber("DrivePath/TargetY", trajectorySpeeds.vyMetersPerSecond);
-        SmartDashboard.putNumber("DrivePath/TargetTheta", trajSample.getPose().getRotation().getRadians());
+        SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_TARGET_X.getKey(), trajectorySpeeds.vxMetersPerSecond);
+        SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_TARGET_Y.getKey(), trajectorySpeeds.vyMetersPerSecond);
+        SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_TARGET_THETA.getKey(), trajSample.getPose().getRotation().getRadians());
 
-        SmartDashboard.putNumber("DrivePath/MaxVelocity", maxVelocity);
+        SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_MAX_VELOCITY.getKey(), maxVelocity);
 
-        SmartDashboard.putNumber("DrivePath/CommandedVx", xVelocity);
-        SmartDashboard.putNumber("DrivePath/CommandedVy", yVelocity);
-        SmartDashboard.putNumber("DrivePath/CommandedVw", thetaVelocity);
+        SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_COMMANDED_VX.getKey(), xVelocity);
+        SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_COMMANDED_VY.getKey(), yVelocity);
+        SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_COMMANDED_VW.getKey(), thetaVelocity);
 
         // set a field relative chassis speed
         drivetrain.setTargetChassisSpeeds(
@@ -146,7 +147,7 @@ public class DrivePath extends Command
         quit = true;
       }
     } else {
-      SmartDashboard.putString("DrivePath/Status", "No Trajectory Found");
+      SmartDashboard.putString(DashboardNames.DRIVE_PATH_STATUS.getKey(), "No Trajectory Found");
       System.err.println("DrivePath No Trajectory Found");
       quit = true;
     }
@@ -155,17 +156,17 @@ public class DrivePath extends Command
   @Override
   public void end(boolean interrupted)
   {
-    SmartDashboard.putBoolean("DrivePath/End", true);
+    SmartDashboard.putBoolean(DashboardNames.DRIVE_PATH_END.getKey(), true);
     drivetrain.setTargetChassisSpeeds(new ChassisSpeeds(0, 0, 0));
   }
 
   @Override
   public boolean isFinished()
   {
-    SmartDashboard.putBoolean("DrivePath/Past Time", currentTime >= endTime);
-    SmartDashboard.putBoolean("DrivePath/Quit", quit);
+    SmartDashboard.putBoolean(DashboardNames.DRIVE_PATH_PAST_TIME.getKey(), currentTime >= endTime);
+    SmartDashboard.putBoolean(DashboardNames.DRIVE_PATH_QUIT.getKey(), quit);
     if (currentTime >= endTime || quit) {
-      SmartDashboard.putString("DrivePath/Status", "Finished");
+      SmartDashboard.putString(DashboardNames.DRIVE_PATH_STATUS.getKey(), "Finished");
       System.out.println("IsFinishedRun");
       return true;
     }

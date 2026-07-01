@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class Intake extends SubsystemBase
 {
@@ -70,7 +71,7 @@ public class Intake extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("Intake: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("Intake/Intake - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.INTAKE_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -210,8 +211,8 @@ public class Intake extends SubsystemBase
       limiter.reset(position); // Keep the limiter in sync in other control mode.
     }
 
-    SmartDashboard.putNumber("Intake/Position(rad)", position);
-    SmartDashboard.putNumber("Intake/TargetPosition(rad)", limiter.lastValue());
-    SmartDashboard.putNumber("Intake/Torque(Nm)", torque);
+    SmartDashboard.putNumber(DashboardNames.INTAKE_POSITION.getKey(), position);
+    SmartDashboard.putNumber(DashboardNames.INTAKE_TARGET_POSITION.getKey(), limiter.lastValue());
+    SmartDashboard.putNumber(DashboardNames.INTAKE_TORQUE.getKey(), torque);
   }
 }
