@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -51,15 +52,14 @@ public class SwerveModule extends SubsystemBase implements Sendable
     private double targetDriveVelocity = 0.0;
     private double targetDriveVelocityRotations = 0.0;
     private double steerVelocity;
-    private final String kCANbus = "CANivore";
-
 
     /** Constructs a swerve module class. Initializes drive and steer motors
-     * 
+     *
      * @param cfg swerve module configuration values for this module
      * @param ids Can Ids for this module
+     * @param canbus shared CAN bus instance this module's devices live on
      */
-    public SwerveModule(SwerveModuleConfig cfg, SwerveModuleIDConfig ids)
+    public SwerveModule(SwerveModuleConfig cfg, SwerveModuleIDConfig ids, CANBus canbus)
     {
         this.position = cfg.position;
         this.cfg = cfg;
@@ -67,9 +67,9 @@ public class SwerveModule extends SubsystemBase implements Sendable
 
         setName(String.format("SwerveModule[%d]", cfg.moduleNumber));
 
-        steerMotor = new TalonFX(ids.steerMotorID, kCANbus);
-        driveMotor = new TalonFX(ids.driveMotorID, kCANbus);
-        steerEncoder = new CANcoder(ids.steerEncoderID, kCANbus);
+        steerMotor = new TalonFX(ids.steerMotorID, canbus);
+        driveMotor = new TalonFX(ids.driveMotorID, canbus);
+        steerEncoder = new CANcoder(ids.steerEncoderID, canbus);
     
         driveVelocityVoltage = new VelocityVoltage(0).withSlot(0);
         steerPositionVoltage = new PositionVoltage(0).withSlot(0);
