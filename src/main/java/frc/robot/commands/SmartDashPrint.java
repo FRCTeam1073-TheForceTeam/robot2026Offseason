@@ -6,6 +6,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.utilities.DashboardNames;
 
 public class SmartDashPrint extends Command
 {
@@ -19,7 +20,7 @@ public class SmartDashPrint extends Command
   @Override
   public void initialize()
   {
-    SmartDashboard.putString("Auto Event", s);
+    SmartDashboard.putString(DashboardNames.AUTO_EVENT.getKey(), s);
   }
 
   @Override

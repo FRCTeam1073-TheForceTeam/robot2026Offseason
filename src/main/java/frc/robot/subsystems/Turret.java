@@ -22,6 +22,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class Turret extends SubsystemBase
 {
@@ -67,7 +68,7 @@ public class Turret extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("Turret: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("Turret/Turret - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.TURRET_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -184,7 +185,7 @@ public class Turret extends SubsystemBase
     velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / turretToMotorTurns;
 
     if (mode == Mode.VELOCITY) {
-      SmartDashboard.putNumber("Turret/Target Velocity", velocity);
+      SmartDashboard.putNumber(DashboardNames.TURRET_TARGET_VELOCITY.getKey(), velocity);
       double motorVelocity = targetVelocity * turretToMotorTurns / (2.0 * Math.PI);
       limiter.reset(position); // Keep the limiter in sync in other control mode.
       motor.setControl(commandVelocityVoltage.withVelocity(motorVelocity));
@@ -200,13 +201,13 @@ public class Turret extends SubsystemBase
 
     locked = Math.abs(targetPosition - position) < Math.toRadians(2.0);
 
-    SmartDashboard.putNumber("Turret/Position rad", position);
-    SmartDashboard.putNumber("Turret/Position deg", Math.toDegrees(position));
-    SmartDashboard.putNumber("Turret/Velocity (Rad_s))", velocity);
-    SmartDashboard.putNumber("Turret/Target", targetPosition);
-    SmartDashboard.putNumber("Turret/Torque", torque);
-    SmartDashboard.putBoolean("Turret/HaveZero", haveZero);
-    SmartDashboard.putBoolean("Turret/LinedUp", locked);
+    SmartDashboard.putNumber(DashboardNames.TURRET_POSITION_RAD.getKey(), position);
+    SmartDashboard.putNumber(DashboardNames.TURRET_POSITION_DEG.getKey(), Math.toDegrees(position));
+    SmartDashboard.putNumber(DashboardNames.TURRET_VELOCITY_RAD_S.getKey(), velocity);
+    SmartDashboard.putNumber(DashboardNames.TURRET_TARGET.getKey(), targetPosition);
+    SmartDashboard.putNumber(DashboardNames.TURRET_TORQUE.getKey(), torque);
+    SmartDashboard.putBoolean(DashboardNames.TURRET_HAVE_ZERO.getKey(), haveZero);
+    SmartDashboard.putBoolean(DashboardNames.TURRET_LINED_UP.getKey(), locked);
   }
 
   @Override

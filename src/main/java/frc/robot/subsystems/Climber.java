@@ -22,6 +22,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class Climber extends SubsystemBase
 {
@@ -68,7 +69,7 @@ public class Climber extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("Climber: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("Climber/Climber - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.CLIMBER_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -124,7 +125,7 @@ public class Climber extends SubsystemBase
   {
     mode = Mode.VELOCITY;
     targetVelocity = metersPerSecond;
-    SmartDashboard.putNumber("Climber/CommandedVelocity", metersPerSecond);
+    SmartDashboard.putNumber(DashboardNames.CLIMBER_COMMANDED_VELOCITY.getKey(), metersPerSecond);
   }
 
   // Command the climber to the given position, meters. Clamped to [minPositionMeters, maxPositionMeters].
@@ -132,7 +133,7 @@ public class Climber extends SubsystemBase
   {
     mode = Mode.POSITION;
     targetPosition = meters;
-    SmartDashboard.putNumber("Climber/CommandedPosition", meters);
+    SmartDashboard.putNumber(DashboardNames.CLIMBER_COMMANDED_POSITION.getKey(), meters);
   }
 
   public void stop()
@@ -190,17 +191,17 @@ public class Climber extends SubsystemBase
 
       motor.setControl(commandPositionVoltage.withPosition(motorPosition));
 
-      SmartDashboard.putNumber("Climber/TargetPostion", clampedCommand);
-      SmartDashboard.putNumber("Climber/LastCommand", clampedCommand);
+      SmartDashboard.putNumber(DashboardNames.CLIMBER_TARGET_POSITION.getKey(), clampedCommand);
+      SmartDashboard.putNumber(DashboardNames.CLIMBER_LAST_COMMAND.getKey(), clampedCommand);
     } else {
       motor.setControl(new NeutralOut());
       limiter.reset(0.0);
       positionLimiter.reset(position);
     }
 
-    SmartDashboard.putNumber("Climber/Velocity(mps)", velocity);
-    SmartDashboard.putNumber("Climber/TargetVelocity(mps)", limiter.lastValue());
-    SmartDashboard.putNumber("Climber/Load(A)", Math.abs(force));
-    SmartDashboard.putNumber("Climber/Position", position);
+    SmartDashboard.putNumber(DashboardNames.CLIMBER_VELOCITY.getKey(), velocity);
+    SmartDashboard.putNumber(DashboardNames.CLIMBER_TARGET_VELOCITY.getKey(), limiter.lastValue());
+    SmartDashboard.putNumber(DashboardNames.CLIMBER_LOAD.getKey(), Math.abs(force));
+    SmartDashboard.putNumber(DashboardNames.CLIMBER_POSITION.getKey(), position);
   }
 }

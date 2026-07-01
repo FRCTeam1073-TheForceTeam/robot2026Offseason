@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.AprilTagFinder.VisionMeasurement;
+import frc.robot.utilities.DashboardNames;
 
 public class Localizer extends SubsystemBase
 {
@@ -131,20 +132,20 @@ public class Localizer extends SubsystemBase
         );
 
         if (counter >= 50) {
-            SmartDashboard.putNumber("Localizer/PS", measurementCounter);
+            SmartDashboard.putNumber(DashboardNames.LOCALIZER_PS.getKey(), measurementCounter);
             measurementCounter = 0;
             counter = 0;
         } else {
             counter = counter + 1;
         }
         // Update localized output for debug:
-        SmartDashboard.putNumber("Localizer/Pose(x)", pose.getX());
-        SmartDashboard.putNumber("Localizer/Pose(y)", pose.getY());
-        SmartDashboard.putNumber("Localizer/Pose(q)", pose.getRotation().getRadians());
-        SmartDashboard.putNumber("Localizer/Vel(x)", speeds.vxMetersPerSecond);
-        SmartDashboard.putNumber("Localizer/Vel(y)", speeds.vyMetersPerSecond);
-        SmartDashboard.putNumber("Localizer/Vel(q)", speeds.omegaRadiansPerSecond);
-        SmartDashboard.putNumber("Localizer/MC", measurementCounter);
+        SmartDashboard.putNumber(DashboardNames.LOCALIZER_POSE_X.getKey(), pose.getX());
+        SmartDashboard.putNumber(DashboardNames.LOCALIZER_POSE_Y.getKey(), pose.getY());
+        SmartDashboard.putNumber(DashboardNames.LOCALIZER_POSE_Q.getKey(), pose.getRotation().getRadians());
+        SmartDashboard.putNumber(DashboardNames.LOCALIZER_VEL_X.getKey(), speeds.vxMetersPerSecond);
+        SmartDashboard.putNumber(DashboardNames.LOCALIZER_VEL_Y.getKey(), speeds.vyMetersPerSecond);
+        SmartDashboard.putNumber(DashboardNames.LOCALIZER_VEL_Q.getKey(), speeds.omegaRadiansPerSecond);
+        SmartDashboard.putNumber(DashboardNames.LOCALIZER_MC.getKey(), measurementCounter);
     }
 
     // Returns field-centric, localizer based position estimate.

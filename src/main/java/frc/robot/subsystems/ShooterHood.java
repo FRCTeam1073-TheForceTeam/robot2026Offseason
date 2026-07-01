@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class ShooterHood extends SubsystemBase
 {
@@ -62,7 +63,7 @@ public class ShooterHood extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("ShooterHood: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("Hood/Hood - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.HOOD_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -179,8 +180,8 @@ public class ShooterHood extends SubsystemBase
       limiter.reset(position); // Keep the limiter in sync in other control mode.
     }
 
-    SmartDashboard.putNumber("Hood/Angle", position);
-    SmartDashboard.putNumber("Hood/Torque", torque);
-    SmartDashboard.putNumber("Hood/Target", targetAngle);
+    SmartDashboard.putNumber(DashboardNames.HOOD_ANGLE.getKey(), position);
+    SmartDashboard.putNumber(DashboardNames.HOOD_TORQUE.getKey(), torque);
+    SmartDashboard.putNumber(DashboardNames.HOOD_TARGET.getKey(), targetAngle);
   }
 }
