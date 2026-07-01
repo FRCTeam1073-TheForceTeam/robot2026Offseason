@@ -4,12 +4,7 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix6.StatusCode;
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -22,11 +17,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Torque;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** Swerve module class one for each swerve module. 
@@ -52,7 +45,7 @@ public class SwerveModule extends SubsystemBase implements Sendable
     private double targetDriveVelocity = 0.0;
     private double targetDriveVelocityRotations = 0.0;
     private double steerVelocity;
-    private final String kCANbus = "CANivore";
+    private final String kCANbus = "Canivore";
 
 
     /** Constructs a swerve module class. Initializes drive and steer motors
@@ -93,12 +86,8 @@ public class SwerveModule extends SubsystemBase implements Sendable
 
     // Return drive position in meters.
     public double getDrivePosition()
-    {   //*NOTE */ Set Alpha to 1 if you are recalibrating
-        
-        //double alpha = 4.87 / 5.356; (old)
-        //double alpha = 1/524 / 1.6296 (new)
-        double alpha = 0.95598 * 0.9352;
-        return alpha * (driveMotor.getRotorPosition().getValueAsDouble() / cfg.rotationsPerMeter);
+    {
+        return driveMotor.getRotorPosition().getValueAsDouble() / cfg.rotationsPerMeter;
     }
 
     // Return drive velocity in meters/second.
@@ -199,97 +188,74 @@ public class SwerveModule extends SubsystemBase implements Sendable
     // configures motors with PIDF values, if it is inverted or not, current limits, etc.
     public void configureHardware()
     {
-        // Default configurations:
-        TalonFXConfiguration steerConfigs = new TalonFXConfiguration();
-        TalonFXConfiguration driveConfigs = new TalonFXConfiguration();
-
-        var error = steerMotor.getConfigurator().apply(new TalonFXConfiguration(), 0.5);
-        if (!error.isOK()) 
-        {
-            System.err.print(String.format("Module %d STEER MOTOR ERROR: %s", cfg.moduleNumber, error.toString()));
-        }
-
-        error = driveMotor.getConfigurator().apply(new TalonFXConfiguration(), 0.5);
-        if (!error.isOK()) 
-        {
-            System.err.println(String.format("Module %d DRIVE MOTOR ERROR: %s", cfg.moduleNumber, error.toString()));
-        }
-
-
-        // Set control direction of motors:
-        steerMotor.getConfigurator().apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
-        driveMotor.getConfigurator().apply(new MotorOutputConfigs().withInverted(InvertedValue.CounterClockwise_Positive));
-
-
-        // Default to brakes off:
-        steerMotor.setNeutralMode(NeutralModeValue.Coast);
-        driveMotor.setNeutralMode(NeutralModeValue.Coast);
-
-        steerMotor.getConfigurator().apply(new CurrentLimitsConfigs().withSupplyCurrentLimitEnable(true));
-        steerMotor.getConfigurator().apply(new CurrentLimitsConfigs().withSupplyCurrentLimit(cfg.steerCurrentLimit));
-        steerMotor.getConfigurator().apply(new CurrentLimitsConfigs().withSupplyCurrentLimit(cfg.steerCurrentThreshold));
-        steerMotor.getConfigurator().apply(new CurrentLimitsConfigs().withSupplyCurrentLowerTime(cfg.steerCurrentThresholdTime));  
-
-        CurrentLimitsConfigs driveCurrentLimitsConfigs = new CurrentLimitsConfigs();
-        driveMotor.getConfigurator().apply(driveCurrentLimitsConfigs.withSupplyCurrentLimitEnable(true));
-        driveMotor.getConfigurator().apply(driveCurrentLimitsConfigs.withSupplyCurrentLimit(cfg.driveCurrentLimit));
-        driveMotor.getConfigurator().apply(driveCurrentLimitsConfigs.withSupplyCurrentLimit(cfg.driveCurrentThreshold));
-        driveMotor.getConfigurator().apply(driveCurrentLimitsConfigs.withSupplyCurrentLowerTime(cfg.driveCurrentThresholdTime));
-        
         MagnetSensorConfigs mgSenseCfg = new MagnetSensorConfigs();
-        // mgSenseCfg.AbsoluteSensorRange = AbsoluteSensorRangeValue.Signed_PlusMinusHalf;
-        // mgSenseCfg.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
-        // mgSenseCfg.MagnetOffset = cfg.steerRotationOffset; 
-
-        error = steerEncoder.getConfigurator().refresh(mgSenseCfg, 0.5);
+        var error = steerEncoder.getConfigurator().refresh(mgSenseCfg, 0.5);
         if (!error.isOK()) {
             System.err.println(String.format("ERROR: SwerveModule %d steerEncoder response: %s ", cfg.moduleNumber, error.getDescription()));
         }
-        // System.out.println(String.format("SwerveModule %d Magnet AbsoluteSensorRange: %s", cfg.moduleNumber, mgSenseCfg.AbsoluteSensorRange));
-        // System.out.println(String.format("SwerveModule %d Magnet SensorDirection: %d",  cfg.moduleNumber, mgSenseCfg.SensorDirection));
         System.out.println(String.format("SwerveModule %d Magnet MagnetOffset: %f", cfg.moduleNumber, mgSenseCfg.MagnetOffset));
 
-        
+        // Steer motor: accumulate every setting into a single configuration object and apply it once,
+        // so unrelated fields don't get silently reset to defaults by later partial applies.
+        TalonFXConfiguration steerConfigs = new TalonFXConfiguration();
+        steerConfigs.TorqueCurrent.PeakForwardTorqueCurrent = cfg.steerCurrentLimit;
+        steerConfigs.TorqueCurrent.PeakReverseTorqueCurrent = -cfg.steerCurrentLimit;
+        steerConfigs.Voltage.PeakForwardVoltage = cfg.steerVoltageLimit;
+        steerConfigs.Voltage.PeakReverseVoltage = -cfg.steerVoltageLimit;
+        steerConfigs.CurrentLimits.SupplyCurrentLimit = cfg.steerCurrentLimit;
+        steerConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
         steerConfigs.Feedback.FeedbackRemoteSensorID = idcfg.steerEncoderID;
         steerConfigs.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
-        steerConfigs.Feedback.RotorToSensorRatio = (150.0 / 7.0);
+        steerConfigs.Feedback.RotorToSensorRatio = cfg.steerGearRatio;
         steerConfigs.Feedback.SensorToMechanismRatio = 1.0;  // This should be used for remote CANCoder with continuous wrap.
-        steerConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        steerConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         steerConfigs.ClosedLoopGeneral.ContinuousWrap = true;
-    
-        error = steerMotor.getConfigurator().apply(steerConfigs);
+        steerConfigs.Slot0.kP = cfg.steerP;
+        steerConfigs.Slot0.kI = cfg.steerI;
+        steerConfigs.Slot0.kD = cfg.steerD;
+        steerConfigs.Slot0.kV = cfg.steerV;
+        steerConfigs.Slot0.kS = cfg.steerS;
+
+        error = steerMotor.getConfigurator().apply(steerConfigs, 1.0);
         if (!error.isOK())
         {
-            System.err.println(String.format("SwerveModule %d configSelectedFeedbackSensor failed: %s ", cfg.moduleNumber, error.getDescription()));
+            System.err.println(String.format("SwerveModule %d Steer Motor Configuration Error: %s ", cfg.moduleNumber, error.getDescription()));
         }
 
-        driveConfigs.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-        driveMotor.getConfigurator().apply(driveConfigs);
-        driveMotor.setPosition(0);
-
-        // PID Loop settings for steering position control:
-        var steerMotorClosedLoopConfig = new Slot0Configs();
-        steerMotorClosedLoopConfig.withKP(cfg.steerP); 
-        steerMotorClosedLoopConfig.withKI(cfg.steerI); 
-        steerMotorClosedLoopConfig.withKD(cfg.steerD); 
-        steerMotorClosedLoopConfig.withKV(cfg.steerV); 
-        error = steerMotor.getConfigurator().apply(steerMotorClosedLoopConfig, 0.5);
+        error = steerMotor.setNeutralMode(NeutralModeValue.Brake, 1.0);
         if (!error.isOK()) {
-            System.err.println(String.format("SwerveModule %d Steer Motor Configuration Error: %s", cfg.moduleNumber, error.getDescription()));
+            System.err.println(String.format("SwerveModule %d Steer Neutral Mode Error: %s", cfg.moduleNumber, error.getDescription()));
         }
-        
-        // PID Loop settings for drive velocity control:
-        var driveMotorClosedLoopConfig = new Slot0Configs();
-        driveMotorClosedLoopConfig.withKP(cfg.driveP);
-        driveMotorClosedLoopConfig.withKI(cfg.driveI);
-        driveMotorClosedLoopConfig.withKD(cfg.driveD);
-        driveMotorClosedLoopConfig.withKV(cfg.driveV);
-        driveMotorClosedLoopConfig.withKA(cfg.driveA);
 
-        error = driveMotor.getConfigurator().apply(driveMotorClosedLoopConfig, 0.5);
-        if (error.isOK()) {
-            System.err.println(String.format("SwerveModule %d Drive Motor Configuration Error: %s", cfg.moduleNumber, error.getDescription()));
+        // Drive motor: same single-apply pattern.
+        TalonFXConfiguration driveConfigs = new TalonFXConfiguration();
+        driveConfigs.TorqueCurrent.PeakForwardTorqueCurrent = cfg.driveCurrentLimit;
+        driveConfigs.TorqueCurrent.PeakReverseTorqueCurrent = -cfg.driveCurrentLimit;
+        driveConfigs.Voltage.PeakForwardVoltage = cfg.driveVoltageLimit;
+        driveConfigs.Voltage.PeakReverseVoltage = -cfg.driveVoltageLimit;
+        driveConfigs.CurrentLimits.SupplyCurrentLimit = cfg.driveCurrentLimit;
+        driveConfigs.CurrentLimits.SupplyCurrentLimitEnable = true;
+        driveConfigs.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+        driveConfigs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        driveConfigs.Slot0.kP = cfg.driveP;
+        driveConfigs.Slot0.kI = cfg.driveI;
+        driveConfigs.Slot0.kD = cfg.driveD;
+        driveConfigs.Slot0.kV = cfg.driveV;
+        driveConfigs.Slot0.kA = cfg.driveA;
+        driveConfigs.Slot0.kS = cfg.driveS;
+
+        error = driveMotor.getConfigurator().apply(driveConfigs, 1.0);
+        if (!error.isOK())
+        {
+            System.err.println(String.format("SwerveModule %d Drive Motor Configuration Error: %s ", cfg.moduleNumber, error.getDescription()));
         }
+
+        error = driveMotor.setNeutralMode(NeutralModeValue.Brake, 1.0);
+        if (!error.isOK()) {
+            System.err.println(String.format("SwerveModule %d Drive Neutral Mode Error: %s", cfg.moduleNumber, error.getDescription()));
+        }
+
+        driveMotor.setPosition(0);
 
         System.out.println(String.format("SwerveModule %d configured.", cfg.moduleNumber));
     }
