@@ -100,9 +100,9 @@ public class TeleopDrive extends Command
   @Override
   public void execute()
   {
-    leftY = -m_OI.getDriverTranslateY();
-    leftX = -m_OI.getDriverTranslateX();
-    rightX = -m_OI.getDriverRotate();
+    leftY = -m_OI.getDriverLeftY();
+    leftX = -m_OI.getDriverLeftX();
+    rightX = -m_OI.getDriverRightX();
 
     SmartDashboard.putBoolean("Parking Brake", parked);
 
@@ -190,10 +190,10 @@ public class TeleopDrive extends Command
 
       //if above the torque gate rumble the contorller
       if(avgTorque >= torqueGate) {
-        m_OI.rumble();
+        m_OI.driverRumble();
       }
       else if(avgTorque < torqueGate) {
-       m_OI.stopRumble();
+       m_OI.driverStopRumble();
       }
 
       SmartDashboard.putNumber("Avg Torque", avgTorque);

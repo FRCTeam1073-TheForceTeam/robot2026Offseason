@@ -4,381 +4,289 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class OI extends SubsystemBase
 {
-  public enum BUTTONS{
-    A(1),
-    B(2),
-    X(3),
-    Y(4), 
-    LeftJoystickY(1),
-    LeftJoystickX(0),
-    RightJoystickY(5),
-    RightJoystickX(4),
-    LeftJoystickPress(9),
-    RightJoystickPress(10),
-    //TODO Fix DPad
-    // DPadUp(),
-    // DPadLeft,
-    // DPadDown,
-    // DPadRight,
-    LeftBumper(5),
-    RightBumper(6), 
-    LeftTrigger(2),
-    RightTrigger(3),
-    ViewButton(7),
-    MenuButton(8);
+  private final XboxController driverController;
+  private final XboxController operatorController;
 
-    private int buttonValue;
+  // TODO: make debouncers for individual buttons.
+  private final Debouncer debouncer = new Debouncer(0.05, Debouncer.DebounceType.kBoth);
 
-    BUTTONS(int buttonValue){
-      this.buttonValue = buttonValue;
+  private double leftXZero;
+  private double leftYZero;
+  private double rightXZero;
+  private double rightYZero;
+
+  private boolean hubActive = false;
+  private boolean lastHubActive = false;
+
+  // Top-level control of ballistic shot mode:
+  private boolean ballisticShot = true;
+  private boolean lastOperatorAButton = false;
+
+  public OI()
+  {
+    setName("OI");
+    driverController = new XboxController(0);
+    operatorController = new XboxController(1);
+  }
+
+  @Override
+  public void periodic()
+  {
+    boolean aButton = operatorController.getAButton();
+    if (aButton && !lastOperatorAButton) {
+      ballisticShot = !ballisticShot;
     }
-    public int getButtonVal(){
-      return buttonValue;
-    }
+    lastOperatorAButton = aButton;
+
+    SmartDashboard.putBoolean("OI/BallisticShot", ballisticShot);
   }
 
-
-  public enum PRIMARYPADBUTTONS {
-    L1(5),
-    L2(4),
-    L3(3),
-    L4(2),
-    BargeScore(1),
-    processorScore(8),
-    FloorMechUp(6),
-    floorLoadAlgae(7);
-
-    private int buttonValue;
-
-    PRIMARYPADBUTTONS(int buttonValue){
-      this.buttonValue = buttonValue;
-    }
-    public int getButtonVal(){
-      return buttonValue;
-    }
-  }
-
-  public enum SECONDARYPADBUTTONS {
-    DisengageClimber(8),
-    ZeroClimber(9),
-    EngageClimber(10),
-    LeftJoystickY(1),
-    LeftJoystickX(0),
-    ZeroElevator(1),
-    FirstPlayer(5),
-    TwoPlayer(6),
-    ScoreCoral(7),
-    AlgaeOpen(3),
-    ZeroAlgae(2),
-    AlgaeEject(4);
-
-
-    private int buttonValue;
-
-    SECONDARYPADBUTTONS(int buttonValue){
-      this.buttonValue = buttonValue;
-    }
-    public int getButtonVal(){
-      return buttonValue;
-    }
-  }
-
-  // Declares our controller variable
-  private Joystick driverController;
-  private Joystick operatorPrimaryController;
-  private Joystick operatorSecondaryController;
-
-  public Debouncer fieldCentricDebouncer = new Debouncer(0.05);
-  public Debouncer parkingBrakeDebouncer = new Debouncer(0.05);
-  public Debouncer menuDriverButtonDebouncer = new Debouncer(0.05);
-  public Debouncer aDriverButtonDebouncer = new Debouncer(0.05);
-  public Debouncer bDriverButtonDebouncer = new Debouncer(0.05);
-  public Debouncer yDriverButtonDebouncer = new Debouncer(0.05);
-  public Debouncer xDriverButtonDebouncer = new Debouncer(0.05);
-  public Debouncer menuOperatorButtonDebouncer = new Debouncer(0.13);
-  public Debouncer viewDriverButtonDebouncer = new Debouncer(0.05);
-  public Debouncer middleRedOperatorButtonDebouncer = new Debouncer(0.05);
-
-
-  // Declares the "zero" value variables (which allow us to compensate for joysticks that are a little off)
-  private double LEFT_X_ZERO;
-  private double LEFT_Y_ZERO;
-  private double RIGHT_X_ZERO;
-  private double RIGHT_Y_ZERO;
-
-  /** Creates a new OI. */
-  public OI() 
+  public boolean ballisticShotMode()
   {
-    // Sets the driver controller to a new joystick object at port 0
-    driverController = new Joystick(0);
-    operatorPrimaryController = new Joystick(1);
-    operatorSecondaryController = new Joystick(2);
-    zeroDriverController();
-    zeroOperatorControllers();
+    return ballisticShot;
   }
 
-    public void zeroDriverController() 
+  public double getDriverLeftX()
   {
-    //Sets all the offsets to zero, then uses whatever value it returns as the new offset.
-    LEFT_X_ZERO = 0;
-    LEFT_Y_ZERO = 0;
-    RIGHT_X_ZERO = 0;
-    RIGHT_Y_ZERO = 0;
-    LEFT_X_ZERO = getDriverLeftX();
-    LEFT_Y_ZERO = getDriverLeftY();
-    RIGHT_X_ZERO = getDriverRightX();
-    RIGHT_Y_ZERO = getDriverRightY();
+    return driverController.getLeftX();
   }
 
-  /** The following methods return quality-controlled values from the driver controller */
-  public double getDriverLeftX() 
+  public double getDriverLeftY()
   {
-    // "Clamping" the value makes sure that it's still between 1 and -1 even if we have added an offset to it
-    return MathUtil.clamp(driverController.getRawAxis(BUTTONS.LeftJoystickX.getButtonVal()) - LEFT_X_ZERO, -1, 1);
+    return driverController.getLeftY();
   }
 
-  public double getDriverLeftY() 
+  public double getDriverRightX()
   {
-    return MathUtil.clamp(driverController.getRawAxis(BUTTONS.LeftJoystickY.getButtonVal()) - LEFT_Y_ZERO, -1, 1);
+    return -1 * driverController.getRightX();
   }
 
-  public double getDriverRightX() 
+  public double getDriverRightY()
   {
-    return MathUtil.clamp(driverController.getRawAxis(BUTTONS.RightJoystickX.getButtonVal()) - RIGHT_X_ZERO, -1, 1);
+    return driverController.getRightY();
   }
 
-  public double getDriverRightY() 
+  public double getOperatorLeftX()
   {
-    return MathUtil.clamp(driverController.getRawAxis(BUTTONS.RightJoystickY.getButtonVal()) - RIGHT_Y_ZERO, -1, 1);
+    return -1 * operatorController.getLeftX();
   }
 
-  public double getDriverTranslateX()
+  public double getOperatorLeftY()
   {
-    return getDriverLeftX();
+    return operatorController.getLeftY();
   }
 
-  public double getDriverTranslateY()
+  public double getOperatorRightX()
   {
-    return getDriverLeftY();
+    return operatorController.getRightX();
   }
 
-  public double getDriverRotate()
+  public double getOperatorRightY()
   {
-    return getDriverRightX();
-  }
-
-  public double getDriverRightTrigger()
-  {
-    return driverController.getRawAxis(BUTTONS.RightTrigger.getButtonVal());
+    return operatorController.getRightY();
   }
 
   public double getDriverLeftTrigger()
   {
-    return driverController.getRawAxis(BUTTONS.LeftTrigger.getButtonVal());
+    return driverController.getLeftTriggerAxis();
   }
 
-  public boolean getDriverLeftBumper(){
-    return parkingBrakeDebouncer.calculate(driverController.getRawButton(BUTTONS.LeftBumper.getButtonVal()));
-  }
-
-  public boolean getDriverRightBumper(){
-    return fieldCentricDebouncer.calculate(driverController.getRawButton(BUTTONS.RightBumper.getButtonVal()));
-  }
-
-  /** Returns a specified button from the driver controller */
-  public boolean getDriverRawButton(int i) 
+  public double getDriverRightTrigger()
   {
-    return driverController.getRawButton(i);
+    return driverController.getRightTriggerAxis();
   }
 
-  public boolean getDriverAButton(){
-    return aDriverButtonDebouncer.calculate(driverController.getRawButton(BUTTONS.A.getButtonVal()));
+  public double getOperatorLeftTrigger()
+  {
+    return operatorController.getLeftTriggerAxis();
   }
 
-  public boolean getDriverBButton(){
-    return bDriverButtonDebouncer.calculate(driverController.getRawButton(BUTTONS.B.getButtonVal()));
+  public double getOperatorRightTrigger()
+  {
+    return operatorController.getRightTriggerAxis();
+  }
+
+  public boolean getDriverAButton()
+  {
+    return driverController.getAButton();
+  }
+
+  public boolean getDriverBButton()
+  {
+    return driverController.getBButton();
   }
 
   public boolean getDriverXButton()
   {
-    return xDriverButtonDebouncer.calculate(driverController.getRawButton(BUTTONS.X.getButtonVal()));
+    return driverController.getXButton();
   }
 
   public boolean getDriverYButton()
   {
-    return yDriverButtonDebouncer.calculate(driverController.getRawButton(BUTTONS.Y.getButtonVal()));
+    return driverController.getYButton();
   }
 
-  public boolean getDriverMenuButton(){
-    return menuDriverButtonDebouncer.calculate(driverController.getRawButton(BUTTONS.MenuButton.getButtonVal()));
+  public boolean getDriverMenuButton()
+  {
+    return driverController.getStartButton();
   }
 
-  public boolean getDriverViewButton(){
-    return viewDriverButtonDebouncer.calculate(driverController.getRawButton(BUTTONS.ViewButton.getButtonVal()));
+  public boolean getDriverViewButton()
+  {
+    return driverController.getBackButton();
+  }
+
+  public boolean getDriverLeftBumper()
+  {
+    return driverController.getLeftBumperButton();
+  }
+
+  public boolean getDriverRightBumper()
+  {
+    return driverController.getRightBumperButton();
+  }
+
+  public int getDriverDPadAngle()
+  {
+    return driverController.getPOV();
   }
 
   public boolean getDriverDPadUp()
   {
-    return (driverController.getPOV() == 0);
-  }
-
-  public boolean getDriverDPadDown()
-  {
-    return (driverController.getPOV() == 180);
-  }
-
-  public boolean getDriverDPadLeft()
-  {
-    return (driverController.getPOV() == 270);
+    return driverController.getPOV() == 0;
   }
 
   public boolean getDriverDPadRight()
   {
-    return (driverController.getPOV() == 90);
+    return driverController.getPOV() == 90;
   }
 
-  //TODO William-What is this?????
-  public boolean getDriverAlignButtons()
+  public boolean getDriverDPadLeft()
   {
-    return getDriverAButton() || getDriverViewButton() || getDriverXButton() || getDriverYButton();
+    return driverController.getPOV() == 270;
   }
 
-  public boolean getDriverLeftJoystickPress(){
-    return getDriverRawButton(BUTTONS.LeftJoystickPress.getButtonVal());
-  }
-
-  public void rumble() {
-    driverController.setRumble(RumbleType.kBothRumble, 1);
-  }
-
-  public void stopRumble() {
-    driverController.setRumble(RumbleType.kBothRumble, 0);
-  }
-
-  public void zeroOperatorControllers() 
+  public boolean getDriverDPadDown()
   {
-    //Sets all the offsets to zero, then uses whatever value it returns as the new offset.
-    LEFT_X_ZERO = 0;
-    LEFT_Y_ZERO = 0;
-    LEFT_X_ZERO = getOperatorLeftX();
-    LEFT_Y_ZERO = getOperatorLeftY();
+    return driverController.getPOV() == 180;
   }
 
-  /** The following methods return quality-controlled values from the operator controller */
-  public double getOperatorLeftX() {
-    if(Math.abs(operatorSecondaryController.getRawAxis(SECONDARYPADBUTTONS.LeftJoystickX.getButtonVal())) < 0.1){
-      return 0.0;
-    }
-    // "Clamping" the value makes sure that it's still between 1 and -1 even if we have added an offset to it
-    return MathUtil.clamp(operatorSecondaryController.getRawAxis(SECONDARYPADBUTTONS.LeftJoystickX.getButtonVal()) - LEFT_X_ZERO, -1, 1);
+  public void driverRumble()
+  {
+    driverController.setRumble(RumbleType.kBothRumble, 1.0);
   }
 
-  public double getOperatorLeftY() {
-    if(Math.abs(operatorSecondaryController.getRawAxis(SECONDARYPADBUTTONS.LeftJoystickY.getButtonVal())) < 0.1){
-      return 0.0;
-    }
-    return MathUtil.clamp(operatorSecondaryController.getRawAxis(SECONDARYPADBUTTONS.LeftJoystickY.getButtonVal()) - LEFT_Y_ZERO, -1, 1);
+  public void driverStopRumble()
+  {
+    driverController.setRumble(RumbleType.kBothRumble, 0.0);
   }
 
-  /** Returns a specified button from the operator controller */
-  public boolean getOperatorPrimaryRawButton(int i) {
-    return operatorPrimaryController.getRawButton(i);
+  public boolean driverLeftStickPress()
+  {
+    return driverController.getLeftStickButton();
   }
 
-  public boolean getOperatorSecondaryRawButton(int i) {
-    return operatorSecondaryController.getRawButton(i);
+  public boolean getOperatorAButton()
+  {
+    return operatorController.getAButton();
   }
 
-  public boolean getOperatorL1() {
-    return getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.L1.getButtonVal());
+  public boolean getOperatorBButton()
+  {
+    return operatorController.getBButton();
   }
 
-  public boolean getOperatorL2() {
-    return getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.L2.getButtonVal());
+  public boolean getOperatorXButton()
+  {
+    return operatorController.getXButton();
   }
 
-  public boolean getOperatorL3() {
-    return getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.L3.getButtonVal());
+  public boolean getOperatorYButton()
+  {
+    return operatorController.getYButton();
   }
 
-  public boolean getOperatorL4() {
-    return getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.L4.getButtonVal());
+  public boolean getOperatorMenuButton()
+  {
+    return operatorController.getStartButton();
   }
 
-  public boolean getOperatorDisengageClimber() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.DisengageClimber.getButtonVal());
+  public boolean getOperatorViewButton()
+  {
+    return operatorController.getBackButton();
   }
 
-  public boolean getOperatorZeroClimber() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.ZeroClimber.getButtonVal());
+  public boolean getOperatorLeftBumper()
+  {
+    return operatorController.getLeftBumperButton();
   }
 
-  public boolean getOperatorFirstPlayer() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.FirstPlayer.getButtonVal());
+  public boolean getOperatorRightBumper()
+  {
+    return operatorController.getRightBumperButton();
   }
 
-  public boolean getOperatorScoralCoral() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.ScoreCoral.getButtonVal());
+  public int getOperatorDPadAngle()
+  {
+    return operatorController.getPOV();
   }
 
-  public boolean getOperatorEngageClimber() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.EngageClimber.getButtonVal());
+  public boolean getOperatorDPadUp()
+  {
+    return operatorController.getPOV() == 0;
   }
 
-  //TODO: haven't mapped these on controller
-  public boolean getOperatorBargeScoreButton() {
-    return getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.BargeScore.getButtonVal());
+  public boolean getOperatorDPadRight()
+  {
+    return operatorController.getPOV() == 90;
   }
 
-  public boolean getOperatorAlgaeOpen() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.AlgaeOpen.getButtonVal());
+  public boolean getOperatorDPadLeft()
+  {
+    return operatorController.getPOV() == 270;
   }
 
-  public boolean getOperatorAlgaeZero() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.ZeroAlgae.getButtonVal());
+  public boolean getOperatorDPadDown()
+  {
+    return operatorController.getPOV() == 180;
   }
 
-  public boolean getOperatorAlgaeEject() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.AlgaeEject.getButtonVal());
+  public void operatorRumble()
+  {
+    operatorController.setRumble(RumbleType.kBothRumble, 1.0);
   }
 
-  public boolean getOperatorFloorAlgaeScore() {
-    return getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.processorScore.getButtonVal());
+  public void operatorStopRumble()
+  {
+    operatorController.setRumble(RumbleType.kBothRumble, 0.0);
   }
 
-  public boolean getOperatorFloorLoadAlgae() {
-    return getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.floorLoadAlgae.getButtonVal());
+  public void zeroDriverController()
+  {
+    leftXZero = getDriverLeftX();
+    leftYZero = getDriverLeftY();
+    rightXZero = getDriverRightX();
+    rightYZero = getDriverRightY();
   }
 
-  public boolean getOperatorTwoPlayerButton() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.TwoPlayer.getButtonVal());
+  public void zeroOperatorController()
+  {
+    leftXZero = getOperatorLeftX();
+    leftYZero = getOperatorLeftY();
+    rightXZero = getOperatorRightX();
+    rightYZero = getOperatorRightY();
   }
 
-  public boolean getOperatorZeroElevator() {
-    return getOperatorSecondaryRawButton(SECONDARYPADBUTTONS.ZeroElevator.getButtonVal());
-  }
-
-  public boolean getOperatorFloorMechUp() {
-    return middleRedOperatorButtonDebouncer.calculate(getOperatorPrimaryRawButton(PRIMARYPADBUTTONS.FloorMechUp.getButtonVal()));
-  }
-
-  @Override
-  public void initSendable(SendableBuilder builder){
-    builder.setSmartDashboardType("OI");
-    builder.addDoubleProperty("Driver Right Y", this::getDriverRightY, null);
-    builder.addDoubleProperty("Driver Right X", this::getDriverRightX, null);
-    builder.addDoubleProperty("Driver Left Y", this::getDriverLeftY, null);
-    builder.addDoubleProperty("Driver Left X", this::getDriverLeftX, null);
-    builder.addDoubleProperty("Operator Left Y", this::getOperatorLeftY, null);
-    builder.addDoubleProperty("Operator Left X", this::getOperatorLeftX, null);
+  public void setHubActive(boolean active)
+  {
+    hubActive = active;
   }
 }
