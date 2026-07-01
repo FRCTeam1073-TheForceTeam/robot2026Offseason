@@ -4,290 +4,338 @@
 
 package frc.robot;
 
-import java.util.function.Consumer;
+import java.util.Optional;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import choreo.Choreo;
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
+
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.BlingTeleop;
+import frc.robot.commands.ClimberTeleop;
+import frc.robot.commands.CollectorTeleop;
+import frc.robot.commands.FlywheelTeleop;
+import frc.robot.commands.HoodTeleop;
+import frc.robot.commands.IntakeTeleop;
+import frc.robot.commands.KickerTeleop;
+import frc.robot.commands.SpindexerTeleop;
 import frc.robot.commands.TeleopDrive;
-import frc.robot.commands.Autos.TestAuto;
+import frc.robot.commands.TestFlywheel;
+import frc.robot.commands.TestHood;
+import frc.robot.commands.TurretTeleop;
+import frc.robot.commands.ZeroClimber;
+import frc.robot.commands.ZeroHood;
+import frc.robot.commands.ZeroIntake;
+import frc.robot.commands.ZeroTurret;
 import frc.robot.subsystems.AprilTagFinder;
+import frc.robot.subsystems.BallisticShot;
+import frc.robot.subsystems.Bling;
+import frc.robot.subsystems.Climber;
+import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.FieldMap;
 import frc.robot.subsystems.FieldMapDisplay;
+import frc.robot.subsystems.Flywheel;
+import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Kicker;
 import frc.robot.subsystems.Localizer;
 import frc.robot.subsystems.OI;
+import frc.robot.subsystems.ShooterHood;
+import frc.robot.subsystems.Spindexer;
+import frc.robot.subsystems.TargetFinder;
+import frc.robot.subsystems.Turret;
+import frc.robot.subsystems.ZoneFinder;
+import frc.robot.utilities.ShooterTable;
 
-public class RobotContainer implements Consumer<String> // need the interface for onChange
+/**
+ * This class is where the bulk of the robot should be declared. Since
+ * Command-based is a "declarative" paradigm, very little robot logic should
+ * actually be handled in the {@link Robot} periodic methods (other than the
+ * scheduler calls). Instead, the structure of the robot (including subsystems,
+ * commands, and trigger mappings) should be declared here.
+ */
+public class RobotContainer
 {
-  private final Drivetrain m_drivetrain = new Drivetrain();
-  private final OI m_OI = new OI();
-  // private final AprilTagFinder m_aprilTagFinder = new AprilTagFinder();
-  // private final Field2d m_field = new Field2d();
-  // private final FieldMap m_fieldMap = new FieldMap();
-  // private final Localizer m_localizer = new Localizer(m_drivetrain, m_fieldMap, m_aprilTagFinder);
-  // private final MapDisplay m_MapDisplay = new MapDisplay(m_drivetrain, m_localizer, m_fieldMap);
-  //private final Lidar m_lidar = null; // Disabled temporarily.
+  public static final String noLevelAuto = "No Auto";
+  public static final String startLine = "Start Line";
+  public static final String centerHub = "CenterHub";
+  public static final String centerDepotOutpost = "CenterDepotOutpost";
+  public static final String centerDepotClimb = "CenterDepotClimb";
+  public static final String rightBumpSteal = "RightBumpSteal";
+  public static final String rightTrenchHalfOutpost = "RightTrenchHalfOutpost";
+  public static final String rightTrenchHalfDouble = "RightTrenchHalfDouble";
+  public static final String rightTrenchHalfDoubleBump = "RightTrenchHalfDoubleBump";
+  public static final String leftTrenchHalfDouble = "LeftTrenchHalfDouble";
+  public static final String leftTrenchHalfDoubleBump = "LeftTrenchHalfDoubleBump";
+  public static final String leftBumpFull = "LeftBumpFull";
+  public static final String basicTest = "BasicTest";
+  public static final String basicAuto = "BasicAuto";
+  public static final String rightBumpFollow = "RightBumpFollow";
+  public static final String leftBumpFollow = "LeftBumpFollow";
 
-  // private final TeleopDrive cmd_teleopDrive = new TeleopDrive(m_drivetrain, m_OI, m_aprilTagFinder);
-  
+  private final SendableChooser<String> levelChooser = new SendableChooser<>();
 
+  private boolean haveTraj = false;
+  private String autoTraj = "none";
 
-  private boolean isRed;
-  private int level;
-  private boolean isRainbow = false;
+  // Create these subsystems first!
+  private final OI oi = new OI();
+  private final Drivetrain drivetrain = new Drivetrain();
 
-  public boolean haveInitStartPos = false;
+  // Must be here because localizer depends on this due to moving camera.
+  private final Turret turret = new Turret();
 
-  private final SendableChooser<String> m_positionChooser = new SendableChooser<>();
-  private static final String testAuto = "Test Auto";
+  private final FieldMap fieldMap = new FieldMap();
+  private final AprilTagFinder tagFinder = new AprilTagFinder(turret, drivetrain);
+  private final Localizer localizer = new Localizer(drivetrain, tagFinder);
+  private final FieldMapDisplay fieldDisplay = new FieldMapDisplay(drivetrain, localizer, fieldMap);
+  private final ZoneFinder zoneFinder = new ZoneFinder(localizer);
+  private final TargetFinder targetFinder = new TargetFinder(localizer, zoneFinder);
+  private final BallisticShot ballisticShot = new BallisticShot(targetFinder);
 
-  public RobotContainer() 
+  private final Climber climber = new Climber();
+
+  private final ShooterTable shooterTable = new ShooterTable();
+  private final Intake intake = new Intake();
+  private final Collector collector = new Collector();
+  private final Spindexer spindexer = new Spindexer();
+  private final Kicker kicker = new Kicker();
+  private final ShooterHood shooterHood = new ShooterHood();
+  private final Flywheel flywheel = new Flywheel();
+  // LaserCan laser; -- not instantiated, matching C++ (commented out there too).
+  private final Bling bling = new Bling();
+
+  private Optional<Trajectory<SwerveSample>> trajectory = Optional.empty();
+
+  // Just used for launching test commands, separate from OI and other controls.
+  private final CommandXboxController operatorController = new CommandXboxController(1);
+
+  private boolean controlBindings = false;
+
+  private final double startDelaySeconds = 0.0;
+
+  public RobotContainer()
   {
-    // CommandScheduler.getInstance().setDefaultCommand(m_drivetrain, cmd_teleopDrive);
+    System.err.println("\tDrivetrain created...");
 
-    SmartDashboard.putData(m_drivetrain);
-    SmartDashboard.putData(m_OI);
-    // SmartDashboard.putData("Field", m_field);
-    // SmartDashboard.putData(m_localizer);
+    targetFinder.setBallisticShot(ballisticShot);
 
-    m_positionChooser.setDefaultOption("Test Auto", testAuto);
+    System.err.println("\tShooter table created...");
+    System.err.println("\tIntake created...");
+    System.err.println("\tCollector created...");
+    System.err.println("\tSpindexer created...");
+    System.err.println("\tKicker created...");
+    System.err.println("\tShooterHood created...");
+    System.err.println("\tFlywheel created...");
+    System.err.println("\tBling created...");
 
-    SmartDashboard.putData("Position Chooser", m_positionChooser);
+    System.err.println("Mechanisms created...");
 
-    m_positionChooser.onChange(this::accept); // this is so we can reset the start position
+    // Default commands are assigned in teleopInit(), after all subsystems are created, to avoid
+    // using uninitialized subsystems in default commands.
 
+    System.err.println("\tDefault commands assigned...");
+
+    // Autonomous Chooser:
+    levelChooser.setDefaultOption("No Level", noLevelAuto);
+    levelChooser.addOption("Start_Line", startLine);
+    levelChooser.addOption("Center_Hub", centerHub);
+    levelChooser.addOption("Center_Depot_Outpost", centerDepotOutpost);
+    levelChooser.addOption("Center_Depot_Climb", centerDepotClimb);
+    levelChooser.addOption("Right_Bump_Steal", rightBumpSteal);
+    levelChooser.addOption("Right_Trench_Half_Outpost", rightTrenchHalfOutpost);
+    levelChooser.addOption("Right_Trench_Half_Double", rightTrenchHalfDouble);
+    levelChooser.addOption("Right_Trench_Half_Double_Bump", rightTrenchHalfDoubleBump);
+    levelChooser.addOption("Left_Trench_Half_Double", leftTrenchHalfDouble);
+    levelChooser.addOption("Left_Trench_Half_Double_Bump", leftTrenchHalfDoubleBump);
+    levelChooser.addOption("Outliers_Right", leftBumpFull);
+    levelChooser.addOption("Basic Test", basicTest);
+    levelChooser.addOption("Basic Auto", basicAuto);
+    levelChooser.addOption("Right_Bump_Follow", rightBumpFollow);
+    levelChooser.addOption("Left_Bump_Follow", leftBumpFollow);
+
+    SmartDashboard.putData("Level Chooser", levelChooser);
+
+    SmartDashboard.putNumber("Start Delay(s)", startDelaySeconds);
+
+    // Configure the button bindings
     configureBindings();
+    System.err.println("Controller bindings configured...");
   }
 
-  private void configureBindings() {
-    // Trigger disengageClimber = new Trigger(m_OI::getOperatorDisengageClimber);
-    //   disengageClimber.onTrue(cmd_disengageClimber);
-
-    // Trigger engageClimber = new Trigger(m_OI::getOperatorEngageClimber);
-    //   engageClimber.onTrue(cmd_engageClimber);
-
-    // Trigger zeroClimber = new Trigger(m_OI::getOperatorZeroClimber);
-    //   zeroClimber.onTrue(cmd_zeroClimber);
-
-    // Trigger loadFloorCoral = new Trigger(m_OI::getOperatorFirstPlayer);
-    //   loadFloorCoral.whileTrue(cmd_floorLoadCoral);
-
-    // Trigger scoreCoral = new Trigger(m_OI::getOperatorScoralCoral);
-    //   scoreCoral.onTrue(cmd_scoreCoral);
-      
-    // Trigger elevatorL2 = new Trigger(m_OI::getOperatorL2);
-    //   elevatorL2.whileTrue(cmd_coralElevatorToL2);
-
-    // Trigger elevatorL3 = new Trigger(m_OI::getOperatorL3);
-    //   elevatorL3.whileTrue(cmd_coralElevatorToL3);
-    
-    // Trigger elevatorL4 = new Trigger(m_OI::getOperatorL4);
-    //   elevatorL4.whileTrue(cmd_coralElevatorToL4);
-
-    // Trigger troughScore = new Trigger(m_OI::getOperatorL1);
-    //   troughScore.whileTrue(cmd_troughRaiseElevator);
-    
-    // // Trigger alignToTag = new Trigger(m_OI::getDriverAlignButtons);
-    // //   alignToTag.whileTrue(cmd_alignToTag);
-
-    // // Trigger lidarAlign = new Trigger(m_OI::getDriverBButton);
-    // //   lidarAlign.whileTrue(cmd_lidarAlign);
-
-    // Trigger tagCenterAlign = new Trigger(m_OI::getDriverAButton);
-    //   tagCenterAlign.whileTrue(cmd_smartAlignReefCenter);
-
-    // Trigger sourceAlign = new Trigger(m_OI::getDriverBButton);
-    //   sourceAlign.whileTrue(cmd_smartAlignSource);
-
-    // Trigger tagLeftAlign = new Trigger(m_OI::getDriverXButton);
-    //   tagLeftAlign.whileTrue(cmd_smartAlignReefLeft);
-    
-    // Trigger tagRightAlign = new Trigger(m_OI::getDriverYButton);
-    //   tagRightAlign.whileTrue(cmd_smartAlignReefRight);
-
-    // Trigger localAlign = new Trigger(m_OI::getDriverMenuButton);
-    //   localAlign.whileTrue(cmd_localAlign);
-    
-    // // Trigger zeroElevator = new Trigger(m_OI::getOperatorZeroElevator);
-    // //   zeroElevator.onTrue(cmd_zeroElevator);
-
-    // Trigger zeroElevator = new Trigger(m_OI::getOperatorZeroElevator);
-    // zeroElevator.onTrue(cmd_stowSequence.create());
-
-    // Trigger elevatorBarge = new Trigger(m_OI::getOperatorBargeScoreButton);
-    //   elevatorBarge.whileTrue(cmd_coralElevatorToBarge);
-    
-    // // Trigger elevatorHighAlgae = new Trigger(m_OI::getOperatorHighAlgae);
-    // //   elevatorHighAlgae.whileTrue(cmd_coralElevatorToHighA);
-    
-    // Trigger floorScoreCoral = new Trigger(m_OI::getOperatorTwoPlayerButton);
-    //   floorScoreCoral.whileTrue(cmd_floorScoreCoral);
-
-    // Trigger algaeOpen = new Trigger(m_OI::getOperatorAlgaeOpen);
-    // algaeOpen.onTrue(cmd_algaeOpen);
-
-    // Trigger algaeZero = new Trigger(m_OI::getOperatorAlgaeZero);
-    // algaeZero.onTrue(cmd_zeroAlgaePivot);
-
-    // Trigger ejectAlgaeAuto = new Trigger(m_OI::getOperatorAlgaeEject);
-    //   ejectAlgaeAuto.onTrue(cmd_algaeAutoEject);
-    
-    // Trigger floorLoadAlgae = new Trigger(m_OI::getOperatorFloorLoadAlgae);
-    //   floorLoadAlgae.whileTrue(cmd_floorAlgaeCollect);
-    
-    // Trigger floorScoreAlgae = new Trigger(m_OI::getOperatorFloorAlgaeScore);
-    //   floorScoreAlgae.whileTrue(cmd_processorScore);
-    
-    // Trigger zeroFloorMech = new Trigger(m_OI::getOperatorFloorMechUp);
-    //   zeroFloorMech.whileTrue(cmd_zeroFloorPivotPos);
-    
-  } 
-
-  public void autonomousInit()
+  public Command getAutonomousCommand()
   {
-    // m_CANdleControl.clearAnim();
-    // m_floorPickupPivot.setRotatorPos(0);
-  }
+    try {
+      // Grab our delay in seconds:
+      double delay = SmartDashboard.getNumber("Start Delay", 0.0);
+      System.err.println("**Auto Start Delay(s): " + delay);
 
-    public Command getAutonomousCommand() 
-  {
-   // return Commands.print("No autonomous command configured");
-   // -1 to indicate no auto select
+      String selected = levelChooser.getSelected();
 
+      if (selected.equals(startLine)) {
+        // TODO(Phase 12): wire up Autos.basicAutoShot(...) once the Autos package is ported.
+        return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber), Commands.none());
+      } else if (selected.equals(centerHub)) {
+        // TODO(Phase 12): wire up Autos.hubAuto(...) once the Autos package is ported.
+        return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber), Commands.none());
+      } else if (
+          selected.equals(centerDepotOutpost)
+          || selected.equals(centerDepotClimb)
+          || selected.equals(rightBumpSteal)
+          || selected.equals(rightTrenchHalfOutpost)
+          || selected.equals(rightTrenchHalfDouble)
+          || selected.equals(rightTrenchHalfDoubleBump)
+          || selected.equals(leftTrenchHalfDouble)
+          || selected.equals(leftTrenchHalfDoubleBump)
+          || selected.equals(leftBumpFull)
+          || selected.equals(basicAuto)
+          || selected.equals(rightBumpFollow)
+          || selected.equals(leftBumpFollow)) {
 
-    // switch(m_positionChooser.getSelected())
-    // {
-    //   // case zeroClawAndLift:
-    //   //   return ZeroClawAndLift.create(m_climberClaw, m_climberLift);
-    //   case testAuto:
-    //     return TestAuto.create(m_drivetrain, m_localizer, m_fieldMap);
-    //   default:
-    //     return null;
-    // }
-    return null;
-  }
+        boolean putIntakeOut = true;
 
-  public void printAllFalseDiagnostics()
-  {
-    boolean isDisabled = DriverStation.isDisabled();
-    boolean allOK = true;
-    // Set allOK to the results of the printDiagnostics method for each subsystem, separated by &&
-    allOK = true;
-    //TODO: Add each subsystem
-    SmartDashboard.putBoolean("Engine light", allOK);
-  }
+        if (selected.equals(centerDepotOutpost)) {
+          putIntakeOut = false;
+        } else if (selected.equals(leftBumpFull)) {
+          putIntakeOut = false;
+        } else if (selected.equals(centerDepotClimb)) {
+          putIntakeOut = false;
+        } else if (selected.equals(rightBumpSteal)) {
+          putIntakeOut = false;
+        } else if (selected.equals(rightTrenchHalfDoubleBump)) {
+          putIntakeOut = false;
+        } else if (selected.equals(leftTrenchHalfDouble)) {
+          putIntakeOut = false;
+        } else if (selected.equals(leftTrenchHalfDoubleBump)) {
+          putIntakeOut = false;
+        } else if (selected.equals(rightTrenchHalfDouble)) {
+          putIntakeOut = false;
+        } else if (selected.equals(basicTest)) {
+          putIntakeOut = false;
+        }
 
-  public Command getTeleopCommand()
-  {
-    return null;
-  }
-
-  public Command getDisabledCommand() 
-  {
-    return null;
-  }
-
-  public void disabledInit() 
-  {
-    
-    // m_CANdleControl.clearAnim();
-    haveInitStartPos = false;
-  }
-
-  public boolean findStartPos() 
-  {
-      if(!DriverStation.getAlliance().isPresent() || m_positionChooser.getSelected().equals("No Position")) {
-        return false;
+        SmartDashboard.putBoolean("Autos/Put Intake Out", putIntakeOut);
+        SmartDashboard.putNumber("Autos/Start Auto", edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
+        // TODO(Phase 12): wire up autoRunner.create(trajectory, delay, putIntakeOut) once AutoRunner is ported.
+        return Commands.idle();
       }
-      /*
-      //create a bool for pose is set
-      double centerY = 4.026;
-      int allianceSign = 1;
-      String initPosition = m_positionChooser.getSelected();
-      
-      double centerX = 8.774; // this is the default 
-      double startLineOffset = 12.227 -8.774 - 2.24; //id 10 x value - center x value - offset from reef to startline
-      Pose2d startPos = new Pose2d();
-      SmartDashboard.putString("Alliance", "None");
-  
-      if(DriverStation.getAlliance().isPresent())
-      {
-        DriverStation.Alliance alliance = DriverStation.getAlliance().get();
-        if(alliance == Alliance.Blue) {
-          allianceSign = -1;
-        }
-        if (initPosition.equals(leftPosition)) {
-          centerY -= allianceSign * 2.013;
-        }
-        else if(initPosition.equals(rightPosition)) {
-          centerY += allianceSign * 2.013;
-        }
-  
-        if (alliance == Alliance.Blue)
-       {
-          isRed = false;
-          SmartDashboard.putString("Alliance", "Blue");
-          // startPos = new Pose2d(centerX - startLineOffset, centerY, new Rotation2d(Math.PI)); //startline
-          startPos = new Pose2d(centerX - startLineOffset, centerY, new Rotation2d(Math.PI)); //startline
-        }
-        else if (alliance == Alliance.Red)
-        { 
-          isRed = true;
-          SmartDashboard.putString("Alliance", "Red");
-          startPos = new Pose2d(centerX + startLineOffset, centerY, new Rotation2d(0)); //startline
-        }
-        else
-        {
-          return false;
-          // SmartDashboard.putString("Alliance", "Null");
-          // isRed = false;
-          // startPos = new Pose2d(0, 0, new Rotation2d(0));
-        }
-        m_drivetrain.resetOdometry(startPos);
-        m_localizer.resetPose(startPos);
-        SmartDashboard.putNumber("RobotContainer/Start Pose X", startPos.getX());
-        SmartDashboard.putNumber("RobotContainer/Start Pose Y", startPos.getY());
-        SmartDashboard.putNumber("RobotContainer/Start Pose Rotation", startPos.getRotation().getRadians());
-        SmartDashboard.putBoolean("Alliance", isRed); //True = Red, False = Blue ***NEED TO EDIT ON ELASTIC
-        return true;
-      }*/
-      return false;
+    } catch (RuntimeException e) {
+      System.err.println("Get Autonomous Command Threw Exception");
+      return Commands.idle(); // A do-nothing command from the commands factory.
+    }
+
+    return Commands.idle(); // Do nothing.
   }
 
-  public boolean disabledPeriodic() 
+  // Called from Robot
+  public void disabledInit()
   {
-    if(DriverStation.getAlliance().isPresent())
-    {
-      // int totalLED = m_CANdleControl.getTotalLED();
-      // int candleNum = m_CANdleControl.getCandleNum();
-
-      DriverStation.Alliance alliance = DriverStation.getAlliance().get();
-      // if(alliance == Alliance.Blue) {
-      //   m_CANdleControl.setRGB(0, 0, 255, candleNum, totalLED);
-      // }
-      // else if (alliance == Alliance.Red){
-      //   m_CANdleControl.setRGB(255, 0, 0, candleNum, totalLED);
-      // }
-      // else{
-      //   m_CANdleControl.setRGB(255, 255, 255, candleNum, totalLED);
-      // }
-  }
-    
-    return findStartPos();
+    haveTraj = false;
   }
 
-  @Override
-  public void accept(String t) // gets called every time the selected position changes so the start position is reinitialized
+  public boolean disabledPeriodic()
   {
-    haveInitStartPos = false;  
+    return loadTrajectory();
+  }
+
+  public boolean loadTrajectory()
+  {
+    String selected = levelChooser.getSelected();
+    if (selected.equals(centerDepotOutpost)
+        || selected.equals(centerDepotClimb)
+        || selected.equals(rightBumpSteal)
+        || selected.equals(rightTrenchHalfOutpost)
+        || selected.equals(rightTrenchHalfDouble)
+        || selected.equals(rightTrenchHalfDoubleBump)
+        || selected.equals(leftTrenchHalfDouble)
+        || selected.equals(leftTrenchHalfDoubleBump)
+        || selected.equals(leftBumpFull)
+        || selected.equals(basicTest)) {
+      autoTraj = selected;
+      SmartDashboard.putNumber("Autos/Grabed Choreo", edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
+      trajectory = Choreo.loadTrajectory(selected);
+    }
+    return trajectory.isPresent();
+  }
+
+  // Called from Robot
+  public void teleopInit()
+  {
+    // Default commands are assigned here after all subsystems are created, to avoid using
+    // uninitialized subsystems in default commands.
+    drivetrain.setDefaultCommand(new TeleopDrive(drivetrain, oi, localizer));
+    intake.setDefaultCommand(new IntakeTeleop(intake, oi, zoneFinder));
+    collector.setDefaultCommand(new CollectorTeleop(collector, oi, drivetrain));
+    spindexer.setDefaultCommand(new SpindexerTeleop(spindexer, kicker, oi));
+    kicker.setDefaultCommand(new KickerTeleop(kicker, oi));
+    shooterHood.setDefaultCommand(new HoodTeleop(shooterHood, oi, targetFinder, shooterTable, zoneFinder, ballisticShot));
+    flywheel.setDefaultCommand(new FlywheelTeleop(flywheel, oi, targetFinder, shooterTable, ballisticShot));
+    turret.setDefaultCommand(new TurretTeleop(turret, oi, targetFinder, drivetrain));
+    climber.setDefaultCommand(new ClimberTeleop(climber, oi, zoneFinder));
+    bling.setDefaultCommand(new BlingTeleop(bling, oi));
+
+    // If the turret has not yet seen zero, zero it now.
+    if (!turret.hasZero()) {
+      CommandScheduler.getInstance().schedule(new ZeroTurret(turret));
+    }
+
+    // TODO: Consider moving this back to configureBindings().
+    // Moved here to de-conflict DPAD in test mode.
+    if (!controlBindings) {
+      operatorController.povLeft().onTrue(new ZeroIntake(intake));
+      operatorController.povUp().onTrue(new ZeroTurret(turret));
+      operatorController.povRight().onTrue(new ZeroHood(shooterHood));
+      operatorController.povDown().onTrue(new ZeroClimber(climber));
+      controlBindings = true;
+    }
+  }
+
+  private void configureBindings()
+  {
+    // Command bindings moved to teleopInit().
+  }
+
+  // Called from Robot
+  public void testInit()
+  {
+    System.err.println("***** TestInit ****");
+
+    // In test mode we run these manually:
+    flywheel.removeDefaultCommand();
+    shooterHood.removeDefaultCommand();
+
+    // Launch some commands for test mode:
+    CommandScheduler.getInstance().schedule(new TestFlywheel(flywheel, oi));
+    CommandScheduler.getInstance().schedule(new TestHood(shooterHood, oi));
+  }
+
+  public void setHubActive(boolean active)
+  {
+    oi.setHubActive(active);
+  }
+
+  public boolean getHaveTraj()
+  {
+    return haveTraj;
+  }
+
+  public void setHaveTraj(boolean haveTraj)
+  {
+    this.haveTraj = haveTraj;
+  }
+
+  public String getAutoTraj()
+  {
+    return autoTraj;
+  }
+
+  public String getSelectedAuto()
+  {
+    return levelChooser.getSelected();
   }
 }
