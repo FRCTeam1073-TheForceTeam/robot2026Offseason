@@ -17,15 +17,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.commands.AlignToTag;
-import frc.robot.commands.AlignToTagRelative;
 import frc.robot.commands.TeleopDrive;
 import frc.robot.commands.Autos.TestAuto;
 import frc.robot.subsystems.AprilTagFinder;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.FieldMap;
+import frc.robot.subsystems.FieldMapDisplay;
 import frc.robot.subsystems.Localizer;
-import frc.robot.subsystems.MapDisplay;
 import frc.robot.subsystems.OI;
 
 public class RobotContainer implements Consumer<String> // need the interface for onChange
