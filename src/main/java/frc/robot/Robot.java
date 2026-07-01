@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import au.grapplerobotics.CanBridge;
+// import au.grapplerobotics.CanBridge;
 
 public class Robot extends TimedRobot {
   private boolean firstInit = true;
@@ -18,7 +18,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    CanBridge.runTCP();
+    // CanBridge.runTCP();
     m_robotContainer = new RobotContainer();
   }
 
