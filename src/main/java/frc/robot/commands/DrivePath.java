@@ -1,243 +1,180 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
 package frc.robot.commands;
+
+import java.util.Optional;
+
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.commands.Path.PathFeedback;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Localizer;
 
 public class DrivePath extends Command
 {
-  /** Creates a new DriveThroughTrajectory. */
+  private boolean quit;
 
-  double distanceTolerance = 0.1;
-  double angleTolerance = 0.1;
+  private final Drivetrain drivetrain;
+  private final Localizer localizer;
 
-  Drivetrain drivetrain;
-  Pose2d robotPose;
-  Path path;
-  Localizer localizer;
-  int currentSegmentIndex = -1;
+  private final Optional<Trajectory<SwerveSample>> trajectory;
+  private Optional<SwerveSample> currentSample;
 
-  PIDController xController;
-  PIDController yController;
-  PIDController thetaController;
-  double currentTime;
-  double maxVelocity;
-  double maxAngularVelocity;
-  double maxAcceleration;
-  double endTime;
-  double xVelocity;
-  double yVelocity;
-  double thetaVelocity;
-  double startTime;
+  private Pose2d robotPose;
 
- /**
-  * Constructs a schema to drive along a given path.
-  * @param ds
-  * @param path
-  */
-  public DrivePath(Drivetrain ds, Path path, Localizer localizer) 
+  private final PIDController xController = new PIDController(5.5, 0, 0.3);
+  private final PIDController yController = new PIDController(5.5, 0, 0.3);
+  private final PIDController thetaController = new PIDController(2.5, 0.0, 0.3);
+
+  private double currentTime;
+  private double startTime;
+  private double endTime;
+
+  private double maxVelocity;
+  private double maxAngularVelocity;
+  private double xVelocity;
+  private double yVelocity;
+  private double thetaVelocity;
+
+  public DrivePath(Drivetrain drivetrain, Localizer localizer, Optional<Trajectory<SwerveSample>> trajectory)
   {
-    drivetrain = ds;
-    this.path = path;
+    this.drivetrain = drivetrain;
     this.localizer = localizer;
+    this.trajectory = trajectory;
 
-    xController = new PIDController(
-      4.8, 
-      0, 
-      0.01
-    );
-
-    yController = new PIDController(
-      4.8, 
-      0, 
-      0.01
-    );
-
-    thetaController = new PIDController(
-      1.5, 
-      0.0,
-      0.01
-    );
+    quit = false;
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
-    SmartDashboard.putString("DrivePath/Status","Idle");
-    addRequirements(ds);
+    SmartDashboard.putString("DrivePath/Status", "Idle");
+    addRequirements(drivetrain);
   }
 
-  // Called when the command is initially scheduled.
   @Override
-  public void initialize() 
+  public void initialize()
   {
+    SmartDashboard.putBoolean("Has Trajectory", trajectory.isPresent());
+
     startTime = Timer.getFPGATimestamp();
+
+    if (trajectory.isPresent()) {
+      // get the initial time and pose of the robot
+      endTime = trajectory.get().getTotalTime();
+      robotPose = localizer.getPose();
+
+      // if the current position is far from the start position quit
+      Optional<Pose2d> initPose = trajectory.get().getInitialPose(isRedAlliance());
+      if (initPose.isPresent()) {
+        Transform2d diff = robotPose.minus(initPose.get());
+        if (diff.getTranslation().getNorm() >= 2.0) {
+          quit = true;
+        }
+      }
+    }
+
     currentTime = 0.01;
-    // currentSegmentIndex = path.closestSegment(drivetrain.getOdometry());   
-    currentSegmentIndex = 0; 
-
-    if (currentSegmentIndex != -1 && path.segments.get(currentSegmentIndex).entryCommand != null) 
-    {
-      CommandScheduler.getInstance().schedule(path.segments.get(currentSegmentIndex).entryCommand);
-    }
-
-    if (currentSegmentIndex != -1 && path.segments.get(currentSegmentIndex).entryActivate != null)
-    {
-      path.segments.get(currentSegmentIndex).entryActivate.activate(path.segments.get(currentSegmentIndex).entryActivateValue);
-    }
 
     xController.reset();
     yController.reset();
     thetaController.reset();
-    SmartDashboard.putString("DrivePath/Status",String.format("Starting Segment: %d", currentSegmentIndex));
   }
 
-  // Called every time the scheduler runs while the command is scheduled.
-  //interpolates the trajectory to get the desired pose at a given time and sets speed proportional to the difference
   @Override
-  public void execute() 
+  public void execute()
   {
-    if (currentSegmentIndex < 0) 
-    {
-      SmartDashboard.putString("DrivePath/Status","Invalid segment index.");
-
-      // Stop:
-      //TODO: send command to the drivetrain
-      return; // Don't run.
-    }
-
+    // get the start time and position
     currentTime = Timer.getFPGATimestamp() - startTime;
-    //robotPose = drivetrain.getOdometry();
     robotPose = localizer.getPose();
-    
-    // Compute position and velocity desired from where we actually are:
-    PathFeedback pathFeedback = path.getPathFeedback(currentSegmentIndex, robotPose);
 
-    maxVelocity = pathFeedback.velocity.norm();
-    maxAngularVelocity = pathFeedback.velocity.norm() * 2;
-    
+    SmartDashboard.putNumber("DrivePath/CurrentTime", currentTime);
+    SmartDashboard.putBoolean("DrivePath/Trajectory", trajectory.isPresent());
 
-    if (currentSegmentIndex >= path.segments.size() - 1)
-    {
-      // Last point is meant to be a bit different:
-      xVelocity = xController.calculate(robotPose.getX(), pathFeedback.pose.getX());
-      yVelocity = yController.calculate(robotPose.getY(), pathFeedback.pose.getY());
-      thetaVelocity = thetaController.calculate(robotPose.getRotation().getRadians(), path.finalOrientation);
+    if (trajectory.isPresent()) {
+      Trajectory<SwerveSample> traj = trajectory.get();
+
+      // fetch current sample
+      currentSample = traj.sampleAt(currentTime, isRedAlliance());
+
+      SmartDashboard.putBoolean("DrivePath/Current Sample", currentSample.isPresent());
+
+      if (currentSample.isPresent()) {
+        SwerveSample trajSample = currentSample.get();
+        ChassisSpeeds trajectorySpeeds = trajSample.getChassisSpeeds();
+        maxVelocity = 2.5;
+        maxAngularVelocity = 2.5;
+
+        // v = PID(Transform + Robot_Pose) + Forward_Velocity * alpha
+        // velocity = feedback + feedforward
+        xVelocity = xController.calculate(robotPose.getX(), trajSample.x) + trajectorySpeeds.vxMetersPerSecond;
+        yVelocity = yController.calculate(robotPose.getY(), trajSample.y) + trajectorySpeeds.vyMetersPerSecond;
+        thetaVelocity = thetaController.calculate(robotPose.getRotation().getRadians(), trajSample.heading) + trajectorySpeeds.omegaRadiansPerSecond;
+
+        xVelocity = MathUtil.clamp(xVelocity, -maxVelocity, maxVelocity);
+        yVelocity = MathUtil.clamp(yVelocity, -maxVelocity, maxVelocity);
+        thetaVelocity = MathUtil.clamp(thetaVelocity, -maxAngularVelocity, maxAngularVelocity);
+
+        SmartDashboard.putNumber("DrivePath/TargetX", trajectorySpeeds.vxMetersPerSecond);
+        SmartDashboard.putNumber("DrivePath/TargetY", trajectorySpeeds.vyMetersPerSecond);
+        SmartDashboard.putNumber("DrivePath/TargetTheta", trajSample.getPose().getRotation().getRadians());
+
+        SmartDashboard.putNumber("DrivePath/MaxVelocity", maxVelocity);
+
+        SmartDashboard.putNumber("DrivePath/CommandedVx", xVelocity);
+        SmartDashboard.putNumber("DrivePath/CommandedVy", yVelocity);
+        SmartDashboard.putNumber("DrivePath/CommandedVw", thetaVelocity);
+
+        // set a field relative chassis speed
+        drivetrain.setTargetChassisSpeeds(
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                xVelocity,
+                yVelocity,
+                thetaVelocity,
+                localizer.getPose().getRotation()));
+      } else {
+        System.err.println("DrivePath No Sample Found");
+        drivetrain.setTargetChassisSpeeds(new ChassisSpeeds(0, 0, 0));
+        quit = true;
+      }
+    } else {
+      SmartDashboard.putString("DrivePath/Status", "No Trajectory Found");
+      System.err.println("DrivePath No Trajectory Found");
+      quit = true;
     }
-    else
-    {
-      xVelocity = xController.calculate(robotPose.getX(), pathFeedback.pose.getX());
-      yVelocity = yController.calculate(robotPose.getY(), pathFeedback.pose.getY());
-      thetaVelocity = thetaController.calculate(robotPose.getRotation().getRadians(), path.getPathOrientation(currentSegmentIndex, robotPose)); 
-    }
-    
-    // Clamp to maximums for safety:
-    xVelocity = MathUtil.clamp(xVelocity, -maxVelocity, maxVelocity);
-    yVelocity = MathUtil.clamp(yVelocity, -maxVelocity, maxVelocity);
-    thetaVelocity = MathUtil.clamp(thetaVelocity, -maxAngularVelocity, maxAngularVelocity);
-
-    SmartDashboard.putNumber("DrivePath/TargetX", path.segments.get(currentSegmentIndex).end.position.get(0, 0));
-    SmartDashboard.putNumber("DrivePath/TargetY", path.segments.get(currentSegmentIndex).end.position.get(1, 0));
-    SmartDashboard.putNumber("DrivePath/TargetTheta", path.segments.get(currentSegmentIndex).orientation);
-
-    SmartDashboard.putNumber("DrivePath/TrajFBVx", pathFeedback.velocity.get(0,0));
-    SmartDashboard.putNumber("DrivePath/TrajFBVy", pathFeedback.velocity.get(1,0));
-    SmartDashboard.putNumber("DrivePath/MaxVelocity", maxVelocity);
-
-    SmartDashboard.putNumber("DrivePath/CommandedVx", xVelocity);
-    SmartDashboard.putNumber("DrivePath/CommandedVy", yVelocity);
-    SmartDashboard.putNumber("DrivePath/CommandedW", thetaVelocity);
-    SmartDashboard.putString("DrivePath/SegmentIndex", String.format("Segment Index: %d", currentSegmentIndex));
-    SmartDashboard.putNumber("DrivePath/SegmentsSize", path.segments.size());
-
-    SmartDashboard.putNumber("DrivePath/Error", Math.sqrt(
-                                                Math.pow(path.segments.get(currentSegmentIndex).end.position.get(0, 0) - robotPose.getX(), 2) + 
-                                                Math.pow(path.segments.get(currentSegmentIndex).end.position.get(1, 0) - robotPose.getY(), 2)
-    ));    
-
-    // Controlled drive command with weights from our path segment feedback, set our two channels of schema output/w weights.
-    drivetrain.setTargetChassisSpeeds(
-                ChassisSpeeds.fromFieldRelativeSpeeds(
-                    xVelocity, 
-                    yVelocity,
-                    thetaVelocity, 
-                    Rotation2d.fromDegrees(localizer.getPose().getRotation().getDegrees()) // gets fused heading
-                )
-            );
   }
 
-  // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) 
+  public void end(boolean interrupted)
   {
+    SmartDashboard.putBoolean("DrivePath/End", true);
     drivetrain.setTargetChassisSpeeds(new ChassisSpeeds(0, 0, 0));
   }
 
-  // Returns true when the command should end.
   @Override
-  public boolean isFinished() 
+  public boolean isFinished()
   {
-
-  if (currentSegmentIndex < 0 || currentSegmentIndex >= path.segments.size()) 
-  {
-    return true; // Finished if we don't have a good index.
-  }
-  
-
-  // Otherwise check our segment, and manage command launch as we move along segments.
-  Path.Segment seg = path.segments.get(currentSegmentIndex);
-  if (path.atEndPoint(currentSegmentIndex, localizer.getPose())) 
-  {
-
-    // Cancel entry comamnd for this segment:
-    if (seg.entryCommand != null) 
-    {
-      CommandScheduler.getInstance().cancel(seg.entryCommand);
-    }
-    // Kick off our exit command for this segment:
-    if (seg.exitCommand != null) 
-    {
-      CommandScheduler.getInstance().schedule(seg.exitCommand);
-    }
-
-    if (seg.entryActivate != null)
-    {
-      seg.entryActivate.activate(seg.entryActivateValue);
-    }
-
-    if (seg.exitActivate != null)
-    {
-      seg.exitActivate.activate(seg.exitActivateValue);
-    }
-
-    // Move to next path segment:
-    currentSegmentIndex = currentSegmentIndex + 1;
-    if (currentSegmentIndex >= path.segments.size()) 
-    {
-      SmartDashboard.putString("DrivePath/Status","Finished.");
+    SmartDashboard.putBoolean("DrivePath/Past Time", currentTime >= endTime);
+    SmartDashboard.putBoolean("DrivePath/Quit", quit);
+    if (currentTime >= endTime || quit) {
+      SmartDashboard.putString("DrivePath/Status", "Finished");
+      System.out.println("IsFinishedRun");
       return true;
-    } 
-    else 
-    {
-      // Move to new segment:
-      seg = path.segments.get(currentSegmentIndex);
-      if (seg.entryCommand != null) 
-      {
-        CommandScheduler.getInstance().schedule(seg.entryCommand);
-      }
-
-      if (seg.entryActivate != null)
-      {
-        seg.entryActivate.activate(seg.entryActivateValue);
-      }
     }
+    return false;
   }
-  return false; // Keep on going.
-}
 
+  private boolean isRedAlliance()
+  {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    return alliance == Alliance.Red;
+  }
 }

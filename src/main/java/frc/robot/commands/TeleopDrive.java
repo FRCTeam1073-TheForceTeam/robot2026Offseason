@@ -5,235 +5,201 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.AprilTagFinder;
-import frc.robot.subsystems.CommandStates;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Localizer;
 import frc.robot.subsystems.OI;
-import frc.robot.subsystems.SwerveModule;
 
-public class TeleopDrive extends Command 
+public class TeleopDrive extends Command
 {
-  double angleTolerance = 0.05;
-  ChassisSpeeds chassisSpeeds;
-  Pose2d Rotation;
-  Pose2d robotRotation;
-  Drivetrain drivetrain;
-  OI m_OI;
+  public static final double JOYSTICK_DEADZONE = 0.15;
+
+  private static final double maximumLinearVelocity = 4.5;
+  private static final double maximumRotationVelocity = 2.0 * Math.PI;
+
+  private final Drivetrain drivetrain;
+  private final OI oi;
+  private final Localizer localizer;
+
+  private ChassisSpeeds speeds;
+
   private boolean fieldCentric;
-  private boolean parked = false;
-  ChassisSpeeds speeds;
-  double last_error = 0; //for snap-to-positions derivative
-  double last_time = 0; //for snap-to-positions derivative
-  boolean lastParkingBreakButton = false;
-  boolean lastFieldCentricButton = true;
-  boolean pointAtTarget;
-  AprilTagFinder aprilTagFinder;
-  Localizer localizer;
+  private boolean lastFieldCentricButton;
+  private boolean slowMode;
+  private boolean lastYPressed;
+  private boolean lastXPressed;
+  private boolean fastRotation;
 
-  PIDController snapPidProfile;
+  private double avgTorque;
+  private double currentTime;
 
-  // Teleop drive velocity scaling:
-  private final static double maximumLinearVelocity = 3.5;   // Meters/second
-  private final static double maximumRotationVelocity = 4.0; // Radians/second
-  private double mult1;
-  private double mult2;
-  private double leftX;
-  private double leftY;
-  private double rightX;
-  private double vx;
-  private double vy;
-  private double w;
-  private double allianceSign = 1; // this is handled by setting the odometry orientation for each alliance
+  // Used to flip the sign based on which alliance we are set for:
+  private int allianceSign;
 
-  double frontLeftTorque;
-  double frontRightTorque;
-  double backLeftTorque;
-  double backRightTorque;
-  double avgTorque;
-
-  double torqueGate = 65; 
-
-  /** Creates a new Teleop. */
-  public TeleopDrive(Drivetrain drivetrain, OI oi, AprilTagFinder finder){
+  public TeleopDrive(Drivetrain drivetrain, OI oi, Localizer localizer)
+  {
     this.drivetrain = drivetrain;
+    this.oi = oi;
     this.localizer = localizer;
-    m_OI = oi;
-    fieldCentric = true;
-    pointAtTarget = false;
-    snapPidProfile = new PIDController(
-      0.05, 
-      0.0, 
-      0.0);
-    aprilTagFinder = finder;
-    // Use addRequirements() here to declare subsystem dependencies.
-    addRequirements(drivetrain);
 
-    this.drivetrain = drivetrain;
+    allianceSign = 0;
+    fieldCentric = true;
+    lastFieldCentricButton = true;
+    slowMode = false;
+    lastYPressed = false;
+    lastXPressed = false;
+    fastRotation = true;
+
+    addRequirements(drivetrain);
   }
 
-  // Called when the command is initially scheduled.
+  public TeleopDrive(Drivetrain drivetrain, OI oi)
+  {
+    this(drivetrain, oi, null);
+  }
+
   @Override
   public void initialize()
   {
-    System.out.println("TeleopDrive: Init");
-    super.initialize();
-    if (DriverStation.getAlliance().get() == Alliance.Red)
-    {
-      allianceSign = -1;
-    }
-    else
-    {
-      allianceSign = 1;
-    }
+    System.err.println("TeleopDrive Init");
+    setAlliance(); // Set the alliance sign.
   }
 
-  // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute()
   {
-    leftY = -m_OI.getDriverLeftY();
-    leftX = -m_OI.getDriverLeftX();
-    rightX = -m_OI.getDriverRightX();
+    if (allianceSign == 0) {
+      setAlliance(); // Try to figure it out if not already set.
+    }
 
-    SmartDashboard.putBoolean("Parking Brake", parked);
+    double leftY = oi.getDriverLeftY();
+    double leftX = oi.getDriverLeftX();
+    double rightX = oi.getDriverRightX();
+    avgTorque = drivetrain.getAverageLoad();
+    currentTime = Timer.getMatchTime();
 
-    if(m_OI.getDriverRightBumper() && lastFieldCentricButton == false){
+    if (oi.getDriverLeftBumper() && lastFieldCentricButton == false) {
       fieldCentric = !fieldCentric;
     }
-    lastFieldCentricButton = m_OI.getDriverRightBumper();
+    lastFieldCentricButton = oi.getDriverLeftBumper();
 
-    if(m_OI.getDriverLeftBumper() && lastParkingBreakButton == false)
-    {
-      parked = !parked;
+    boolean driverDPadUp = oi.getDriverDPadUp();
+    boolean driverDPadDown = oi.getDriverDPadDown();
+    boolean driverDPadLeft = oi.getDriverDPadLeft();
+    boolean driverDPadRight = oi.getDriverDPadRight();
+    int driverDPadAngle = oi.getDriverDPadAngle();
+
+    // set deadzones
+    if (Math.abs(leftY) < JOYSTICK_DEADZONE) {
+      leftY = 0.0;
     }
-    // TODO: get parking brake to work - right now only wheel in swerve mod 0 works
-    lastParkingBreakButton = m_OI.getDriverLeftBumper();
-    if(parked && !drivetrain.getParkingBrake())
-    {
-      drivetrain.parkingBrake(true);
+    if (Math.abs(leftX) < JOYSTICK_DEADZONE) {
+      leftX = 0.0;
     }
-    if(!parked && drivetrain.getParkingBrake())
-    {
-      drivetrain.parkingBrake(false);
-    }
-    else 
-    {
-      var dPadUp = m_OI.getDriverDPadUp(); 
-      var dPadDown = m_OI.getDriverDPadDown();
-      var dPadLeft = m_OI.getDriverDPadLeft();
-      var dPadRight = m_OI.getDriverDPadRight();
-
-      if(!dPadUp && !dPadDown && !dPadLeft && !dPadRight) {
-
-      //multiples the angle by a number from 1 to the square root of 30:
-        mult1 = 1.0 + (m_OI.getDriverLeftTrigger() * ((Math.sqrt(36)) - 1));
-        mult2 = 1.0 + (m_OI.getDriverRightTrigger() * ((Math.sqrt(36)) - 1));
-
-        //sets deadzones on the controller to extend to .05:
-        if(Math.abs(leftY) < .15) {leftY = 0;}
-        if(Math.abs(leftX) < .15) {leftX = 0;}
-        if(Math.abs(rightX) < .15) {rightX = 0;}
-
-        vx = MathUtil.clamp((allianceSign * leftY * maximumLinearVelocity / 25 ) * mult1 * mult2, -maximumLinearVelocity, maximumLinearVelocity);
-        vy = MathUtil.clamp((allianceSign * leftX * maximumLinearVelocity / 25 ) * mult1 * mult2, -maximumLinearVelocity, maximumLinearVelocity);
-        w = MathUtil.clamp((rightX * maximumRotationVelocity / 25) * mult1 * mult2, -maximumRotationVelocity, maximumRotationVelocity);
-
-        SmartDashboard.putNumber("TeleopDrive/vx", vx);
-        if(fieldCentric)
-        {
-          drivetrain.setTargetChassisSpeeds(
-            ChassisSpeeds.fromFieldRelativeSpeeds(
-                vx, 
-                vy,
-                w,  
-                Rotation2d.fromDegrees(localizer.getPose().getRotation().getDegrees()) // gets fused heading
-                // Rotation2d.fromDegrees(drivetrain.getOdometryThetaRadians())
-            )
-          );
-        }
-        else 
-        {
-          drivetrain.setTargetChassisSpeeds(new ChassisSpeeds(vx, vy, w));
-        }
-      }
-      else {
-        //robot centric creep
-        ChassisSpeeds creepSpeeds = new ChassisSpeeds();
-
-        if(dPadUp) {
-          creepSpeeds.vxMetersPerSecond = 0.2;
-        }
-        if(dPadDown) {
-          creepSpeeds.vxMetersPerSecond = -0.2;
-        }
-        if(dPadRight) {
-          creepSpeeds.vyMetersPerSecond = -0.2;
-        }
-        if(dPadLeft) {
-          creepSpeeds.vyMetersPerSecond = 0.2;
-        }
-        drivetrain.setTargetChassisSpeeds(creepSpeeds);
-
-      }
-      
-
-      avgTorque = drivetrain.getAverageLoad();
-
-      //if above the torque gate rumble the contorller
-      if(avgTorque >= torqueGate) {
-        m_OI.driverRumble();
-      }
-      else if(avgTorque < torqueGate) {
-       m_OI.driverStopRumble();
-      }
-
-      SmartDashboard.putNumber("Avg Torque", avgTorque);
+    if (Math.abs(rightX) < JOYSTICK_DEADZONE) {
+      rightX = 0.0;
     }
 
-    
-    // Allow driver to zero the drive subsystem heading for field-centric control.
-    // if(m_OI.getDriverViewButton())
-    // {
-    //   drivetrain.zeroHeading();
-    // }
+    double vx = MathUtil.clamp(allianceSign * sign(leftY + 0.01)
+        * (maximumLinearVelocity / (maximumLinearVelocity - 1))
+        * (Math.pow(maximumLinearVelocity, Math.abs(leftY)) - 1), -maximumLinearVelocity, maximumLinearVelocity);
+    double vy = MathUtil.clamp(allianceSign * sign(leftX + 0.01)
+        * (maximumLinearVelocity / (maximumLinearVelocity - 1))
+        * (Math.pow(maximumLinearVelocity, Math.abs(leftX)) - 1), -maximumLinearVelocity, maximumLinearVelocity);
+    double omega = MathUtil.clamp(sign(rightX + 0.01)
+        * (maximumRotationVelocity / (maximumRotationVelocity - 1))
+        * (Math.pow(maximumRotationVelocity, Math.abs(rightX)) - 1), -maximumRotationVelocity, maximumRotationVelocity);
 
+    if (!lastYPressed && oi.getDriverYButton()) {
+      slowMode = !slowMode;
+    }
+    lastYPressed = oi.getDriverYButton();
+    if (slowMode) {
+      vx *= 0.4;
+      vy *= 0.4;
+    }
 
-    //TODO: we should test resetting odometry to see if it works
-    // if(m_OI.getDriverMenuButton()){
-    //   Rotation2d zeroRotate = new Rotation2d();
-    //   Pose2d zero = new Pose2d(0.0, 0.0, zeroRotate);
-    //   drivetrain.resetOdometry(zero);
-    //   localizer.resetOrientation();
-    // }
+    if (!lastXPressed && oi.getDriverXButton()) {
+      fastRotation = !fastRotation;
+    }
+    lastXPressed = oi.getDriverXButton();
 
+    if (!fastRotation) {
+      omega *= 0.4;
+    }
 
-    SmartDashboard.putBoolean("Field Centric ", fieldCentric);
+    SmartDashboard.putBoolean("TeleopDrive/Slow Mode", slowMode);
+    SmartDashboard.putNumber("TeleopDrive/vx", vx);
+    SmartDashboard.putNumber("TeleopDrive/vy", vy);
+    SmartDashboard.putNumber("TeleopDrive/omega", omega);
+    SmartDashboard.putNumber("TeleopDrive/AvgTorque", avgTorque);
+    SmartDashboard.putBoolean("TeleopDrive/FieldCentric", fieldCentric);
+    SmartDashboard.putNumber("TeleopDrive/leftX", leftX);
+    SmartDashboard.putNumber("TeleopDrive/leftY", leftY);
+    SmartDashboard.putNumber("TeleopDrive/rightX", rightX);
+    SmartDashboard.putNumber("TeleopDrive/Driver DPad angle", driverDPadAngle);
+    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Up", driverDPadUp);
+    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Down", driverDPadDown);
+    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Left", driverDPadLeft);
+    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Right", driverDPadRight);
+    SmartDashboard.putNumber("TeleopDrive/Maximum Rotation Velocity", maximumRotationVelocity);
+    SmartDashboard.putBoolean("TeleopDrive/Fast Rotation", fastRotation);
 
-    super.execute();
+    // odometry centric drive
+    if (fieldCentric) {
+      Rotation2d rotation;
+      if (localizer != null) {
+        rotation = localizer.getPose().getRotation();
+      } else {
+        rotation = drivetrain.getGyroHeading();
+      }
 
+      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, rotation);
+      drivetrain.setTargetChassisSpeeds(speeds);
+    } else { // robot centric drive
+      drivetrain.setTargetChassisSpeeds(new ChassisSpeeds(allianceSign * -vx, allianceSign * -vy, omega));
+    }
   }
 
-  // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted){
+  public void end(boolean interrupted)
+  {
     if (interrupted) {
-      System.out.println("TeleopDrive: Interrupted!");
+      System.err.println("TeleopDrive: Interrupted!");
     }
-    super.end(interrupted);
   }
 
-  // Returns true when the command should end.
   @Override
-  public boolean isFinished(){
+  public boolean isFinished()
+  {
     return false;
+  }
+
+  private void setAlliance()
+  {
+    var alliance = DriverStation.getAlliance();
+
+    if (alliance.isPresent()) {
+      if (alliance.get() == Alliance.Red) {
+        allianceSign = 1;
+        System.err.println("TeleopDrive:: RED Alliance");
+      } else {
+        allianceSign = -1;
+        System.err.println("TeleopDrive:: BLUE Alliance");
+      }
+    } else {
+      System.err.println("WARNING: TeleopDrive:: Alliance not set.");
+    }
+  }
+
+  private static double sign(double value)
+  {
+    return value / Math.abs(value);
   }
 }
