@@ -9,6 +9,7 @@ import edu.wpi.first.networktables.IntegerArrayPublisher;
 import edu.wpi.first.networktables.IntegerArraySubscriber;
 import edu.wpi.first.networktables.IntegerArrayTopic;
 import edu.wpi.first.networktables.PubSubOption;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
 import com.ctre.phoenix6.StatusCode;
@@ -48,7 +49,7 @@ public class Drivetrain extends SubsystemBase
   {
     super.setSubsystem("Drivetrain");
 
-    pigeon2 = new Pigeon2(5, kCANbus);
+    pigeon2 = new Pigeon2(5, new CANBus(kCANbus));
     var error = pigeon2.getConfigurator().apply(new Pigeon2Configuration());
     if (!error.isOK()) 
     {

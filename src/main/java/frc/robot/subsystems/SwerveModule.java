@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
@@ -61,9 +62,9 @@ public class SwerveModule extends SubsystemBase implements Sendable
 
         setName(String.format("SwerveModule[%d]", cfg.moduleNumber));
 
-        steerMotor = new TalonFX(ids.steerMotorID, kCANbus);
-        driveMotor = new TalonFX(ids.driveMotorID, kCANbus);
-        steerEncoder = new CANcoder(ids.steerEncoderID, kCANbus);
+        steerMotor = new TalonFX(ids.steerMotorID, new CANBus(kCANbus));
+        driveMotor = new TalonFX(ids.driveMotorID, new CANBus(kCANbus));
+        steerEncoder = new CANcoder(ids.steerEncoderID, new CANBus(kCANbus));
     
         driveVelocityVoltage = new VelocityVoltage(0).withSlot(0);
         steerPositionVoltage = new PositionVoltage(0).withSlot(0);

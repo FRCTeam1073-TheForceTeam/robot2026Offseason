@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.AutoRunner;
 import frc.robot.commands.BlingTeleop;
 import frc.robot.commands.ClimberTeleop;
 import frc.robot.commands.CollectorTeleop;
@@ -32,6 +33,7 @@ import frc.robot.commands.ZeroClimber;
 import frc.robot.commands.ZeroHood;
 import frc.robot.commands.ZeroIntake;
 import frc.robot.commands.ZeroTurret;
+import frc.robot.commands.Autos.Autos;
 import frc.robot.subsystems.AprilTagFinder;
 import frc.robot.subsystems.BallisticShot;
 import frc.robot.subsystems.Bling;
@@ -110,6 +112,9 @@ public class RobotContainer
   // LaserCan laser; -- not instantiated, matching C++ (commented out there too).
   private final Bling bling = new Bling();
 
+  private final AutoRunner autoRunner = new AutoRunner(drivetrain, tagFinder, localizer, kicker, climber, flywheel, shooterHood,
+      spindexer, turret, collector, intake, null, shooterTable, targetFinder, bling, ballisticShot);
+
   private Optional<Trajectory<SwerveSample>> trajectory = Optional.empty();
 
   // Just used for launching test commands, separate from OI and other controls.
@@ -178,11 +183,11 @@ public class RobotContainer
       String selected = levelChooser.getSelected();
 
       if (selected.equals(startLine)) {
-        // TODO(Phase 12): wire up Autos.basicAutoShot(...) once the Autos package is ported.
-        return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber), Commands.none());
+        return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber),
+            Autos.basicAutoShot(spindexer, kicker, turret, flywheel, shooterHood, targetFinder, shooterTable, ballisticShot));
       } else if (selected.equals(centerHub)) {
-        // TODO(Phase 12): wire up Autos.hubAuto(...) once the Autos package is ported.
-        return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber), Commands.none());
+        return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber),
+            Autos.hubAuto(spindexer, kicker, turret, flywheel, shooterHood));
       } else if (
           selected.equals(centerDepotOutpost)
           || selected.equals(centerDepotClimb)
@@ -221,8 +226,7 @@ public class RobotContainer
 
         SmartDashboard.putBoolean("Autos/Put Intake Out", putIntakeOut);
         SmartDashboard.putNumber("Autos/Start Auto", edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
-        // TODO(Phase 12): wire up autoRunner.create(trajectory, delay, putIntakeOut) once AutoRunner is ported.
-        return Commands.idle();
+        return autoRunner.create(trajectory, delay, putIntakeOut);
       }
     } catch (RuntimeException e) {
       System.err.println("Get Autonomous Command Threw Exception");
