@@ -11,6 +11,7 @@ import edu.wpi.first.networktables.IntegerArrayTopic;
 import edu.wpi.first.networktables.PubSubOption;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -31,7 +32,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Drivetrain extends SubsystemBase
 {
-  private final String kCANbus = "CANivore";
+  private final CANBus kCANbus = new CANBus("CANivore");
   private SwerveDriveKinematics kinematics;
   private SwerveDriveOdometry odometry;
   private SwerveModule[] modules;
@@ -67,7 +68,7 @@ public class Drivetrain extends SubsystemBase
     moduleConfig.moduleNumber = 0;
     moduleConfig.position = new Translation2d(0.289, 0.289);
 
-    modules[0] = new SwerveModule(moduleConfig, moduleIDConfig);
+    modules[0] = new SwerveModule(moduleConfig, moduleIDConfig, kCANbus);
     modulePositions[0] = new SwerveModulePosition();
 
     //front right
@@ -77,7 +78,7 @@ public class Drivetrain extends SubsystemBase
     moduleConfig.moduleNumber = 1;
     moduleConfig.position = new Translation2d(0.289, -0.289);
 
-    modules[1] = new SwerveModule(moduleConfig, moduleIDConfig);
+    modules[1] = new SwerveModule(moduleConfig, moduleIDConfig, kCANbus);
     modulePositions[1] = new SwerveModulePosition();
 
     //back left
@@ -87,7 +88,7 @@ public class Drivetrain extends SubsystemBase
     moduleConfig.moduleNumber = 2;
     moduleConfig.position = new Translation2d(-0.289, 0.289);
 
-    modules[2] = new SwerveModule(moduleConfig, moduleIDConfig);
+    modules[2] = new SwerveModule(moduleConfig, moduleIDConfig, kCANbus);
     modulePositions[2] = new SwerveModulePosition();
 
     //back right
@@ -96,7 +97,7 @@ public class Drivetrain extends SubsystemBase
     moduleConfig.moduleNumber = 3;
     moduleConfig.position = new Translation2d(-0.289, -0.289);
 
-    modules[3] = new SwerveModule(moduleConfig, moduleIDConfig);
+    modules[3] = new SwerveModule(moduleConfig, moduleIDConfig, kCANbus);
     modulePositions[3] = new SwerveModulePosition();
 
     // Create our kinematics class
