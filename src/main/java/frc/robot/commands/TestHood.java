@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.OI;
 import frc.robot.subsystems.ShooterHood;
+import frc.robot.utilities.DashboardNames;
 
 /**
  * Hood test command for shot tuning.
@@ -57,8 +58,8 @@ public class TestHood extends Command
 
     double position = ShooterHood.maxPositionRadians - level * scaleFactor;
     shooterHood.setPosition(position);
-    SmartDashboard.putNumber("TestHood/level", level);
-    SmartDashboard.putNumber("TestHood/position", position);
+    SmartDashboard.putNumber(DashboardNames.TEST_HOOD_LEVEL.getKey(), level);
+    SmartDashboard.putNumber(DashboardNames.TEST_HOOD_POSITION.getKey(), position);
 
     lastLeftBumper = leftBumper;
     lastRightBumper = rightBumper;

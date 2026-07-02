@@ -52,6 +52,7 @@ import frc.robot.subsystems.Spindexer;
 import frc.robot.subsystems.TargetFinder;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.ZoneFinder;
+import frc.robot.utilities.DashboardNames;
 import frc.robot.utilities.ShooterTable;
 
 /**
@@ -164,9 +165,9 @@ public class RobotContainer
     levelChooser.addOption("Right_Bump_Follow", rightBumpFollow);
     levelChooser.addOption("Left_Bump_Follow", leftBumpFollow);
 
-    SmartDashboard.putData("Level Chooser", levelChooser);
+    SmartDashboard.putData(DashboardNames.AUTO_LEVEL_CHOOSER.getKey(), levelChooser);
 
-    SmartDashboard.putNumber("Start Delay(s)", startDelaySeconds);
+    SmartDashboard.putNumber(DashboardNames.AUTO_START_DELAY.getKey(), startDelaySeconds);
 
     // Configure the button bindings
     configureBindings();
@@ -177,7 +178,7 @@ public class RobotContainer
   {
     try {
       // Grab our delay in seconds:
-      double delay = SmartDashboard.getNumber("Start Delay", 0.0);
+      double delay = SmartDashboard.getNumber(DashboardNames.AUTO_START_DELAY.getKey(), 0.0);
       System.err.println("**Auto Start Delay(s): " + delay);
 
       String selected = levelChooser.getSelected();
@@ -224,8 +225,8 @@ public class RobotContainer
           putIntakeOut = false;
         }
 
-        SmartDashboard.putBoolean("Autos/Put Intake Out", putIntakeOut);
-        SmartDashboard.putNumber("Autos/Start Auto", edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
+        SmartDashboard.putBoolean(DashboardNames.AUTO_PUT_INTAKE_OUT.getKey(), putIntakeOut);
+        SmartDashboard.putNumber(DashboardNames.AUTO_START_TIME.getKey(), edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
         return autoRunner.create(trajectory, delay, putIntakeOut);
       }
     } catch (RuntimeException e) {
@@ -261,7 +262,7 @@ public class RobotContainer
         || selected.equals(leftBumpFull)
         || selected.equals(basicTest)) {
       autoTraj = selected;
-      SmartDashboard.putNumber("Autos/Grabed Choreo", edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
+      SmartDashboard.putNumber(DashboardNames.AUTO_GRABBED_CHOREO.getKey(), edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
       trajectory = Choreo.loadTrajectory(selected);
     }
     return trajectory.isPresent();

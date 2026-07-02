@@ -12,6 +12,7 @@ import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class LaserCan extends SubsystemBase
 {
@@ -30,7 +31,7 @@ public class LaserCan extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("LaserCAN: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("LaserCan/LaserCAN - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.LASER_CAN_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -57,8 +58,8 @@ public class LaserCan extends SubsystemBase
       rangeMeters = 0.0;
     }
 
-    SmartDashboard.putBoolean("LaserCan/is_valid", isValid);
-    SmartDashboard.putNumber("LaserCan/distance(m)", rangeMeters);
+    SmartDashboard.putBoolean(DashboardNames.LASER_CAN_IS_VALID.getKey(), isValid);
+    SmartDashboard.putNumber(DashboardNames.LASER_CAN_DISTANCE.getKey(), rangeMeters);
   }
 
   public boolean isValid()

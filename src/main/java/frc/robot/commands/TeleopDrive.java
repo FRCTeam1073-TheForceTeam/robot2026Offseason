@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Localizer;
 import frc.robot.subsystems.OI;
+import frc.robot.utilities.DashboardNames;
 
 public class TeleopDrive extends Command
 {
@@ -134,22 +135,22 @@ public class TeleopDrive extends Command
       omega *= 0.4;
     }
 
-    SmartDashboard.putBoolean("TeleopDrive/Slow Mode", slowMode);
-    SmartDashboard.putNumber("TeleopDrive/vx", vx);
-    SmartDashboard.putNumber("TeleopDrive/vy", vy);
-    SmartDashboard.putNumber("TeleopDrive/omega", omega);
-    SmartDashboard.putNumber("TeleopDrive/AvgTorque", avgTorque);
-    SmartDashboard.putBoolean("TeleopDrive/FieldCentric", fieldCentric);
-    SmartDashboard.putNumber("TeleopDrive/leftX", leftX);
-    SmartDashboard.putNumber("TeleopDrive/leftY", leftY);
-    SmartDashboard.putNumber("TeleopDrive/rightX", rightX);
-    SmartDashboard.putNumber("TeleopDrive/Driver DPad angle", driverDPadAngle);
-    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Up", driverDPadUp);
-    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Down", driverDPadDown);
-    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Left", driverDPadLeft);
-    SmartDashboard.putBoolean("TeleopDrive/Driver DPad Right", driverDPadRight);
-    SmartDashboard.putNumber("TeleopDrive/Maximum Rotation Velocity", maximumRotationVelocity);
-    SmartDashboard.putBoolean("TeleopDrive/Fast Rotation", fastRotation);
+    SmartDashboard.putBoolean(DashboardNames.TELEOP_DRIVE_SLOW_MODE.getKey(), slowMode);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_VX.getKey(), vx);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_VY.getKey(), vy);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_OMEGA.getKey(), omega);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_AVG_TORQUE.getKey(), avgTorque);
+    SmartDashboard.putBoolean(DashboardNames.TELEOP_DRIVE_FIELD_CENTRIC.getKey(), fieldCentric);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_LEFT_X.getKey(), leftX);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_LEFT_Y.getKey(), leftY);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_RIGHT_X.getKey(), rightX);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_DPAD_ANGLE.getKey(), driverDPadAngle);
+    SmartDashboard.putBoolean(DashboardNames.TELEOP_DRIVE_DPAD_UP.getKey(), driverDPadUp);
+    SmartDashboard.putBoolean(DashboardNames.TELEOP_DRIVE_DPAD_DOWN.getKey(), driverDPadDown);
+    SmartDashboard.putBoolean(DashboardNames.TELEOP_DRIVE_DPAD_LEFT.getKey(), driverDPadLeft);
+    SmartDashboard.putBoolean(DashboardNames.TELEOP_DRIVE_DPAD_RIGHT.getKey(), driverDPadRight);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_DRIVE_MAX_ROTATION_VELOCITY.getKey(), maximumRotationVelocity);
+    SmartDashboard.putBoolean(DashboardNames.TELEOP_DRIVE_FAST_ROTATION.getKey(), fastRotation);
 
     // odometry centric drive
     if (fieldCentric) {

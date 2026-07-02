@@ -12,6 +12,7 @@ import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.OI;
 import frc.robot.subsystems.TargetFinder;
 import frc.robot.subsystems.Turret;
+import frc.robot.utilities.DashboardNames;
 
 public class TurretTeleop extends Command
 {
@@ -53,7 +54,7 @@ public class TurretTeleop extends Command
 
     turret.setPosition(targetAngle);
 
-    SmartDashboard.putNumber("TeleopTurret/targetAngle", targetAngle);
+    SmartDashboard.putNumber(DashboardNames.TELEOP_TURRET_TARGET_ANGLE.getKey(), targetAngle);
   }
 
   @Override

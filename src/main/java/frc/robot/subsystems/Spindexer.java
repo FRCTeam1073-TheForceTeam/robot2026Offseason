@@ -19,6 +19,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class Spindexer extends SubsystemBase
 {
@@ -56,7 +57,7 @@ public class Spindexer extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("Spindexer: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("Spindexer/Spindexer - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.SPINDEXER_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -137,9 +138,9 @@ public class Spindexer extends SubsystemBase
       limiter.reset(velocity);
     }
 
-    SmartDashboard.putNumber("Spindexer/Velocity(mps)", velocity);
-    SmartDashboard.putNumber("Spindexer/TargetVelocity(mps)", limiter.lastValue());
-    SmartDashboard.putNumber("Spindexer/Current(A)", currentSig.getValueAsDouble());
+    SmartDashboard.putNumber(DashboardNames.SPINDEXER_VELOCITY.getKey(), velocity);
+    SmartDashboard.putNumber(DashboardNames.SPINDEXER_TARGET_VELOCITY.getKey(), limiter.lastValue());
+    SmartDashboard.putNumber(DashboardNames.SPINDEXER_CURRENT.getKey(), currentSig.getValueAsDouble());
   }
 
   @Override

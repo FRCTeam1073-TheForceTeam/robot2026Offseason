@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.utilities.DashboardNames;
 
 
 public class FieldMap
@@ -64,10 +65,10 @@ public class FieldMap
 
         tagPose = tagPose.plus(offset);
 
-        SmartDashboard.putNumber("FieldMap/TargetTagID", tagID);
-        SmartDashboard.putNumber("FieldMap/TargetPoseX", tagPose.getX());
-        SmartDashboard.putNumber("FieldMap/TargetPoseY", tagPose.getY());
-        SmartDashboard.putNumber("FieldMap/TargetPoseTheta", tagPose.getRotation().getRadians());
+        SmartDashboard.putNumber(DashboardNames.FIELD_MAP_TARGET_TAG_ID.getKey(), tagID);
+        SmartDashboard.putNumber(DashboardNames.FIELD_MAP_TARGET_POSE_X.getKey(), tagPose.getX());
+        SmartDashboard.putNumber(DashboardNames.FIELD_MAP_TARGET_POSE_Y.getKey(), tagPose.getY());
+        SmartDashboard.putNumber(DashboardNames.FIELD_MAP_TARGET_POSE_THETA.getKey(), tagPose.getRotation().getRadians());
 
         return tagPose;
     }

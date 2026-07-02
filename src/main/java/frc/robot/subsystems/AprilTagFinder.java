@@ -24,6 +24,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class AprilTagFinder extends SubsystemBase
 {
@@ -244,7 +245,7 @@ public class AprilTagFinder extends SubsystemBase
       if (cam.isTurret) {
         // If the camera is the turret but it is not zeroed/indexed skip it.
         if (!turret.hasZero()) {
-          SmartDashboard.putBoolean("AprilTagFinder/UsingTurretCam", false);
+          SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), false);
           continue;
         }
 
@@ -268,9 +269,9 @@ public class AprilTagFinder extends SubsystemBase
               .plus(new Transform3d(
                   new Translation3d(Units.inchesToMeters(-0.136), Units.inchesToMeters(-6.125), Units.inchesToMeters(5.187)),
                   new Rotation3d(0, Math.toRadians(-15), 0)));
-          SmartDashboard.putBoolean("AprilTagFinder/UsingTurretCam", true);
+          SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), true);
         } else {
-          SmartDashboard.putBoolean("AprilTagFinder/UsingTurretCam", false);
+          SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), false);
           continue; // Skip turret if it's moving too fast.
         }
       } // End camera is turret.
@@ -280,7 +281,7 @@ public class AprilTagFinder extends SubsystemBase
       // List<VisionMeasurement> measurements = getMultiTagEstimate(results, estimators.get(i), transform);
       visionMeasurements.addAll(measurements);
     }
-    SmartDashboard.putBoolean("AprilTagFinder/HasAprilTags", hasAprilTags);
+    SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_HAS_TAGS.getKey(), hasAprilTags);
   }
 
   private double[] estimateStddevs(double range, double bearing)

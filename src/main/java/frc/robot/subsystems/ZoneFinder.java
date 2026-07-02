@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class ZoneFinder extends SubsystemBase
 {
@@ -97,6 +98,6 @@ public class ZoneFinder extends SubsystemBase
             }
             zonelist.append(zonePortion).append(", ");
         }
-        SmartDashboard.putString("Zone/Zone", zonelist.toString());
+        SmartDashboard.putString(DashboardNames.ZONE_ZONE.getKey(), zonelist.toString());
     }
 }

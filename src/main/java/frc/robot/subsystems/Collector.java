@@ -19,6 +19,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class Collector extends SubsystemBase
 {
@@ -54,7 +55,7 @@ public class Collector extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("Collector: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("Collector/Collector - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.COLLECTOR_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -134,8 +135,8 @@ public class Collector extends SubsystemBase
       limiter.reset(0.0);
     }
 
-    SmartDashboard.putNumber("Collector/Velocity(mps)", velocity);
-    SmartDashboard.putNumber("Collector/TargetVelocity(mps)", limiter.lastValue());
+    SmartDashboard.putNumber(DashboardNames.COLLECTOR_VELOCITY.getKey(), velocity);
+    SmartDashboard.putNumber(DashboardNames.COLLECTOR_TARGET_VELOCITY.getKey(), limiter.lastValue());
   }
 
   @Override

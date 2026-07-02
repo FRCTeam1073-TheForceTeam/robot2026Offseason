@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class Flywheel extends SubsystemBase
 {
@@ -64,7 +65,7 @@ public class Flywheel extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("Flywheel failed to conifgure:");
     }
-    SmartDashboard.putBoolean("Flywheel/Flywheel - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.FLYWHEEL_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -179,10 +180,10 @@ public class Flywheel extends SubsystemBase
       limiter.reset(velocity); // Be ready to re-start from wherever we actually are...
     }
 
-    SmartDashboard.putNumber("Flywheel/AngularVelocity (RPM)", 60.0 * velocitySig.getValueAsDouble());
-    SmartDashboard.putNumber("Flywheel/TargetVelocity (mps)", limiter.lastValue());
-    SmartDashboard.putNumber("Flywheel/Velocity (mps)", velocity);
-    SmartDashboard.putNumber("Flywheel/Current(A)", current);
-    SmartDashboard.putNumber("Flywheel/FollowerCurrent(A)", followerCurrent);
+    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_ANGULAR_VELOCITY.getKey(), 60.0 * velocitySig.getValueAsDouble());
+    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_TARGET_VELOCITY.getKey(), limiter.lastValue());
+    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_VELOCITY.getKey(), velocity);
+    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_CURRENT.getKey(), current);
+    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_FOLLOWER_CURRENT.getKey(), followerCurrent);
   }
 }

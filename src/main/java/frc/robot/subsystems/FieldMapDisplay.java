@@ -5,6 +5,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class FieldMapDisplay extends SubsystemBase
 {
@@ -24,6 +25,6 @@ public class FieldMapDisplay extends SubsystemBase
     public void periodic()
     {
         field.setRobotPose(localizer.getPose());
-        SmartDashboard.putData("Field", field); // the widget for this is the dropdown named "field"
+        SmartDashboard.putData(DashboardNames.FIELD_DISPLAY_FIELD.getKey(), field); // the widget for this is the dropdown named "field"
     }
 }

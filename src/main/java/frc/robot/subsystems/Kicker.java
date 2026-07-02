@@ -19,6 +19,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utilities.DashboardNames;
 
 public class Kicker extends SubsystemBase
 {
@@ -56,7 +57,7 @@ public class Kicker extends SubsystemBase
     if (!hardwareConfigured) {
       System.err.println("Kicker: Hardware Failed To Configure!");
     }
-    SmartDashboard.putBoolean("Kicker/Kicker - hardware_configured", hardwareConfigured);
+    SmartDashboard.putBoolean(DashboardNames.KICKER_HW_CONFIGURED.getKey(), hardwareConfigured);
   }
 
   private boolean configureHardware()
@@ -138,9 +139,9 @@ public class Kicker extends SubsystemBase
       limiter.reset(velocity);
     }
 
-    SmartDashboard.putNumber("Kicker/Velocity(mps)", velocity);
-    SmartDashboard.putNumber("Kicker/TargetVelocity(mps)", limiter.lastValue());
-    SmartDashboard.putNumber("Kicker/Current(A)", currentSig.getValueAsDouble());
+    SmartDashboard.putNumber(DashboardNames.KICKER_VELOCITY.getKey(), velocity);
+    SmartDashboard.putNumber(DashboardNames.KICKER_TARGET_VELOCITY.getKey(), limiter.lastValue());
+    SmartDashboard.putNumber(DashboardNames.KICKER_CURRENT.getKey(), currentSig.getValueAsDouble());
   }
 
   @Override
