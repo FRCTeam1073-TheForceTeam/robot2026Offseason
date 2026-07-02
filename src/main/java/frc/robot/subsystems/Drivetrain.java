@@ -9,6 +9,7 @@ import edu.wpi.first.networktables.IntegerArrayPublisher;
 import edu.wpi.first.networktables.IntegerArraySubscriber;
 import edu.wpi.first.networktables.IntegerArrayTopic;
 import edu.wpi.first.networktables.PubSubOption;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
 import com.ctre.phoenix6.StatusCode;
@@ -31,7 +32,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Drivetrain extends SubsystemBase
 {
-  private final String kCANbus = "CANivore";
+  private final String kCANbus = "Canivore";
   private SwerveDriveKinematics kinematics;
   private SwerveDriveOdometry odometry;
   private SwerveModule[] modules;
@@ -48,7 +49,7 @@ public class Drivetrain extends SubsystemBase
   {
     super.setSubsystem("Drivetrain");
 
-    pigeon2 = new Pigeon2(5, kCANbus);
+    pigeon2 = new Pigeon2(5, new CANBus(kCANbus));
     var error = pigeon2.getConfigurator().apply(new Pigeon2Configuration());
     if (!error.isOK()) 
     {
@@ -65,7 +66,7 @@ public class Drivetrain extends SubsystemBase
 
     SwerveModuleConfig moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 0;
-    moduleConfig.position = new Translation2d(0.289, 0.289);
+    moduleConfig.position = new Translation2d(0.276, 0.276);
 
     modules[0] = new SwerveModule(moduleConfig, moduleIDConfig);
     modulePositions[0] = new SwerveModulePosition();
@@ -75,7 +76,7 @@ public class Drivetrain extends SubsystemBase
 
     moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 1;
-    moduleConfig.position = new Translation2d(0.289, -0.289);
+    moduleConfig.position = new Translation2d(0.276, -0.276);
 
     modules[1] = new SwerveModule(moduleConfig, moduleIDConfig);
     modulePositions[1] = new SwerveModulePosition();
@@ -85,7 +86,7 @@ public class Drivetrain extends SubsystemBase
 
     moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 2;
-    moduleConfig.position = new Translation2d(-0.289, 0.289);
+    moduleConfig.position = new Translation2d(-0.276, 0.276);
 
     modules[2] = new SwerveModule(moduleConfig, moduleIDConfig);
     modulePositions[2] = new SwerveModulePosition();
@@ -94,7 +95,7 @@ public class Drivetrain extends SubsystemBase
     moduleIDConfig = new SwerveModuleIDConfig(16, 17, 15);
     moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
     moduleConfig.moduleNumber = 3;
-    moduleConfig.position = new Translation2d(-0.289, -0.289);
+    moduleConfig.position = new Translation2d(-0.276, -0.276);
 
     modules[3] = new SwerveModule(moduleConfig, moduleIDConfig);
     modulePositions[3] = new SwerveModulePosition();
@@ -115,7 +116,7 @@ public class Drivetrain extends SubsystemBase
     odometry = new SwerveDriveOdometry(kinematics, Rotation2d.fromDegrees(getGyroHeadingDegrees()), modulePositions, new Pose2d(0,0,new Rotation2d(0)));
 
     // Configure maximum linear speed for limiting:
-    maximumLinearSpeed = 3.5;
+    maximumLinearSpeed = 4.75;
     // Initial chassis speeds are zero:
     targetChassisSpeeds = new ChassisSpeeds(0,0,0);
 
@@ -192,6 +193,11 @@ public class Drivetrain extends SubsystemBase
   public double getGyroHeadingRadians()
   {
     return getGyroHeadingDegrees() * Math.PI / 180.0;
+  }
+
+  public Rotation2d getGyroHeading()
+  {
+    return pigeon2.getRotation2d();
   }
 
   // Wraps the heading in degrees:
