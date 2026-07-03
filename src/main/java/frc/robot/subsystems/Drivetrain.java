@@ -26,9 +26,18 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 public class Drivetrain extends SubsystemBase
 {
@@ -125,6 +134,8 @@ public class Drivetrain extends SubsystemBase
     // for (int mod = 0; mod < 4; ++mod) {
     //   addChild(String.format("Module[%d]", mod), modules[mod]);
     // }
+
+    configureAutoBuilder();
   }
 
   // Returns target x velocity (for sendable)
@@ -408,6 +419,39 @@ public class Drivetrain extends SubsystemBase
 
   public double getAverageLoad() {
     return (modules[0].getLoad() + modules[1].getLoad() + modules[2].getLoad() + modules[3].getLoad()) / 4;
+  }
+
+  private void configureAutoBuilder() {
+    RobotConfig robotConfig = new RobotConfig(
+        55.0,                              // massKG — TODO: replace with measured robot mass (w/ battery+bumpers)
+        6.0,                               // MOI (kg*m^2) — TODO: replace with measured/calculated value (typical swerve 4-8)
+        new ModuleConfig(
+            0.0508,                        // wheelRadiusMeters — real value (0.1016m dia / 2, from SwerveModuleConfig)
+            4.75,                          // maxDriveVelocityMPS — real value, matches Drivetrain.maximumLinearSpeed
+            1.0,                           // wheelCOF — TODO: tune later; 1.0 is PathPlanner's documented safe default
+            DCMotor.getKrakenX60(1),       // TODO: confirm motor variant — Falcon 500 vs Kraken X60 unconfirmed in code;
+                                            // swap to DCMotor.getFalcon500(1) if team confirms Falcon 500
+            6.03,                          // driveGearing — real value, from SwerveModuleConfig.gearRatio
+            40,                            // driveCurrentLimit — real value, from SwerveModuleConfig.driveCurrentLimit
+            1),                            // numMotors per module
+        modules[0].position, modules[1].position, modules[2].position, modules[3].position); // FL, FR, BL, BR
+
+    AutoBuilder.configure(
+        this::getOdometry,
+        this::resetOdometry,
+        this::getChassisSpeeds,
+        this::setTargetChassisSpeeds,
+        new PPHolonomicDriveController(
+            new PIDConstants(5.5, 0, 0.3),   // translation
+            new PIDConstants(2.5, 0, 0.3)),  // rotation
+        robotConfig,
+        this::shouldFlipPath,
+        this);
+  }
+
+  private boolean shouldFlipPath() {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+    return alliance == Alliance.Red;
   }
 
 }

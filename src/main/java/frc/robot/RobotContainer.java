@@ -10,6 +10,8 @@ import choreo.Choreo;
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
 
+import com.pathplanner.lib.commands.PathPlannerAuto;
+
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -80,6 +82,7 @@ public class RobotContainer
   public static final String basicAuto = "BasicAuto";
   public static final String rightBumpFollow = "RightBumpFollow";
   public static final String leftBumpFollow = "LeftBumpFollow";
+  public static final String examplePPAuto = "ExamplePPAuto";
 
   private final SendableChooser<String> levelChooser = new SendableChooser<>();
 
@@ -164,6 +167,7 @@ public class RobotContainer
     levelChooser.addOption("Basic Auto", basicAuto);
     levelChooser.addOption("Right_Bump_Follow", rightBumpFollow);
     levelChooser.addOption("Left_Bump_Follow", leftBumpFollow);
+    levelChooser.addOption("Example_PathPlanner_Auto", examplePPAuto);
 
     SmartDashboard.putData(DashboardNames.AUTO_LEVEL_CHOOSER.getKey(), levelChooser);
 
@@ -228,6 +232,8 @@ public class RobotContainer
         SmartDashboard.putBoolean(DashboardNames.AUTO_PUT_INTAKE_OUT.getKey(), putIntakeOut);
         SmartDashboard.putNumber(DashboardNames.AUTO_START_TIME.getKey(), edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
         return autoRunner.create(trajectory, delay, putIntakeOut);
+      } else if (selected.equals(examplePPAuto)) {
+        return Commands.sequence(Commands.waitSeconds(delay), new PathPlannerAuto(examplePPAuto));
       }
     } catch (RuntimeException e) {
       System.err.println("Get Autonomous Command Threw Exception");
