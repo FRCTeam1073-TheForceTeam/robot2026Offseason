@@ -10,6 +10,7 @@ import com.ctre.phoenix6.hardware.CANdle;
 import com.ctre.phoenix6.signals.RGBWColor;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class Bling extends SubsystemBase
 {
@@ -43,8 +44,10 @@ public class Bling extends SubsystemBase
   {
     if (hasCommand) {
       candle.setControl(command);
+      Logger.recordOutput("Bling/CommandActive", true);
     } else {
       candle.setControl(new SolidColor(8, 20).withColor(new RGBWColor(255, 255, 255)));
+      Logger.recordOutput("Bling/CommandActive", false);
     }
   }
 

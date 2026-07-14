@@ -22,6 +22,8 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 /** Swerve module class one for each swerve module. 
  * 
@@ -35,6 +37,17 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 */
 public class SwerveModule extends SubsystemBase implements Sendable
 {
+    @AutoLog
+    public static class SwerveModuleInputs
+    {
+        public double steerRotations = 0.0;
+        public double drivePositionMeters = 0.0;
+        public double driveVelocityMetersPerSec = 0.0;
+        public double targetSteerRotations = 0.0;
+        public double targetDriveVelocityMetersPerSec = 0.0;
+        public double driveLoad = 0.0;
+    }
+
     private SwerveModuleConfig cfg;
     private SwerveModuleIDConfig idcfg;
     private TalonFX steerMotor, driveMotor;
@@ -47,7 +60,7 @@ public class SwerveModule extends SubsystemBase implements Sendable
     private double targetDriveVelocityRotations = 0.0;
     private double steerVelocity;
     private final String kCANbus = "Canivore";
-
+    private final SwerveModuleInputsAutoLogged inputs = new SwerveModuleInputsAutoLogged();
 
     /** Constructs a swerve module class. Initializes drive and steer motors
      * 
@@ -322,5 +335,20 @@ public class SwerveModule extends SubsystemBase implements Sendable
     public double getSteerVelocity(){
         steerEncoder.getVelocity().refresh();
         return steerEncoder.getVelocity().getValueAsDouble();
+    }
+
+    public void updateInputs()
+    {
+        inputs.steerRotations = getSteerRotations();
+        inputs.drivePositionMeters = getDrivePosition();
+        inputs.driveVelocityMetersPerSec = getDriveVelocity();
+        inputs.targetSteerRotations = getTargetSteerRotations();
+        inputs.targetDriveVelocityMetersPerSec = getTargetDriveVelocity();
+        inputs.driveLoad = getLoad();
+    }
+
+    public SwerveModuleInputsAutoLogged getInputs()
+    {
+        return inputs;
     }
 }

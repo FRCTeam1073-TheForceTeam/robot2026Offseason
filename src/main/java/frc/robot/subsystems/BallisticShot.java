@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * This subsystem continuously updates a cached value for a best-shot using compensated
@@ -77,6 +78,10 @@ public class BallisticShot extends SubsystemBase
   {
     double range = targetFinder.getRangeToTargetMeters();
     currentShot = computeShot(range); // Cache the computed shot value so we don't recompute it too often.
+
+    Logger.recordOutput("BallisticShot/FlywheelSpeed", currentShot.flywheelSpeed);
+    Logger.recordOutput("BallisticShot/HoodAngle", currentShot.hoodAngle);
+    Logger.recordOutput("BallisticShot/ShotTime", currentShot.shotTime);
   }
 
   // Access the currently cached/latest shot value:

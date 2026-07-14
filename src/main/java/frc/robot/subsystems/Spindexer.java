@@ -20,9 +20,18 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 public class Spindexer extends SubsystemBase
 {
+  @AutoLog
+  public static class SpindexerInputs
+  {
+    public double velocity = 0.0;
+    public double force = 0.0;
+  }
+
   public static final int SpindexerMotorId = 23;
 
   public static final double gearRatio = 3.0;
@@ -38,6 +47,7 @@ public class Spindexer extends SubsystemBase
   private final StatusSignal<Current> currentSig;
   private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
   private final SlewRateLimiter limiter = new SlewRateLimiter(10.0);
+  private final SpindexerInputsAutoLogged inputs = new SpindexerInputsAutoLogged();
 
   private boolean hasCommand = false;
   private double targetVelocity = 0.0;
@@ -128,6 +138,10 @@ public class Spindexer extends SubsystemBase
     force = currentSig.getValueAsDouble() / ampsPerNewton;
     velocity = velocitySig.getValueAsDouble() / (turnsPerMeter * gearRatio);
 
+    inputs.velocity = velocity;
+    inputs.force = force;
+    Logger.processInputs("Spindexer", inputs);
+
     if (hasCommand) {
       double limitedVel = limiter.calculate(targetVelocity);
       double motorVel = limitedVel * turnsPerMeter * gearRatio;
@@ -138,9 +152,7 @@ public class Spindexer extends SubsystemBase
       limiter.reset(velocity);
     }
 
-    SmartDashboard.putNumber(DashboardNames.SPINDEXER_VELOCITY.getKey(), velocity);
-    SmartDashboard.putNumber(DashboardNames.SPINDEXER_TARGET_VELOCITY.getKey(), limiter.lastValue());
-    SmartDashboard.putNumber(DashboardNames.SPINDEXER_CURRENT.getKey(), currentSig.getValueAsDouble());
+    Logger.recordOutput("Spindexer/TargetVelocity", hasCommand ? limiter.lastValue() : 0.0);
   }
 
   @Override

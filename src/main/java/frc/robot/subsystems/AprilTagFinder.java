@@ -25,6 +25,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.Logger;
 
 public class AprilTagFinder extends SubsystemBase
 {
@@ -281,6 +282,34 @@ public class AprilTagFinder extends SubsystemBase
       // List<VisionMeasurement> measurements = getMultiTagEstimate(results, estimators.get(i), transform);
       visionMeasurements.addAll(measurements);
     }
+
+    // Flatten vision measurements to parallel arrays for logging
+    int n = visionMeasurements.size();
+    Pose2d[] measurementPoses = new Pose2d[n];
+    double[] measurementTimestamps = new double[n];
+    int[] measurementTagIds = new int[n];
+    double[] measurementStddevX = new double[n];
+    double[] measurementStddevY = new double[n];
+    double[] measurementStddevTheta = new double[n];
+
+    for (int i = 0; i < n; i++) {
+      VisionMeasurement m = visionMeasurements.get(i);
+      measurementPoses[i] = m.pose;
+      measurementTimestamps[i] = m.timeStamp;
+      measurementTagIds[i] = m.tagID;
+      measurementStddevX[i] = m.stddevs[0];
+      measurementStddevY[i] = m.stddevs[1];
+      measurementStddevTheta[i] = m.stddevs[2];
+    }
+
+    Logger.recordOutput("AprilTagFinder/MeasurementPoses", measurementPoses);
+    Logger.recordOutput("AprilTagFinder/MeasurementTimestamps", measurementTimestamps);
+    Logger.recordOutput("AprilTagFinder/MeasurementTagIds", measurementTagIds);
+    Logger.recordOutput("AprilTagFinder/MeasurementStdDevX", measurementStddevX);
+    Logger.recordOutput("AprilTagFinder/MeasurementStdDevY", measurementStddevY);
+    Logger.recordOutput("AprilTagFinder/MeasurementStdDevTheta", measurementStddevTheta);
+    Logger.recordOutput("AprilTagFinder/HasAprilTags", hasAprilTags);
+
     SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_HAS_TAGS.getKey(), hasAprilTags);
   }
 

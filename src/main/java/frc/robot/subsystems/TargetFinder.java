@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.Logger;
 
 public class TargetFinder extends SubsystemBase
 {
@@ -125,8 +126,10 @@ public class TargetFinder extends SubsystemBase
         double angle = Math.atan2(relativeTargetPos.getY(), relativeTargetPos.getX());
         turretToTargetAngle = angle;
         rangeToTarget = relativeTargetPos.getNorm();
-        SmartDashboard.putNumber(DashboardNames.TARGET_FINDER_TURRET_ANGLE.getKey(), turretToTargetAngle);
-        SmartDashboard.putNumber(DashboardNames.TARGET_FINDER_TURRET_RANGE.getKey(), rangeToTarget);
+
+        Logger.recordOutput("TargetFinder/TurretToTargetAngle", turretToTargetAngle);
+        Logger.recordOutput("TargetFinder/RangeToTarget", rangeToTarget);
+        Logger.recordOutput("TargetFinder/Passing", passing);
     }
 
     public double getTurretToTargetAngleRadians()

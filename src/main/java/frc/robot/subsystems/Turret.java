@@ -23,9 +23,21 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 public class Turret extends SubsystemBase
 {
+  @AutoLog
+  public static class TurretInputs
+  {
+    public double positionRadians = 0.0;
+    public double velocityRadPerSec = 0.0;
+    public double torqueNm = 0.0;
+    public boolean haveZero = false;
+    public boolean locked = false;
+  }
+
   public static final int RotaterMotorId = 25;
   public static final int EncoderMotorId = 26; // Currently unused: no separate absolute encoder wired in yet.
 
@@ -44,6 +56,7 @@ public class Turret extends SubsystemBase
   private final PositionVoltage commandPositionVoltage = new PositionVoltage(0).withSlot(0);
   private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(1);
   private final SlewRateLimiter limiter = new SlewRateLimiter(8.0);
+  private final TurretInputsAutoLogged inputs = new TurretInputsAutoLogged();
 
   private Mode mode = Mode.NONE;
   private double targetVelocity = 0.0;
@@ -184,8 +197,15 @@ public class Turret extends SubsystemBase
     position = positionSig.getValueAsDouble() * 2.0 * Math.PI / turretToMotorTurns;
     velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / turretToMotorTurns;
 
+    inputs.positionRadians = position;
+    inputs.velocityRadPerSec = velocity;
+    inputs.torqueNm = torque;
+    inputs.haveZero = haveZero;
+    locked = Math.abs(targetPosition - position) < Math.toRadians(2.0);
+    inputs.locked = locked;
+    Logger.processInputs("Turret", inputs);
+
     if (mode == Mode.VELOCITY) {
-      SmartDashboard.putNumber(DashboardNames.TURRET_TARGET_VELOCITY.getKey(), velocity);
       double motorVelocity = targetVelocity * turretToMotorTurns / (2.0 * Math.PI);
       limiter.reset(position); // Keep the limiter in sync in other control mode.
       motor.setControl(commandVelocityVoltage.withVelocity(motorVelocity));
@@ -199,15 +219,9 @@ public class Turret extends SubsystemBase
       limiter.reset(position); // Keep the limiter in sync in other control mode.
     }
 
-    locked = Math.abs(targetPosition - position) < Math.toRadians(2.0);
-
-    SmartDashboard.putNumber(DashboardNames.TURRET_POSITION_RAD.getKey(), position);
-    SmartDashboard.putNumber(DashboardNames.TURRET_POSITION_DEG.getKey(), Math.toDegrees(position));
-    SmartDashboard.putNumber(DashboardNames.TURRET_VELOCITY_RAD_S.getKey(), velocity);
-    SmartDashboard.putNumber(DashboardNames.TURRET_TARGET.getKey(), targetPosition);
-    SmartDashboard.putNumber(DashboardNames.TURRET_TORQUE.getKey(), torque);
-    SmartDashboard.putBoolean(DashboardNames.TURRET_HAVE_ZERO.getKey(), haveZero);
-    SmartDashboard.putBoolean(DashboardNames.TURRET_LINED_UP.getKey(), locked);
+    Logger.recordOutput("Turret/Mode", mode.name());
+    Logger.recordOutput("Turret/TargetPositionRadians", targetPosition);
+    Logger.recordOutput("Turret/TargetVelocityRadPerSec", targetVelocity);
   }
 
   @Override

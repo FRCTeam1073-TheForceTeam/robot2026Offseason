@@ -29,6 +29,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class Drivetrain extends SubsystemBase
 {
@@ -337,8 +338,18 @@ public class Drivetrain extends SubsystemBase
       modules[2].setCommand(states[2].angle.getRotations(), states[2].speedMetersPerSecond);
       modules[3].setCommand(states[3].angle.getRotations(), states[3].speedMetersPerSecond);
     }
-   
+
+    // Update and log per-module inputs
+    for (int i = 0; i < 4; i++) {
+      modules[i].updateInputs();
+      Logger.processInputs("Drivetrain/Module" + i, modules[i].getInputs());
+    }
+
     updateOdometry();
+
+    // Log drivetrain-level outputs
+    Logger.recordOutput("Drivetrain/Pose", odometry.getPoseMeters());
+    Logger.recordOutput("Drivetrain/Speeds", getChassisSpeeds());
   }
 
   // rotates all the wheels to be facing inwards and stops the motors to hold position

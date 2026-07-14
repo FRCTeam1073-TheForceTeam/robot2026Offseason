@@ -21,9 +21,19 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 public class ShooterHood extends SubsystemBase
 {
+  @AutoLog
+  public static class ShooterHoodInputs
+  {
+    public double positionRadians = 0.0;
+    public double torqueNm = 0.0;
+    public boolean hasZero = false;
+  }
+
   public static final int HoodMotorId = 24;
 
   public static final double ampsPerNewtonMeter = 10.0;
@@ -42,6 +52,7 @@ public class ShooterHood extends SubsystemBase
   private final PositionVoltage commandPositionVoltage = new PositionVoltage(0).withSlot(1);
   private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
   private final SlewRateLimiter limiter = new SlewRateLimiter(3.0);
+  private final ShooterHoodInputsAutoLogged inputs = new ShooterHoodInputsAutoLogged();
 
   private Mode mode = Mode.NONE;
   private double targetVelocity = 0.0;
@@ -164,6 +175,11 @@ public class ShooterHood extends SubsystemBase
     torque = currentSig.getValueAsDouble() / ampsPerNewtonMeter;
     position = positionSig.getValueAsDouble() / hoodToMotorGearRatio * 2.0 * Math.PI;
 
+    inputs.positionRadians = position;
+    inputs.torqueNm = torque;
+    inputs.hasZero = hasZero;
+    Logger.processInputs("ShooterHood", inputs);
+
     if (mode == Mode.VELOCITY) {
       double motorAngularVelocity = targetVelocity * hoodToMotorGearRatio / (2.0 * Math.PI);
       motor.setControl(commandVelocityVoltage.withVelocity(motorAngularVelocity));
@@ -180,8 +196,7 @@ public class ShooterHood extends SubsystemBase
       limiter.reset(position); // Keep the limiter in sync in other control mode.
     }
 
-    SmartDashboard.putNumber(DashboardNames.HOOD_ANGLE.getKey(), position);
-    SmartDashboard.putNumber(DashboardNames.HOOD_TORQUE.getKey(), torque);
-    SmartDashboard.putNumber(DashboardNames.HOOD_TARGET.getKey(), targetAngle);
+    Logger.recordOutput("ShooterHood/Mode", mode.name());
+    Logger.recordOutput("ShooterHood/TargetAngle", targetAngle);
   }
 }

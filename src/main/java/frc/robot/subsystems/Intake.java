@@ -24,9 +24,20 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase
 {
+  @AutoLog
+  public static class IntakeInputs
+  {
+    public double positionRadians = 0.0;
+    public double velocityRadPerSec = 0.0;
+    public double torqueNm = 0.0;
+    public boolean hasZero = false;
+  }
+
   public static final int IntakeLeadId = 18;
   public static final int IntakeFollowId = 19;
 
@@ -47,6 +58,7 @@ public class Intake extends SubsystemBase
   private final PositionVoltage commandPositionVoltage = new PositionVoltage(0).withSlot(0);
   private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(1);
   private final SlewRateLimiter limiter = new SlewRateLimiter(9.0); // was 5 radians before
+  private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
 
   private Mode mode = Mode.NONE;
   private double targetVelocity = 0.0;
@@ -188,6 +200,12 @@ public class Intake extends SubsystemBase
     position = positionSig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
     velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
 
+    inputs.positionRadians = position;
+    inputs.velocityRadPerSec = velocity;
+    inputs.torqueNm = torque;
+    inputs.hasZero = hasZero;
+    Logger.processInputs("Intake", inputs);
+
     if (mode == Mode.VELOCITY) {
       double motorVelocity = targetVelocity * gearRatio / (2.0 * Math.PI);
       leadMotor.setControl(commandVelocityVoltage.withVelocity(motorVelocity));
@@ -211,8 +229,7 @@ public class Intake extends SubsystemBase
       limiter.reset(position); // Keep the limiter in sync in other control mode.
     }
 
-    SmartDashboard.putNumber(DashboardNames.INTAKE_POSITION.getKey(), position);
-    SmartDashboard.putNumber(DashboardNames.INTAKE_TARGET_POSITION.getKey(), limiter.lastValue());
-    SmartDashboard.putNumber(DashboardNames.INTAKE_TORQUE.getKey(), torque);
+    Logger.recordOutput("Intake/Mode", mode.name());
+    Logger.recordOutput("Intake/TargetPosition", limiter.lastValue());
   }
 }

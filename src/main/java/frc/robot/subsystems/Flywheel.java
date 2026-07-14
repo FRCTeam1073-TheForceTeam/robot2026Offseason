@@ -21,9 +21,20 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 public class Flywheel extends SubsystemBase
 {
+  @AutoLog
+  public static class FlywheelInputs
+  {
+    public double velocity = 0.0;
+    public double current = 0.0;
+    public double followerVelocity = 0.0;
+    public double followerCurrent = 0.0;
+  }
+
   public static final int LeadMotorId = 21;
   public static final int FollowMotorId = 22;
 
@@ -42,6 +53,7 @@ public class Flywheel extends SubsystemBase
   private final StatusSignal<Current> followerCurrentSig;
   private final VelocityVoltage flywheelVelocityVoltage = new VelocityVoltage(0).withSlot(0);
   private final SlewRateLimiter limiter = new SlewRateLimiter(20.0);
+  private final FlywheelInputsAutoLogged inputs = new FlywheelInputsAutoLogged();
 
   private boolean hasCommand = false;
   private double targetVelocity = 0.0;
@@ -164,6 +176,12 @@ public class Flywheel extends SubsystemBase
     current = currentSig.getValueAsDouble();
     followerCurrent = followerCurrentSig.getValueAsDouble();
 
+    inputs.velocity = velocity;
+    inputs.current = current;
+    inputs.followerVelocity = followerVelocity;
+    inputs.followerCurrent = followerCurrent;
+    Logger.processInputs("Flywheel", inputs);
+
     if (hasCommand) {
       // Compute a rate-limited velocity:
       double limitedVelocity = limiter.calculate(targetVelocity);
@@ -180,10 +198,6 @@ public class Flywheel extends SubsystemBase
       limiter.reset(velocity); // Be ready to re-start from wherever we actually are...
     }
 
-    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_ANGULAR_VELOCITY.getKey(), 60.0 * velocitySig.getValueAsDouble());
-    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_TARGET_VELOCITY.getKey(), limiter.lastValue());
-    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_VELOCITY.getKey(), velocity);
-    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_CURRENT.getKey(), current);
-    SmartDashboard.putNumber(DashboardNames.FLYWHEEL_FOLLOWER_CURRENT.getKey(), followerCurrent);
+    Logger.recordOutput("Flywheel/TargetVelocity", getTargetVelocity());
   }
 }

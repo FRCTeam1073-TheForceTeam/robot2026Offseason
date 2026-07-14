@@ -13,10 +13,20 @@ import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 public class LaserCan extends SubsystemBase
 {
+  @AutoLog
+  public static class LaserCanInputs
+  {
+    public boolean isValid = false;
+    public double rangeMeters = 0.0;
+  }
+
   private final au.grapplerobotics.LaserCan laserCan;
+  private final LaserCanInputsAutoLogged inputs = new LaserCanInputsAutoLogged();
 
   private boolean isValid = false;
   private double rangeMeters = 0.0;
@@ -58,8 +68,9 @@ public class LaserCan extends SubsystemBase
       rangeMeters = 0.0;
     }
 
-    SmartDashboard.putBoolean(DashboardNames.LASER_CAN_IS_VALID.getKey(), isValid);
-    SmartDashboard.putNumber(DashboardNames.LASER_CAN_DISTANCE.getKey(), rangeMeters);
+    inputs.isValid = isValid;
+    inputs.rangeMeters = rangeMeters;
+    Logger.processInputs("LaserCan", inputs);
   }
 
   public boolean isValid()

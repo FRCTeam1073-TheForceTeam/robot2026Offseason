@@ -23,9 +23,20 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.Logger;
 
 public class Climber extends SubsystemBase
 {
+  @AutoLog
+  public static class ClimberInputs
+  {
+    public double positionMeters = 0.0;
+    public double velocityMetersPerSec = 0.0;
+    public double forceNewtons = 0.0;
+    public boolean isHooked = false;
+  }
+
   public static final int ClimberMotorId = 29;
 
   public static final double gearRatio = 32.0;
@@ -47,6 +58,7 @@ public class Climber extends SubsystemBase
   private final SlewRateLimiter limiter = new SlewRateLimiter(10.0);
   private final SlewRateLimiter positionLimiter = new SlewRateLimiter(0.3);
   private final DigitalInput climberOnInput = new DigitalInput(0);
+  private final ClimberInputsAutoLogged inputs = new ClimberInputsAutoLogged();
 
   private Mode mode = Mode.NONE;
   private double targetVelocity = 0.0;
@@ -177,6 +189,12 @@ public class Climber extends SubsystemBase
     velocity = velocitySig.getValueAsDouble() / (turnsPerMeter * gearRatio);
     position = positionSig.getValueAsDouble() / (turnsPerMeter * gearRatio);
 
+    inputs.positionMeters = position;
+    inputs.velocityMetersPerSec = velocity;
+    inputs.forceNewtons = force;
+    inputs.isHooked = climberOnInput.get();
+    Logger.processInputs("Climber", inputs);
+
     if (mode == Mode.VELOCITY) {
       double limitedVel = limiter.calculate(targetVelocity);
       double motorVel = limitedVel * turnsPerMeter * gearRatio;
@@ -199,9 +217,8 @@ public class Climber extends SubsystemBase
       positionLimiter.reset(position);
     }
 
-    SmartDashboard.putNumber(DashboardNames.CLIMBER_VELOCITY.getKey(), velocity);
-    SmartDashboard.putNumber(DashboardNames.CLIMBER_TARGET_VELOCITY.getKey(), limiter.lastValue());
-    SmartDashboard.putNumber(DashboardNames.CLIMBER_LOAD.getKey(), Math.abs(force));
-    SmartDashboard.putNumber(DashboardNames.CLIMBER_POSITION.getKey(), position);
+    Logger.recordOutput("Climber/Mode", mode.name());
+    Logger.recordOutput("Climber/TargetVelocity", limiter.lastValue());
+    Logger.recordOutput("Climber/TargetPosition", targetPosition);
   }
 }
