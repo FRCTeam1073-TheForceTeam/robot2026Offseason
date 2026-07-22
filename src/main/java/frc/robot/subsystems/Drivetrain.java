@@ -13,6 +13,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 
@@ -22,7 +23,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 public class Drivetrain extends SubsystemBase {
     private final CommandSwerveDrivetrain ctre;
     private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
-    private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
 
     private boolean parkingBrakeOn = false;
 
@@ -74,7 +74,10 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public void setTargetChassisSpeeds(ChassisSpeeds speeds) {
-        ctre.setControl(applyRobotSpeeds.withSpeeds(speeds));
+        // Don't apply drive commands if parking brake is active
+        if (!parkingBrakeOn) {
+            ctre.setControl(applyRobotSpeeds.withSpeeds(speeds));
+        }
     }
 
     public ChassisSpeeds getChassisSpeeds() {
@@ -121,13 +124,9 @@ public class Drivetrain extends SubsystemBase {
     }
 
     public void parkingBrake(boolean enable) {
+        System.err.println("DEBUG Drivetrain.parkingBrake: enable=" + enable);
         parkingBrakeOn = enable;
-        if (enable) {
-            ctre.setControl(brakeRequest);
-        } else {
-            // Resume normal control via the next setTargetChassisSpeeds call
-            ctre.setControl(applyRobotSpeeds.withSpeeds(new ChassisSpeeds(0, 0, 0)));
-        }
+        System.err.println("DEBUG: Parking brake state set to " + parkingBrakeOn);
     }
 
     public boolean getParkingBrake() {
@@ -165,6 +164,25 @@ public class Drivetrain extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // Apply parking brake if active (must be done every loop)
+        if (parkingBrakeOn) {
+            System.err.println("DEBUG periodic: Applying parking brake");
+            // Lock wheels in X pattern (±45° on each corner)
+            // FL: +45°, FR: -45°, BL: -45°, BR: +45°
+            ctre.getModule(0).apply(
+                new com.ctre.phoenix6.controls.PositionVoltage(Math.PI/4),  // 45° in radians
+                new com.ctre.phoenix6.controls.NeutralOut());                // 0 drive velocity
+            ctre.getModule(1).apply(
+                new com.ctre.phoenix6.controls.PositionVoltage(-Math.PI/4), // -45° in radians
+                new com.ctre.phoenix6.controls.NeutralOut());
+            ctre.getModule(2).apply(
+                new com.ctre.phoenix6.controls.PositionVoltage(-Math.PI/4), // -45° in radians
+                new com.ctre.phoenix6.controls.NeutralOut());
+            ctre.getModule(3).apply(
+                new com.ctre.phoenix6.controls.PositionVoltage(Math.PI/4),  // 45° in radians
+                new com.ctre.phoenix6.controls.NeutralOut());
+        }
+
         var state = ctre.getStateCopy();
 
         // Log drivetrain-level telemetry
@@ -175,5 +193,18 @@ public class Drivetrain extends SubsystemBase {
         Logger.recordOutput("Drivetrain/OdometryPeriod", state.OdometryPeriod);
         Logger.recordOutput("Drivetrain/SuccessfulDAQs", state.SuccessfulDaqs);
         Logger.recordOutput("Drivetrain/FailedDAQs", state.FailedDaqs);
+
+        // Log module offsets for debugging (verify CANcoder calibration)
+        SmartDashboard.putNumber("Drivetrain/Module0/MagnetOffset", ctre.getModule(0).getEncoder().getAbsolutePosition().getValueAsDouble());
+        SmartDashboard.putNumber("Drivetrain/Module1/MagnetOffset", ctre.getModule(1).getEncoder().getAbsolutePosition().getValueAsDouble());
+        SmartDashboard.putNumber("Drivetrain/Module2/MagnetOffset", ctre.getModule(2).getEncoder().getAbsolutePosition().getValueAsDouble());
+        SmartDashboard.putNumber("Drivetrain/Module3/MagnetOffset", ctre.getModule(3).getEncoder().getAbsolutePosition().getValueAsDouble());
+
+        // Log current module angles (for parking brake debugging)
+        var moduleStates = ctre.getState().ModuleStates;
+        SmartDashboard.putNumber("Drivetrain/Module0/SteerAngle", moduleStates[0].angle.getDegrees());
+        SmartDashboard.putNumber("Drivetrain/Module1/SteerAngle", moduleStates[1].angle.getDegrees());
+        SmartDashboard.putNumber("Drivetrain/Module2/SteerAngle", moduleStates[2].angle.getDegrees());
+        SmartDashboard.putNumber("Drivetrain/Module3/SteerAngle", moduleStates[3].angle.getDegrees());
     }
 }

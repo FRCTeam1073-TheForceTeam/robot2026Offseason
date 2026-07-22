@@ -296,6 +296,21 @@ public class RobotContainer
       operatorController.povUp().onTrue(new ZeroTurret(turret));
       operatorController.povRight().onTrue(new ZeroHood(shooterHood));
       operatorController.povDown().onTrue(new ZeroClimber(climber));
+
+      // Parking brake: toggle with driver B button
+      new edu.wpi.first.wpilibj2.command.button.Trigger(() -> {
+          boolean bPressed = oi.getDriverBButton();
+          if (bPressed) {
+              System.err.println("DEBUG: Driver B button pressed! Current brake state: " + drivetrain.getParkingBrake());
+          }
+          return bPressed;
+      })
+          .onTrue(edu.wpi.first.wpilibj2.command.Commands.runOnce(() -> {
+              System.err.println("DEBUG: Executing parking brake toggle");
+              drivetrain.parkingBrake(!drivetrain.getParkingBrake());
+              System.err.println("DEBUG: Parking brake toggled to: " + drivetrain.getParkingBrake());
+          }, drivetrain));
+
       controlBindings = true;
     }
   }
