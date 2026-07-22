@@ -4,421 +4,176 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.networktables.DoubleSubscriber;
-import edu.wpi.first.networktables.IntegerArrayPublisher;
-import edu.wpi.first.networktables.IntegerArraySubscriber;
-import edu.wpi.first.networktables.IntegerArrayTopic;
-import edu.wpi.first.networktables.PubSubOption;
-import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-
-import com.ctre.phoenix6.StatusCode;
-import com.ctre.phoenix6.configs.Pigeon2Configuration;
-import com.ctre.phoenix6.hardware.Pigeon2;
-
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 
-public class Drivetrain extends SubsystemBase
-{
-  private final String kCANbus = "Canivore";
-  private SwerveDriveKinematics kinematics;
-  private SwerveDriveOdometry odometry;
-  private SwerveModule[] modules;
-  private SwerveModulePosition[] modulePositions;
-  private ChassisSpeeds targetChassisSpeeds;
-  private Pigeon2 pigeon2;
-  private boolean debug = false;
+import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 
-  private double maximumLinearSpeed = 1.0;
-  private boolean parkingBrakeOn = false;
+public class Drivetrain extends SubsystemBase {
+    private final CommandSwerveDrivetrain ctre;
+    private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+    private final SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
 
-  /** Creates a new DriveSubsystem. */
-  public Drivetrain()
-  {
-    super.setSubsystem("Drivetrain");
+    private boolean parkingBrakeOn = false;
 
-    pigeon2 = new Pigeon2(5, new CANBus(kCANbus));
-    var error = pigeon2.getConfigurator().apply(new Pigeon2Configuration());
-    if (!error.isOK()) 
-    {
-      System.out.println(String.format("Drivetrain: PIGEON IMU ERROR: %s", error.toString()));
-    }
-    error = pigeon2.setYaw(0);
+    public Drivetrain() {
+        super.setSubsystem("Drivetrain");
 
-    // Make space for four swerve modules:
-    modules = new SwerveModule[4];
-    modulePositions = new SwerveModulePosition[4];
+        ctre = new CommandSwerveDrivetrain(
+            TunerConstants.DrivetrainConstants,
+            TunerConstants.FrontLeft,
+            TunerConstants.FrontRight,
+            TunerConstants.BackLeft,
+            TunerConstants.BackRight
+        );
 
-    //front left
-    SwerveModuleIDConfig moduleIDConfig = new SwerveModuleIDConfig(7, 8, 6);
-
-    SwerveModuleConfig moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
-    moduleConfig.moduleNumber = 0;
-    moduleConfig.position = new Translation2d(0.276, 0.276);
-
-    modules[0] = new SwerveModule(moduleConfig, moduleIDConfig);
-    modulePositions[0] = new SwerveModulePosition();
-
-    //front right
-    moduleIDConfig = new SwerveModuleIDConfig(10, 11, 9);
-
-    moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
-    moduleConfig.moduleNumber = 1;
-    moduleConfig.position = new Translation2d(0.276, -0.276);
-
-    modules[1] = new SwerveModule(moduleConfig, moduleIDConfig);
-    modulePositions[1] = new SwerveModulePosition();
-
-    //back left
-    moduleIDConfig = new SwerveModuleIDConfig(13, 14, 12);
-
-    moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
-    moduleConfig.moduleNumber = 2;
-    moduleConfig.position = new Translation2d(-0.276, 0.276);
-
-    modules[2] = new SwerveModule(moduleConfig, moduleIDConfig);
-    modulePositions[2] = new SwerveModulePosition();
-
-    //back right
-    moduleIDConfig = new SwerveModuleIDConfig(16, 17, 15);
-    moduleConfig = new SwerveModuleConfig(); // Gets preferences and defaults for fields.
-    moduleConfig.moduleNumber = 3;
-    moduleConfig.position = new Translation2d(-0.276, -0.276);
-
-    modules[3] = new SwerveModule(moduleConfig, moduleIDConfig);
-    modulePositions[3] = new SwerveModulePosition();
-
-    // Create our kinematics class
-    kinematics = new SwerveDriveKinematics(
-      modules[0].position,
-      modules[1].position,
-      modules[2].position,
-      modules[3].position
-    );
-
-    // Create odometry:
-    modules[0].samplePosition(modulePositions[0]);
-    modules[1].samplePosition(modulePositions[1]);
-    modules[2].samplePosition(modulePositions[2]);
-    modules[3].samplePosition(modulePositions[3]);
-    odometry = new SwerveDriveOdometry(kinematics, Rotation2d.fromDegrees(getGyroHeadingDegrees()), modulePositions, new Pose2d(0,0,new Rotation2d(0)));
-
-    // Configure maximum linear speed for limiting:
-    maximumLinearSpeed = 4.75;
-    // Initial chassis speeds are zero:
-    targetChassisSpeeds = new ChassisSpeeds(0,0,0);
-
-
-    // Add each module as a child for debugging:
-    // for (int mod = 0; mod < 4; ++mod) {
-    //   addChild(String.format("Module[%d]", mod), modules[mod]);
-    // }
-  }
-
-  // Returns target x velocity (for sendable)
-  double getTargetVx() {
-    return targetChassisSpeeds.vxMetersPerSecond;
-  }
-
-  // Returns target y velocity (for sendable)
-  double getTargetVy() {
-    return targetChassisSpeeds.vyMetersPerSecond;
-  }
-
-  // Returns target angular velocity (for sendable)
-  double getTargetOmega() {
-    return targetChassisSpeeds.omegaRadiansPerSecond;
-  }
-
-  @Override
-  public void initSendable(SendableBuilder builder){
-    super.initSendable(builder);
-    //TODO: take out sendable stuff from the code
-    // builder.setSmartDashboardType("Drivetrain");
-    builder.addBooleanProperty("ParkingBrake", this::getParkingBrake, null);
-    builder.addDoubleProperty("Odo X", this::getOdometryX, null);
-    builder.addDoubleProperty("Odo Y", this::getOdometryY, null);
-    builder.addDoubleProperty("Odo Theta(RAD)", this::getOdometryThetaRadians, null);
-    builder.addDoubleProperty("Odo Gyro Heading(DEG)", this::getGyroHeadingDegrees, null);
-    builder.addDoubleProperty("Odo Gyro Wrapped Heading", this::getWrappedGyroHeadingDegrees, null);
-    builder.addDoubleProperty("Target Vx", this::getTargetVx, null);
-    builder.addDoubleProperty("Target Vy", this::getTargetVy, null);
-    builder.addDoubleProperty("Target Omega", this::getTargetOmega, null);
-    builder.addDoubleProperty("Pitch", this::getPitch, null);
-    builder.addDoubleProperty("Roll", this::getRoll, null);
-  }
-
-  // @Override
-  // public boolean updateDiagnostics() {
-  //   String result = new String();
-  //   boolean isOK = true;
-
-  //   // Run the diagnostics for each ofthe modules and return value if something is wrong:
-  //   for (int mod = 0; mod < 4; ++mod) {
-  //     if (!modules[mod].updateDiagnostics())
-  //       return setDiagnosticsFeedback(modules[mod].getDiagnosticsDetails(), false);
-  //   }
-
-  //   StatusCode error = pigeon2.clearStickyFaults(0.5);
-  //   if (error != StatusCode.OK) {
-  //      return setDiagnosticsFeedback("Pigeon 2 Diagnostics Error", false);
-  //   }
-
-  //   return setDiagnosticsFeedback(result, isOK);
-  // }
-
-  public void setDebugMode(boolean debug) 
-  {
-    this.debug = debug;
-  }
-
-  //Returns IMU heading in degrees
-  public double getGyroHeadingDegrees() 
-  {
-    return pigeon2.getYaw().refresh().getValueAsDouble();
-  }
-
-  public double getGyroHeadingRadians()
-  {
-    return getGyroHeadingDegrees() * Math.PI / 180.0;
-  }
-
-  public Rotation2d getGyroHeading()
-  {
-    return pigeon2.getRotation2d();
-  }
-
-  // Wraps the heading in degrees:
-  public double getWrappedGyroHeadingDegrees()
-  {
-    return MathUtils.wrapAngleDegrees(getGyroHeadingDegrees());
-  }
-
-  public double getWrappedGyroHeadingRadians()
-  {
-    return MathUtils.wrapAngleRadians(getGyroHeadingDegrees() * Math.PI / 180);
-  }
-
-  public double getPitch()
-  {
-    return pigeon2.getPitch().getValueAsDouble();
-  }
-
-  public double getRoll()
-  {
-    return pigeon2.getRoll().getValueAsDouble();
-  }
-
-  // Reset IMU heading to zero degrees
-  public void zeroHeading() 
-  {
-    // TODO:Change value to whatever value you need it to be
-    pigeon2.setYaw(0);
-  }
-
-  // Set the commanded chassis speeds for the drive subsystem.
-  public void setTargetChassisSpeeds(ChassisSpeeds speeds)
-  {
-    targetChassisSpeeds = speeds;
-  }
-
-  // Return the measured chassis speeds for the drive subsystem.
-  public ChassisSpeeds getChassisSpeeds()
-  {
-    SwerveModuleState[] wheelStates = new SwerveModuleState[4];
-    wheelStates[0] = new SwerveModuleState();
-    wheelStates[1] = new SwerveModuleState();
-    wheelStates[2] = new SwerveModuleState();
-    wheelStates[3] = new SwerveModuleState();
-
-    wheelStates[0].speedMetersPerSecond = modules[0].getDriveVelocity();
-    wheelStates[1].speedMetersPerSecond = modules[1].getDriveVelocity();
-    wheelStates[2].speedMetersPerSecond = modules[2].getDriveVelocity();
-    wheelStates[3].speedMetersPerSecond = modules[3].getDriveVelocity();
-
-    wheelStates[0].angle = Rotation2d.fromRotations(modules[0].getSteerRotations());
-    wheelStates[1].angle = Rotation2d.fromRotations(modules[1].getSteerRotations());
-    wheelStates[2].angle = Rotation2d.fromRotations(modules[2].getSteerRotations());
-    wheelStates[3].angle = Rotation2d.fromRotations(modules[3].getSteerRotations());
-
-    return kinematics.toChassisSpeeds(wheelStates);
-  }
-
-  // puts the motors in brake mode
-  public void setBrakes(boolean brakeOn)
-  {
-    modules[0].setDriveMotorBraking(brakeOn);
-    modules[1].setDriveMotorBraking(brakeOn);
-    modules[2].setDriveMotorBraking(brakeOn);
-    modules[3].setDriveMotorBraking(brakeOn);
-  }
-
-  // returns the wheel positions
-  public SwerveDriveKinematics getKinematics()
-  {
-    return kinematics;
-  }
-
-  public void updateOdometry() 
-  {
-    modules[0].samplePosition(modulePositions[0]);
-    modules[1].samplePosition(modulePositions[1]);
-    modules[2].samplePosition(modulePositions[2]);
-    modules[3].samplePosition(modulePositions[3]);
-    
-    odometry.update(Rotation2d.fromDegrees(getGyroHeadingDegrees()), modulePositions);
-  }
-
-  public SwerveModulePosition[] getSwerveModulePositions()
-  {
-    return modulePositions;
-  }
-
-  public void resetOdometry(Pose2d where)
-  {
-    odometry.resetPosition(Rotation2d.fromDegrees(getGyroHeadingDegrees()), modulePositions, where);
-  }
-
-  public Pose2d getOdometry()
-  {
-    return new Pose2d(odometry.getPoseMeters().getX(), odometry.getPoseMeters().getY(), Rotation2d.fromRadians(getOdometryThetaRadians()));
-  }
-
-  public double getOdometryX(){
-    return odometry.getPoseMeters().getX();
-  }
-
-  public double getOdometryY(){
-    return odometry.getPoseMeters().getY();
-  }
-
-  public double getOdometryThetaRadians()
-  {
-    return odometry.getPoseMeters().getRotation().getRadians();
-  }
-
-  public Pose3d get3dOdometry()
-  {
-    // return odometry position as a pose 3d
-    Pose2d odo = getOdometry();
-    // TODO: use internal roll and pitch methods later
-    return new Pose3d(odo.getX(), odo.getY(), 0.0, new Rotation3d(getRoll(), getPitch(), getOdometryThetaRadians()));
-  }
-  
-  @Override
-  public void periodic()
-  {
-
-    if (!debug && !parkingBrakeOn) //disables motors when parking brakes are active
-    {
-      // This method will be called once per scheduler run
-      SwerveModuleState[] states = kinematics.toSwerveModuleStates(targetChassisSpeeds);
-      SwerveDriveKinematics.desaturateWheelSpeeds(states, maximumLinearSpeed);
-
-      states[0] = SwerveModuleState.optimize(states[0], Rotation2d.fromRotations(modules[0].getSteerRotations()));
-      states[1] = SwerveModuleState.optimize(states[1], Rotation2d.fromRotations(modules[1].getSteerRotations()));
-      states[2] = SwerveModuleState.optimize(states[2], Rotation2d.fromRotations(modules[2].getSteerRotations()));
-      states[3] = SwerveModuleState.optimize(states[3], Rotation2d.fromRotations(modules[3].getSteerRotations()));
-
-      modules[0].setCommand(states[0].angle.getRotations(), states[0].speedMetersPerSecond);
-      modules[1].setCommand(states[1].angle.getRotations(), states[1].speedMetersPerSecond);
-      modules[2].setCommand(states[2].angle.getRotations(), states[2].speedMetersPerSecond);
-      modules[3].setCommand(states[3].angle.getRotations(), states[3].speedMetersPerSecond);
+        // Configure logging (optional, for Tuner X SysId)
+        SignalLogger.setPath("/media/sda1/ctre-logs/");
     }
 
-    // Update and log per-module inputs
-    for (int i = 0; i < 4; i++) {
-      modules[i].updateInputs();
-      Logger.processInputs("Drivetrain/Module" + i, modules[i].getInputs());
+    public double getGyroHeadingDegrees() {
+        return ctre.getPigeon2().getYaw().refresh().getValueAsDouble();
     }
 
-    updateOdometry();
-
-    // Log drivetrain-level outputs
-    Logger.recordOutput("Drivetrain/Pose", odometry.getPoseMeters());
-    Logger.recordOutput("Drivetrain/Speeds", getChassisSpeeds());
-  }
-
-  // rotates all the wheels to be facing inwards and stops the motors to hold position
-  public void parkingBrake(boolean parkingBrakeOn) 
-  {
-    this.parkingBrakeOn = parkingBrakeOn;
-    if (parkingBrakeOn)
-    {
-      targetChassisSpeeds.vxMetersPerSecond = 0.0;
-      targetChassisSpeeds.vyMetersPerSecond = 0.0;
-      targetChassisSpeeds.omegaRadiansPerSecond = 0.0;
-      SwerveModuleState[] states = kinematics.toSwerveModuleStates(targetChassisSpeeds);
-
-      // Set angles for locked parking position:
-      states[0].angle = Rotation2d.fromRadians(Math.PI/4.0);
-      states[1].angle = Rotation2d.fromRadians(-Math.PI/4.0);
-      states[2].angle = Rotation2d.fromRadians(-Math.PI/4.0);
-      states[3].angle = Rotation2d.fromRadians(Math.PI/4.0);
-
-
-      // Run the optimizer for the states:
-      states[0] = SwerveModuleState.optimize(states[0], Rotation2d.fromRotations(modules[0].getSteerRotations()));
-      states[1] = SwerveModuleState.optimize(states[1], Rotation2d.fromRotations(modules[1].getSteerRotations()));
-      states[2] = SwerveModuleState.optimize(states[2], Rotation2d.fromRotations(modules[2].getSteerRotations()));
-      states[3] = SwerveModuleState.optimize(states[3], Rotation2d.fromRotations(modules[3].getSteerRotations()));
-
-      
-      modules[0].setCommand(states[0].angle.getRotations(), states[0].speedMetersPerSecond);
-      modules[1].setCommand(states[1].angle.getRotations(), states[1].speedMetersPerSecond);
-      modules[2].setCommand(states[2].angle.getRotations(), states[2].speedMetersPerSecond);
-      modules[3].setCommand(states[3].angle.getRotations(), states[3].speedMetersPerSecond);
+    public double getGyroHeadingRadians() {
+        return getGyroHeadingDegrees() * Math.PI / 180.0;
     }
-  }
 
-  public boolean getParkingBrake()
-  {
-    return parkingBrakeOn;
-  }
+    public Rotation2d getGyroHeading() {
+        return ctre.getPigeon2().getRotation2d();
+    }
 
-  public void setDebugSpeed(double speed) // sets the speed directly
-  {
-    modules[0].setDriveVelocity(speed);
-    modules[1].setDriveVelocity(speed);
-    modules[2].setDriveVelocity(speed);
-    modules[3].setDriveVelocity(speed);
-  }
+    public double getWrappedGyroHeadingDegrees() {
+        return MathUtils.wrapAngleDegrees(getGyroHeadingDegrees());
+    }
 
-  public void setDebugAngle(double power) // sets the angle directly
-  {
-    modules[0].setDebugRotate(power);
-    modules[1].setDebugRotate(power);
-    modules[2].setDebugRotate(power);
-    modules[3].setDebugRotate(power);
-  }
+    public double getWrappedGyroHeadingRadians() {
+        return MathUtils.wrapAngleRadians(getGyroHeadingDegrees() * Math.PI / 180);
+    }
 
-  public void setDebugDrivePower(double power) // sets the power directly
-  {
-    modules[0].setDebugTranslate(power);
-    modules[1].setDebugTranslate(power);
-    modules[2].setDebugTranslate(power);
-    modules[3].setDebugTranslate(power);
-  }
+    public double getPitch() {
+        return ctre.getPigeon2().getPitch().getValueAsDouble();
+    }
 
-  public SwerveModule[] getModules() {
-    return modules;
-  }
+    public double getRoll() {
+        return ctre.getPigeon2().getRoll().getValueAsDouble();
+    }
 
-  public double getAverageLoad() {
-    return (modules[0].getLoad() + modules[1].getLoad() + modules[2].getLoad() + modules[3].getLoad()) / 4;
-  }
+    public void zeroHeading() {
+        ctre.getPigeon2().setYaw(0);
+    }
 
+    public void setTargetChassisSpeeds(ChassisSpeeds speeds) {
+        ctre.setControl(applyRobotSpeeds.withSpeeds(speeds));
+    }
+
+    public ChassisSpeeds getChassisSpeeds() {
+        return ctre.getState().Speeds;
+    }
+
+    public void setBrakes(boolean brakeOn) {
+        ctre.configNeutralMode(brakeOn ?
+            com.ctre.phoenix6.signals.NeutralModeValue.Brake :
+            com.ctre.phoenix6.signals.NeutralModeValue.Coast);
+    }
+
+    public SwerveDriveKinematics getKinematics() {
+        return ctre.getKinematics();
+    }
+
+    public SwerveModulePosition[] getSwerveModulePositions() {
+        return ctre.getState().ModulePositions;
+    }
+
+    public void resetOdometry(Pose2d where) {
+        ctre.resetPose(where);
+    }
+
+    public Pose2d getOdometry() {
+        return ctre.getState().Pose;
+    }
+
+    public double getOdometryX() {
+        return ctre.getState().Pose.getX();
+    }
+
+    public double getOdometryY() {
+        return ctre.getState().Pose.getY();
+    }
+
+    public double getOdometryThetaRadians() {
+        return ctre.getState().Pose.getRotation().getRadians();
+    }
+
+    public Pose3d get3dOdometry() {
+        Pose2d odo = getOdometry();
+        return new Pose3d(odo.getX(), odo.getY(), 0.0, new Rotation3d(getRoll(), getPitch(), getOdometryThetaRadians()));
+    }
+
+    public void parkingBrake(boolean enable) {
+        parkingBrakeOn = enable;
+        if (enable) {
+            ctre.setControl(brakeRequest);
+        } else {
+            // Resume normal control via the next setTargetChassisSpeeds call
+            ctre.setControl(applyRobotSpeeds.withSpeeds(new ChassisSpeeds(0, 0, 0)));
+        }
+    }
+
+    public boolean getParkingBrake() {
+        return parkingBrakeOn;
+    }
+
+    public double getAverageLoad() {
+        double totalLoad = 0;
+        for (int i = 0; i < 4; i++) {
+            totalLoad += ctre.getModule(i).getDriveMotor().getTorqueCurrent(true).getValueAsDouble();
+        }
+        return totalLoad / 4.0;
+    }
+
+    public void addVisionMeasurement(Pose2d pose, double timestamp, double[] stddevs) {
+        ctre.addVisionMeasurement(pose, timestamp, VecBuilder.fill(stddevs[0], stddevs[1], stddevs[2]));
+    }
+
+    public void resetRotation(Rotation2d rotation) {
+        ctre.resetRotation(rotation);
+    }
+
+    @Override
+    public void initSendable(SendableBuilder builder) {
+        super.initSendable(builder);
+        builder.addBooleanProperty("ParkingBrake", this::getParkingBrake, null);
+        builder.addDoubleProperty("Odo X", this::getOdometryX, null);
+        builder.addDoubleProperty("Odo Y", this::getOdometryY, null);
+        builder.addDoubleProperty("Odo Theta(RAD)", this::getOdometryThetaRadians, null);
+        builder.addDoubleProperty("Odo Gyro Heading(DEG)", this::getGyroHeadingDegrees, null);
+        builder.addDoubleProperty("Odo Gyro Wrapped Heading", this::getWrappedGyroHeadingDegrees, null);
+        builder.addDoubleProperty("Pitch", this::getPitch, null);
+        builder.addDoubleProperty("Roll", this::getRoll, null);
+    }
+
+    @Override
+    public void periodic() {
+        var state = ctre.getStateCopy();
+
+        // Log drivetrain-level telemetry
+        Logger.recordOutput("Drivetrain/Pose", state.Pose);
+        Logger.recordOutput("Drivetrain/Speeds", state.Speeds);
+        Logger.recordOutput("Drivetrain/ModuleStates", state.ModuleStates);
+        Logger.recordOutput("Drivetrain/ModuleTargets", state.ModuleTargets);
+        Logger.recordOutput("Drivetrain/OdometryPeriod", state.OdometryPeriod);
+        Logger.recordOutput("Drivetrain/SuccessfulDAQs", state.SuccessfulDaqs);
+        Logger.recordOutput("Drivetrain/FailedDAQs", state.FailedDaqs);
+    }
 }
