@@ -4,12 +4,9 @@ package frc.robot.subsystems;
 
 import java.util.List;
 
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,8 +22,6 @@ public class Localizer extends SubsystemBase
 
     private final Drivetrain driveTrain;
     private final AprilTagFinder finder;
-    private final SwerveDriveKinematics kinematics;
-    private SwerveDrivePoseEstimator estimator;
 
     private ChassisSpeeds speeds = new ChassisSpeeds(0.0, 0.0, 0.0); // Cached field centric velocity.
     private Pose2d pose = new Pose2d(); // Cached localized pose.
@@ -43,11 +38,6 @@ public class Localizer extends SubsystemBase
     {
         this.driveTrain = driveTrain;
         this.finder = finder;
-        this.kinematics = driveTrain.getKinematics();
-
-        estimator = new SwerveDrivePoseEstimator(
-            kinematics, driveTrain.getOdometry().getRotation(), driveTrain.getSwerveModulePositions(), new Pose2d()
-        );
         lastUpdateTime = Timer.getFPGATimestamp();
     }
 
@@ -87,31 +77,27 @@ public class Localizer extends SubsystemBase
         angularSpeedThreshold = angularSpeed;
     }
 
-    // creates an entirely new estimator so the rotation is reset for sure
     public void resetPose(Pose2d newPos)
     {
-        estimator = new SwerveDrivePoseEstimator(kinematics, driveTrain.getGyroHeading(), driveTrain.getSwerveModulePositions(), newPos);
+        driveTrain.resetOdometry(newPos);
     }
 
     public void resetOrientation()
     {
-        Pose2d resetPos = new Pose2d(estimator.getEstimatedPosition().getTranslation(), new Rotation2d(0));
-        estimator = new SwerveDrivePoseEstimator(kinematics, driveTrain.getGyroHeading(), driveTrain.getSwerveModulePositions(), resetPos);
+        driveTrain.resetRotation(new Rotation2d(0));
     }
 
     @Override
     public void periodic()
     {
         double now = Timer.getFPGATimestamp();
-        estimator.updateWithTime(now, driveTrain.getGyroHeading(), driveTrain.getSwerveModulePositions());
 
         if (now - lastUpdateTime > timeGap && measurementStable()) {
             List<VisionMeasurement> measurements = finder.getAllMeasurements();
             for (int index = 0; index < measurements.size(); index++) {
                 VisionMeasurement currentMeasurement = measurements.get(index);
 
-                estimator.addVisionMeasurement(currentMeasurement.pose, currentMeasurement.timeStamp,
-                    VecBuilder.fill(currentMeasurement.stddevs[0], currentMeasurement.stddevs[1], currentMeasurement.stddevs[2]));
+                driveTrain.addVisionMeasurement(currentMeasurement.pose, currentMeasurement.timeStamp, currentMeasurement.stddevs);
                 measurementCounter++;
             }
             lastUpdateTime = now;
@@ -120,10 +106,10 @@ public class Localizer extends SubsystemBase
         }
 
         // Cache output:
-        pose = estimator.getEstimatedPosition();
+        pose = driveTrain.getOdometry();
         // Compute speeds in field coordinates:
         ChassisSpeeds robotSpeeds = driveTrain.getChassisSpeeds();
-        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, estimator.getEstimatedPosition().getRotation());
+        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, pose.getRotation());
 
         // Simplistic IIR update of reported field-centric speeds:
         speeds = new ChassisSpeeds(
