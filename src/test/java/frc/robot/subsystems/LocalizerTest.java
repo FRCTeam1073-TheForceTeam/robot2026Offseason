@@ -23,7 +23,7 @@ public class LocalizerTest {
     public void setUp() {
         mockDrivetrain = new MockDrivetrain();
         mockTurret = new MockTurret();
-        mockFinder = new MockAprilTagFinder(mockTurret, mockDrivetrain);
+        mockFinder = new MockAprilTagFinder(mockTurret);
         localizer = new Localizer(mockDrivetrain, mockFinder);
     }
 
@@ -170,8 +170,8 @@ public class LocalizerTest {
         private List<VisionMeasurement> measurements = new ArrayList<>();
         private boolean wasClearMeasurementsCalled = false;
 
-        public MockAprilTagFinder(Turret turret, Drivetrain drivetrain) {
-            super(turret, drivetrain);
+        public MockAprilTagFinder(Turret turret) {
+            super(turret);
         }
 
         @Override

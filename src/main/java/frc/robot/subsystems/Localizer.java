@@ -4,6 +4,8 @@ package frc.robot.subsystems;
 
 import java.util.List;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -13,7 +15,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.AprilTagFinder.VisionMeasurement;
 import frc.robot.utilities.DashboardNames;
-import org.littletonrobotics.junction.Logger;
 
 public class Localizer extends SubsystemBase
 {
