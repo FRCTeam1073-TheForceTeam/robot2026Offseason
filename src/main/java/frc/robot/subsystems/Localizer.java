@@ -90,20 +90,7 @@ public class Localizer extends SubsystemBase
     @Override
     public void periodic()
     {
-        double now = Timer.getFPGATimestamp();
-
-        if (now - lastUpdateTime > timeGap && measurementStable()) {
-            List<VisionMeasurement> measurements = finder.getAllMeasurements();
-            for (int index = 0; index < measurements.size(); index++) {
-                VisionMeasurement currentMeasurement = measurements.get(index);
-
-                driveTrain.addVisionMeasurement(currentMeasurement.pose, currentMeasurement.timeStamp, currentMeasurement.stddevs);
-                measurementCounter++;
-            }
-            lastUpdateTime = now;
-
-            finder.clearMeasurements();
-        }
+        processVisionMeasurements();
 
         // Cache output:
         pose = driveTrain.getOdometry();
@@ -131,6 +118,42 @@ public class Localizer extends SubsystemBase
         }
     }
 
+    private void processVisionMeasurements()
+    {
+        double now = Timer.getFPGATimestamp();
+        double timeSinceLastUpdate = now - lastUpdateTime;
+        boolean isTimeReady = timeSinceLastUpdate > timeGap;
+        boolean isStable = measurementStable();
+
+        Logger.recordOutput("Localizer/Vision/TimeSinceLastUpdate", timeSinceLastUpdate);
+        Logger.recordOutput("Localizer/Vision/IsTimeReady", isTimeReady);
+        Logger.recordOutput("Localizer/Vision/IsStable", isStable);
+
+        List<VisionMeasurement> measurements = finder.getAllMeasurements();
+        Logger.recordOutput("Localizer/Vision/MeasurementCount", measurements.size());
+
+        if (isTimeReady && isStable) {
+            for (int index = 0; index < measurements.size(); index++) {
+                VisionMeasurement currentMeasurement = measurements.get(index);
+
+                Logger.recordOutput("Localizer/Vision/Measurement_" + index + "/Pose", currentMeasurement.pose);
+                Logger.recordOutput("Localizer/Vision/Measurement_" + index + "/TimeStamp", currentMeasurement.timeStamp);
+                Logger.recordOutput("Localizer/Vision/Measurement_" + index + "/StddevX", currentMeasurement.stddevs[0]);
+                Logger.recordOutput("Localizer/Vision/Measurement_" + index + "/StddevY", currentMeasurement.stddevs[1]);
+                Logger.recordOutput("Localizer/Vision/Measurement_" + index + "/StddevTheta", currentMeasurement.stddevs[2]);
+
+                driveTrain.addVisionMeasurement(currentMeasurement.pose, currentMeasurement.timeStamp, currentMeasurement.stddevs);
+                measurementCounter++;
+            }
+            lastUpdateTime = now;
+
+            finder.clearMeasurements();
+            Logger.recordOutput("Localizer/Vision/MeasurementsProcessed", true);
+        } else {
+            Logger.recordOutput("Localizer/Vision/MeasurementsProcessed", false);
+        }
+    }
+
     // Returns field-centric, localizer based position estimate.
     public Pose2d getPose()
     {
@@ -149,6 +172,12 @@ public class Localizer extends SubsystemBase
         double linearSpeed = Math.sqrt(robotSpeeds.vxMetersPerSecond * robotSpeeds.vxMetersPerSecond
             + robotSpeeds.vyMetersPerSecond * robotSpeeds.vyMetersPerSecond);
         double angularSpeed = Math.abs(robotSpeeds.omegaRadiansPerSecond);
+
+        Logger.recordOutput("Localizer/Vision/LinearSpeed", linearSpeed);
+        Logger.recordOutput("Localizer/Vision/LinearSpeedThreshold", linearSpeedThreshold);
+        Logger.recordOutput("Localizer/Vision/AngularSpeed", angularSpeed);
+        Logger.recordOutput("Localizer/Vision/AngularSpeedThreshold", angularSpeedThreshold);
+
         return (linearSpeed <= linearSpeedThreshold && angularSpeed <= angularSpeedThreshold);
     }
 }
