@@ -1,6 +1,11 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.util.Units;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -8,18 +13,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.BallisticShot;
 import frc.robot.subsystems.OI;
 import frc.robot.subsystems.ShooterHood;
 import frc.robot.subsystems.TargetFinder;
 import frc.robot.subsystems.ZoneFinder;
 import frc.robot.utilities.ShooterTable;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
