@@ -15,55 +15,55 @@ import frc.robot.utilities.ShooterTable;
  */
 public class TrackHood extends Command
 {
-  private final ShooterHood shooterHood;
-  private final TargetFinder tf;
-  private final ShooterTable st;
-  private final BallisticShot bs;
-  private final boolean useShooterTable;
+    private final ShooterHood shooterHood;
+    private final TargetFinder tf;
+    private final ShooterTable st;
+    private final BallisticShot bs;
+    private final boolean useShooterTable;
 
-  public TrackHood(ShooterHood shooterHood, TargetFinder tf, ShooterTable st, BallisticShot bs, boolean useShooterTable)
-  {
-    this.shooterHood = shooterHood;
-    this.tf = tf;
-    this.st = st;
-    this.bs = bs;
-    this.useShooterTable = useShooterTable;
+    public TrackHood(ShooterHood shooterHood, TargetFinder tf, ShooterTable st, BallisticShot bs, boolean useShooterTable)
+    {
+        this.shooterHood = shooterHood;
+        this.tf = tf;
+        this.st = st;
+        this.bs = bs;
+        this.useShooterTable = useShooterTable;
 
-    addRequirements(shooterHood);
-  }
-
-  public TrackHood(ShooterHood shooterHood, TargetFinder tf, ShooterTable st, BallisticShot bs)
-  {
-    this(shooterHood, tf, st, bs, false);
-  }
-
-  @Override
-  public void initialize()
-  {
-  }
-
-  @Override
-  public void execute()
-  {
-    double range = tf.getRangeToTargetMeters();
-    if (useShooterTable) {
-      double targetAngle = st.getHoodAngle(range);
-      shooterHood.setPosition(targetAngle);
-    } else {
-      BallisticShot.Shot shot = bs.getShot();
-      shooterHood.setPosition(shot.hoodAngle);
+        addRequirements(shooterHood);
     }
-  }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-    shooterHood.stop();
-  }
+    public TrackHood(ShooterHood shooterHood, TargetFinder tf, ShooterTable st, BallisticShot bs)
+    {
+        this(shooterHood, tf, st, bs, false);
+    }
 
-  @Override
-  public boolean isFinished()
-  {
-    return false;
-  }
+    @Override
+    public void initialize()
+    {
+    }
+
+    @Override
+    public void execute()
+    {
+        double range = tf.getRangeToTargetMeters();
+        if (useShooterTable) {
+            double targetAngle = st.getHoodAngle(range);
+            shooterHood.setPosition(targetAngle);
+        } else {
+            BallisticShot.Shot shot = bs.getShot();
+            shooterHood.setPosition(shot.hoodAngle);
+        }
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        shooterHood.stop();
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        return false;
+    }
 }

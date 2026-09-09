@@ -11,49 +11,49 @@ import frc.robot.subsystems.OI;
 
 public class CollectorTeleop extends Command
 {
-  private final Collector collector;
-  private final OI oi;
+    private final Collector collector;
+    private final OI oi;
 
-  // Observes drivetrain, does not require it.
-  private final Drivetrain dt;
+    // Observes drivetrain, does not require it.
+    private final Drivetrain dt;
 
-  public CollectorTeleop(Collector collector, OI oi, Drivetrain dt)
-  {
-    this.collector = collector;
-    this.oi = oi;
-    this.dt = dt;
+    public CollectorTeleop(Collector collector, OI oi, Drivetrain dt)
+    {
+        this.collector = collector;
+        this.oi = oi;
+        this.dt = dt;
 
-    // DO NOT REQUIRE DRIVETRAIN:
-    addRequirements(collector);
-  }
-
-  @Override
-  public void initialize()
-  {
-  }
-
-  @Override
-  public void execute()
-  {
-    // TODO: ASK SILLY DIRIVE TEAM!!
-    if (Math.abs(oi.getDriverLeftTrigger()) >= 0.1) { // To eject fuel.
-      collector.setVelocity(-4.0);
-    } else if (Math.abs(oi.getDriverRightTrigger()) >= 0.1) {
-      collector.setVelocity(9.14);
-    } else {
-      collector.stop();
+        // DO NOT REQUIRE DRIVETRAIN:
+        addRequirements(collector);
     }
-  }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-    collector.stop(); // Default no-command state.
-  }
+    @Override
+    public void initialize()
+    {
+    }
 
-  @Override
-  public boolean isFinished()
-  {
-    return false;
-  }
+    @Override
+    public void execute()
+    {
+        // TODO: ASK SILLY DIRIVE TEAM!!
+        if (Math.abs(oi.getDriverLeftTrigger()) >= 0.1) { // To eject fuel.
+            collector.setVelocity(-4.0);
+        } else if (Math.abs(oi.getDriverRightTrigger()) >= 0.1) {
+            collector.setVelocity(9.14);
+        } else {
+            collector.stop();
+        }
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        collector.stop(); // Default no-command state.
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        return false;
+    }
 }

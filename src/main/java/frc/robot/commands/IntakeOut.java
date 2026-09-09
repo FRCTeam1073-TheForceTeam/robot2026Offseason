@@ -12,54 +12,54 @@ import frc.robot.subsystems.Intake;
  */
 public class IntakeOut extends Command
 {
-  private final Intake intake;
+    private final Intake intake;
 
-  /**
-   * Create a IntakeOut Command
-   *
-   * @param intake the subsystem handle.
-   * @param unsafe Don't require the subsystem. Don't use except in auto prep!
-   */
-  public IntakeOut(Intake intake, boolean unsafe)
-  {
-    this.intake = intake;
+    /**
+     * Create a IntakeOut Command
+     *
+     * @param intake the subsystem handle.
+     * @param unsafe Don't require the subsystem. Don't use except in auto prep!
+     */
+    public IntakeOut(Intake intake, boolean unsafe)
+    {
+        this.intake = intake;
 
-    if (!unsafe) {
-      addRequirements(intake);
+        if (!unsafe) {
+            addRequirements(intake);
+        }
     }
-  }
 
-  public IntakeOut(Intake intake)
-  {
-    this(intake, false);
-  }
-
-  @Override
-  public void initialize()
-  {
-    System.err.println("Intake Out");
-  }
-
-  @Override
-  public void execute()
-  {
-    intake.setPosition(Math.toRadians(-0.1));
-  }
-
-  @Override
-  public void end(boolean interrupted)
-  {
-    if (interrupted) {
-      System.err.println("IntakeOut Interrupted!! ");
-    } else {
-      System.err.println("IntakeOut Finished");
+    public IntakeOut(Intake intake)
+    {
+        this(intake, false);
     }
-  }
 
-  // Ends immediately:
-  @Override
-  public boolean isFinished()
-  {
-    return true;
-  }
+    @Override
+    public void initialize()
+    {
+        System.err.println("Intake Out");
+    }
+
+    @Override
+    public void execute()
+    {
+        intake.setPosition(Math.toRadians(-0.1));
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        if (interrupted) {
+            System.err.println("IntakeOut Interrupted!! ");
+        } else {
+            System.err.println("IntakeOut Finished");
+        }
+    }
+
+    // Ends immediately:
+    @Override
+    public boolean isFinished()
+    {
+        return true;
+    }
 }

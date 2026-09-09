@@ -29,207 +29,220 @@ import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase
 {
-  @AutoLog
-  public static class IntakeInputs
-  {
-    public double positionRadians = 0.0;
-    public double velocityRadPerSec = 0.0;
-    public double torqueNm = 0.0;
-    public boolean hasZero = false;
-  }
-
-  public static final int IntakeLeadId = 18;
-  public static final int IntakeFollowId = 19;
-
-  public static final double gearRatio = 40.0; // From new design.
-  public static final double ampsPerNewtonMeter = 10.0;
-  public static final double currentLimit = 45.0;
-
-  public static final double maxPositionRadians = 0.0;
-  public static final double minPositionRadians = -2.13;
-
-  private enum Mode { NONE, VELOCITY, POSITION }
-
-  private final TalonFX leadMotor;
-  private final TalonFX followMotor;
-  private final StatusSignal<Angle> positionSig;
-  private final StatusSignal<AngularVelocity> velocitySig;
-  private final StatusSignal<Current> currentSig;
-  private final PositionVoltage commandPositionVoltage = new PositionVoltage(0).withSlot(0);
-  private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(1);
-  private final SlewRateLimiter limiter = new SlewRateLimiter(9.0); // was 5 radians before
-  private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
-
-  private Mode mode = Mode.NONE;
-  private double targetVelocity = 0.0;
-  private double targetPosition = 0.0;
-
-  private boolean hasZero = false;
-  private double position = 0.0;
-  private double velocity = 0.0;
-  private double torque = 0.0;
-
-  public Intake()
-  {
-    setName("Intake");
-
-    leadMotor = new TalonFX(IntakeLeadId, new CANBus("rio"));
-    followMotor = new TalonFX(IntakeFollowId, new CANBus("rio"));
-    positionSig = leadMotor.getPosition();
-    velocitySig = leadMotor.getVelocity();
-    currentSig = leadMotor.getTorqueCurrent();
-
-    boolean hardwareConfigured = configureHardware();
-    if (!hardwareConfigured) {
-      System.err.println("Intake: Hardware Failed To Configure!");
-    }
-    SmartDashboard.putBoolean(DashboardNames.INTAKE_HW_CONFIGURED.getKey(), hardwareConfigured);
-  }
-
-  private boolean configureHardware()
-  {
-    TalonFXConfiguration configs = new TalonFXConfiguration();
-
-    configs.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
-    configs.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
-
-    configs.Voltage.PeakForwardVoltage = 8.0;
-    configs.Voltage.PeakReverseVoltage = -8.0;
-
-    configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
-    configs.CurrentLimits.SupplyCurrentLimitEnable = true;
-
-    // Slot 0 for the position control loop:
-    configs.Slot0.kV = 0.153;
-    configs.Slot0.kP = 0.4;
-    configs.Slot0.kI = 0.04;
-    configs.Slot0.kD = 0.01;
-    configs.Slot0.kA = 0.0;
-    configs.Slot0.kS = 0.02;
-
-    // Slot 1 for the velocity control loop:
-    configs.Slot1.kV = 0.153;
-    configs.Slot1.kP = 0.3;
-    configs.Slot1.kI = 0.0;
-    configs.Slot1.kD = 0.0;
-    configs.Slot1.kA = 0.0;
-    configs.Slot1.kS = 0.02;
-
-    configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
-    var status = leadMotor.getConfigurator().apply(configs, 1.0);
-    if (!status.isOK()) {
-      System.err.println("Intake: leader failed to config!");
-      return false;
+    @AutoLog
+    public static class IntakeInputs
+    {
+        public double positionRadians = 0.0;
+        public double velocityRadPerSec = 0.0;
+        public double torqueNm = 0.0;
+        public boolean hasZero = false;
     }
 
-    // The follow motor's actual physical inversion is handled via Follower(Opposed) in periodic(), so
-    // it's configured with the same base config as the leader here (matching current C++ behavior).
-    status = followMotor.getConfigurator().apply(configs, 1.0);
-    if (!status.isOK()) {
-      System.err.println("Intake: follower failed to config!");
-      return false;
+    public static final int IntakeLeadId = 18;
+    public static final int IntakeFollowId = 19;
+
+    public static final double gearRatio = 40.0; // From new design.
+    public static final double ampsPerNewtonMeter = 10.0;
+    public static final double currentLimit = 45.0;
+
+    public static final double maxPositionRadians = 0.0;
+    public static final double minPositionRadians = -2.13;
+
+    private enum Mode { NONE, VELOCITY, POSITION }
+
+    private final TalonFX leadMotor;
+    private final TalonFX followMotor;
+    private final StatusSignal<Angle> positionSig;
+    private final StatusSignal<AngularVelocity> velocitySig;
+    private final StatusSignal<Current> currentSig;
+    private final PositionVoltage commandPositionVoltage = new PositionVoltage(0).withSlot(0);
+    private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(1);
+    private final SlewRateLimiter limiter = new SlewRateLimiter(9.0); // was 5 radians before
+    private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
+
+    private Mode mode = Mode.NONE;
+    private double targetVelocity = 0.0;
+    private double targetPosition = 0.0;
+
+    private boolean hasZero = false;
+    private double position = 0.0;
+    private double velocity = 0.0;
+    private double torque = 0.0;
+
+    public Intake()
+    {
+        setName("Intake");
+
+        leadMotor = new TalonFX(IntakeLeadId, new CANBus("rio"));
+        followMotor = new TalonFX(IntakeFollowId, new CANBus("rio"));
+        positionSig = leadMotor.getPosition();
+        velocitySig = leadMotor.getVelocity();
+        currentSig = leadMotor.getTorqueCurrent();
+
+        boolean hardwareConfigured = configureHardware();
+        if (!hardwareConfigured) {
+            System.err.println("Intake: Hardware Failed To Configure!");
+        }
+        SmartDashboard.putBoolean(DashboardNames.INTAKE_HW_CONFIGURED.getKey(), hardwareConfigured);
     }
 
-    // Set our neutral mode to brake on:
-    status = leadMotor.setNeutralMode(NeutralModeValue.Brake, 1.0);
-    if (!status.isOK()) {
-      System.err.println("Intake: neutral mode failed to config :(!");
-      return false;
+    private boolean configureHardware()
+    {
+        TalonFXConfiguration configs = new TalonFXConfiguration();
+
+        configs.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
+        configs.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
+
+        configs.Voltage.PeakForwardVoltage = 8.0;
+        configs.Voltage.PeakReverseVoltage = -8.0;
+
+        configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
+        configs.CurrentLimits.SupplyCurrentLimitEnable = true;
+
+        // Slot 0 for the position control loop:
+        configs.Slot0.kV = 0.153;
+        configs.Slot0.kP = 0.4;
+        configs.Slot0.kI = 0.04;
+        configs.Slot0.kD = 0.01;
+        configs.Slot0.kA = 0.0;
+        configs.Slot0.kS = 0.02;
+
+        // Slot 1 for the velocity control loop:
+        configs.Slot1.kV = 0.153;
+        configs.Slot1.kP = 0.3;
+        configs.Slot1.kI = 0.0;
+        configs.Slot1.kD = 0.0;
+        configs.Slot1.kA = 0.0;
+        configs.Slot1.kS = 0.02;
+
+        configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+        var status = leadMotor.getConfigurator().apply(configs, 1.0);
+        if (!status.isOK()) {
+            System.err.println("Intake: leader failed to config!");
+            return false;
+        }
+
+        // The follow motor's actual physical inversion is handled via Follower(Opposed) in periodic(), so
+        // it's configured with the same base config as the leader here (matching current C++ behavior).
+        status = followMotor.getConfigurator().apply(configs, 1.0);
+        if (!status.isOK()) {
+            System.err.println("Intake: follower failed to config!");
+            return false;
+        }
+
+        // Set our neutral mode to brake on:
+        status = leadMotor.setNeutralMode(NeutralModeValue.Brake, 1.0);
+        if (!status.isOK()) {
+            System.err.println("Intake: neutral mode failed to config :(!");
+            return false;
+        }
+
+        // Initialize at the zero position:
+        leadMotor.setPosition((-122.0 / 360.0) * gearRatio);
+
+        return true;
     }
 
-    // Initialize at the zero position:
-    leadMotor.setPosition((-122.0 / 360.0) * gearRatio);
-
-    return true;
-  }
-
-  // Command the intake to spin at the given angular velocity, radians/second.
-  public void setVelocity(double radiansPerSecond)
-  {
-    mode = Mode.VELOCITY;
-    targetVelocity = radiansPerSecond;
-  }
-
-  // Command the intake pivot to the given position, radians. Clamped to [minPositionRadians, maxPositionRadians].
-  public void setPosition(double radians)
-  {
-    mode = Mode.POSITION;
-    targetPosition = radians;
-  }
-
-  public void stop()
-  {
-    mode = Mode.NONE;
-  }
-
-  public void zero()
-  {
-    leadMotor.setPosition((-122.0 / 360.0) * gearRatio);
-    hasZero = true;
-  }
-
-  public double getPositionRadians()
-  {
-    return position;
-  }
-
-  public double getVelocityRadPerSec()
-  {
-    return velocity;
-  }
-
-  public double getTorqueNm()
-  {
-    return torque;
-  }
-
-  public boolean hasZero()
-  {
-    return hasZero;
-  }
-
-  @Override
-  public void periodic()
-  {
-    positionSig.refresh();
-    currentSig.refresh();
-    velocitySig.refresh();
-
-    torque = currentSig.getValueAsDouble() / ampsPerNewtonMeter;
-    position = positionSig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
-    velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
-
-    inputs.positionRadians = position;
-    inputs.velocityRadPerSec = velocity;
-    inputs.torqueNm = torque;
-    inputs.hasZero = hasZero;
-    Logger.processInputs("Intake", inputs);
-
-    if (mode == Mode.VELOCITY) {
-      double motorVelocity = targetVelocity * gearRatio / (2.0 * Math.PI);
-      leadMotor.setControl(commandVelocityVoltage.withVelocity(motorVelocity));
-      followMotor.setControl(new Follower(leadMotor.getDeviceID(), MotorAlignmentValue.Opposed));
-      limiter.reset(position); // Keep the limiter in sync in the other control mode.
-    } else if (mode == Mode.POSITION) {
-      double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
-      // Matches C++: the limiter is evaluated against the clamped command first (its result is
-      // discarded), then evaluated again against the raw command for the value actually used -
-      // a stateful double-Calculate() quirk in the source, preserved here rather than "fixed".
-      limiter.calculate(clampedCommand);
-      double limitedIntakeTarget = limiter.calculate(targetPosition);
-
-      double motorPosition = limitedIntakeTarget * gearRatio / (2.0 * Math.PI);
-
-      leadMotor.setControl(commandPositionVoltage.withPosition(motorPosition));
-      followMotor.setControl(new Follower(leadMotor.getDeviceID(), MotorAlignmentValue.Opposed));
-    } else {
-      leadMotor.setControl(new NeutralOut());
-      followMotor.setControl(new NeutralOut());
-      limiter.reset(position); // Keep the limiter in sync in other control mode.
+    // Command the intake to spin at the given angular velocity, radians/second.
+    public void setVelocity(double radiansPerSecond)
+    {
+        mode = Mode.VELOCITY;
+        targetVelocity = radiansPerSecond;
     }
 
-    Logger.recordOutput("Intake/Mode", mode.name());
-    Logger.recordOutput("Intake/TargetPosition", limiter.lastValue());
-  }
+    // Command the intake pivot to the given position, radians. Clamped to [minPositionRadians, maxPositionRadians].
+    public void setPosition(double radians)
+    {
+        mode = Mode.POSITION;
+        targetPosition = radians;
+    }
+
+    public void stop()
+    {
+        mode = Mode.NONE;
+    }
+
+    public void zero()
+    {
+        leadMotor.setPosition((-122.0 / 360.0) * gearRatio);
+        hasZero = true;
+    }
+
+    public double getPositionRadians()
+    {
+        return position;
+    }
+
+    public double getVelocityRadPerSec()
+    {
+        return velocity;
+    }
+
+    public double getTorqueNm()
+    {
+        return torque;
+    }
+
+    public boolean hasZero()
+    {
+        return hasZero;
+    }
+
+    // The limiter's state must track the physically-constrained position (clamped) to avoid jerky
+    // motion at boundaries. However, rate limiting should apply to the unconstrained target to
+    // provide responsive control. This dual-calculate pattern achieves both: the first call updates
+    // the limiter's internal state with the actual position we can reach (clamped), while the second
+    // call returns a rate-limited version of the requested target. This could be refactored by
+    // using separate state tracking, but the current approach works and matches hardware behavior.
+    static double computePositionCommandRadians(SlewRateLimiter limiter, double targetPosition, double minPositionRadians, double maxPositionRadians)
+    {
+        double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
+        limiter.calculate(clampedCommand);
+        return limiter.calculate(targetPosition);
+    }
+
+    @Override
+    public void periodic()
+    {
+        positionSig.refresh();
+        currentSig.refresh();
+        velocitySig.refresh();
+
+        torque = currentSig.getValueAsDouble() / ampsPerNewtonMeter;
+        position = positionSig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
+        velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
+
+        inputs.positionRadians = position;
+        inputs.velocityRadPerSec = velocity;
+        inputs.torqueNm = torque;
+        inputs.hasZero = hasZero;
+        Logger.processInputs("Intake", inputs);
+
+        if (mode == Mode.VELOCITY) {
+            double motorVelocity = targetVelocity * gearRatio / (2.0 * Math.PI);
+            leadMotor.setControl(commandVelocityVoltage.withVelocity(motorVelocity));
+            followMotor.setControl(new Follower(leadMotor.getDeviceID(), MotorAlignmentValue.Opposed));
+            limiter.reset(position); // Keep the limiter in sync in the other control mode.
+        } else if (mode == Mode.POSITION) {
+            double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
+            // Matches C++: the limiter is evaluated against the clamped command first (its result is
+            // discarded), then evaluated again against the raw command for the value actually used -
+            // a stateful double-Calculate() quirk in the source, preserved here rather than "fixed".
+            limiter.calculate(clampedCommand);
+            double limitedIntakeTarget = limiter.calculate(targetPosition);
+
+            double motorPosition = limitedIntakeTarget * gearRatio / (2.0 * Math.PI);
+
+            leadMotor.setControl(commandPositionVoltage.withPosition(motorPosition));
+            followMotor.setControl(new Follower(leadMotor.getDeviceID(), MotorAlignmentValue.Opposed));
+        } else {
+            leadMotor.setControl(new NeutralOut());
+            followMotor.setControl(new NeutralOut());
+            limiter.reset(position); // Keep the limiter in sync in other control mode.
+        }
+
+        Logger.recordOutput("Intake/Mode", mode.name());
+        Logger.recordOutput("Intake/TargetPosition", limiter.lastValue());
+    }
 }

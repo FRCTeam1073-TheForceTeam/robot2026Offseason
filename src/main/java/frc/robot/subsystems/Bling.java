@@ -14,51 +14,51 @@ import org.littletonrobotics.junction.Logger;
 
 public class Bling extends SubsystemBase
 {
-  public static final int CANdleId = 30; // temp number
+    public static final int CANdleId = 30; // temp number
 
-  private final CANdle candle;
+    private final CANdle candle;
 
-  private boolean hasCommand = false;
-  private SolidColor command;
+    private boolean hasCommand = false;
+    private SolidColor command;
 
-  public Bling()
-  {
-    setName("Bling");
-    // Might not be roboRio figure out what it is if not
-    candle = new CANdle(CANdleId, CANBus.roboRIO());
-  }
-
-  public void setCommand(SolidColor cmd)
-  {
-    hasCommand = true;
-    command = cmd;
-  }
-
-  public void stop()
-  {
-    hasCommand = false;
-  }
-
-  @Override
-  public void periodic()
-  {
-    if (hasCommand) {
-      candle.setControl(command);
-      Logger.recordOutput("Bling/CommandActive", true);
-    } else {
-      candle.setControl(new SolidColor(8, 20).withColor(new RGBWColor(255, 255, 255)));
-      Logger.recordOutput("Bling/CommandActive", false);
+    public Bling()
+    {
+        setName("Bling");
+        // Might not be roboRio figure out what it is if not
+        candle = new CANdle(CANdleId, CANBus.roboRIO());
     }
-  }
 
-  public void blingWhite()
-  {
-    setCommand(new SolidColor(8, 20).withColor(new RGBWColor(255, 255, 255)));
-  }
+    public void setCommand(SolidColor cmd)
+    {
+        hasCommand = true;
+        command = cmd;
+    }
 
-  // TODO: change these commands to on and off
-  public void blingPurple()
-  {
-    setCommand(new SolidColor(8, 20).withColor(new RGBWColor(147, 112, 219)));
-  }
+    public void stop()
+    {
+        hasCommand = false;
+    }
+
+    @Override
+    public void periodic()
+    {
+        if (hasCommand) {
+            candle.setControl(command);
+            Logger.recordOutput("Bling/CommandActive", true);
+        } else {
+            candle.setControl(new SolidColor(8, 20).withColor(new RGBWColor(255, 255, 255)));
+            Logger.recordOutput("Bling/CommandActive", false);
+        }
+    }
+
+    public void blingWhite()
+    {
+        setCommand(new SolidColor(8, 20).withColor(new RGBWColor(255, 255, 255)));
+    }
+
+    // TODO: change these commands to on and off
+    public void blingPurple()
+    {
+        setCommand(new SolidColor(8, 20).withColor(new RGBWColor(147, 112, 219)));
+    }
 }

@@ -16,64 +16,64 @@ import frc.robot.utilities.DashboardNames;
  */
 public class TestHood extends Command
 {
-  private static final int maxLevel = 32;
-  private static final double scaleFactor = 0.015625;
+    private static final int maxLevel = 32;
+    private static final double scaleFactor = 0.015625;
 
-  private final ShooterHood shooterHood;
-  private final OI oi;
+    private final ShooterHood shooterHood;
+    private final OI oi;
 
-  private int level = 0;
-  private boolean lastLeftBumper = false;
-  private boolean lastRightBumper = false;
+    private int level = 0;
+    private boolean lastLeftBumper = false;
+    private boolean lastRightBumper = false;
 
-  public TestHood(ShooterHood shooterHood, OI oi)
-  {
-    this.shooterHood = shooterHood;
-    this.oi = oi;
+    public TestHood(ShooterHood shooterHood, OI oi)
+    {
+        this.shooterHood = shooterHood;
+        this.oi = oi;
 
-    addRequirements(shooterHood);
-  }
-
-  @Override
-  public void initialize()
-  {
-    level = 0;
-  }
-
-  @Override
-  public void execute()
-  {
-    boolean leftBumper = oi.getOperatorLeftBumper();
-    boolean rightBumper = oi.getOperatorRightBumper();
-
-    if (leftBumper && !lastLeftBumper) {
-      ++level;
+        addRequirements(shooterHood);
     }
 
-    if (rightBumper && !lastRightBumper) {
-      --level;
+    @Override
+    public void initialize()
+    {
+        level = 0;
     }
 
-    level = (int) MathUtil.clamp(level, 0, maxLevel);
+    @Override
+    public void execute()
+    {
+        boolean leftBumper = oi.getOperatorLeftBumper();
+        boolean rightBumper = oi.getOperatorRightBumper();
 
-    double position = ShooterHood.maxPositionRadians - level * scaleFactor;
-    shooterHood.setPosition(position);
-    SmartDashboard.putNumber(DashboardNames.TEST_HOOD_LEVEL.getKey(), level);
-    SmartDashboard.putNumber(DashboardNames.TEST_HOOD_POSITION.getKey(), position);
+        if (leftBumper && !lastLeftBumper) {
+            ++level;
+        }
 
-    lastLeftBumper = leftBumper;
-    lastRightBumper = rightBumper;
-  }
+        if (rightBumper && !lastRightBumper) {
+            --level;
+        }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-    shooterHood.stop();
-  }
+        level = (int) MathUtil.clamp(level, 0, maxLevel);
 
-  @Override
-  public boolean isFinished()
-  {
-    return false;
-  }
+        double position = ShooterHood.maxPositionRadians - level * scaleFactor;
+        shooterHood.setPosition(position);
+        SmartDashboard.putNumber(DashboardNames.TEST_HOOD_LEVEL.getKey(), level);
+        SmartDashboard.putNumber(DashboardNames.TEST_HOOD_POSITION.getKey(), position);
+
+        lastLeftBumper = leftBumper;
+        lastRightBumper = rightBumper;
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        shooterHood.stop();
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        return false;
+    }
 }
