@@ -25,137 +25,137 @@ import org.littletonrobotics.junction.Logger;
 
 public class Collector extends SubsystemBase
 {
-  @AutoLog
-  public static class CollectorInputs
-  {
-    public double velocity = 0.0;
-    public double force = 0.0;
-  }
-
-  public static final int MotorId = 20;
-
-  public static final double wheelDiameterMeters = 1.25 * 0.0254;
-  public static final double gearRatio = 2.0;
-  public static final double turnsPerMeter = 1.0 / (wheelDiameterMeters * Math.PI);
-  public static final double ampsPerNewton = 10.0;
-  public static final double currentLimit = 50.0;
-
-  private final TalonFX motor;
-  private final StatusSignal<AngularVelocity> velocitySig;
-  private final StatusSignal<Current> currentSig;
-  private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
-  private final SlewRateLimiter limiter = new SlewRateLimiter(10.0);
-  private final CollectorInputsAutoLogged inputs = new CollectorInputsAutoLogged();
-
-  private boolean hasCommand = false;
-  private double targetVelocity = 0.0;
-
-  private double velocity = 0.0;
-  private double force = 0.0;
-
-  public Collector()
-  {
-    setName("Collector");
-
-    motor = new TalonFX(MotorId, new CANBus("rio"));
-    velocitySig = motor.getVelocity();
-    currentSig = motor.getTorqueCurrent();
-
-    boolean hardwareConfigured = configureHardware();
-    if (!hardwareConfigured) {
-      System.err.println("Collector: Hardware Failed To Configure!");
-    }
-    SmartDashboard.putBoolean(DashboardNames.COLLECTOR_HW_CONFIGURED.getKey(), hardwareConfigured);
-  }
-
-  private boolean configureHardware()
-  {
-    TalonFXConfiguration configs = new TalonFXConfiguration();
-
-    configs.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
-    configs.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
-
-    configs.Voltage.PeakForwardVoltage = 9.0;
-    configs.Voltage.PeakReverseVoltage = -9.0;
-
-    configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
-    configs.CurrentLimits.SupplyCurrentLimitEnable = true;
-
-    configs.Slot0.kV = 0.123;
-    configs.Slot0.kP = 0.3;
-    configs.Slot0.kI = 0.0;
-    configs.Slot0.kD = 0.0;
-    configs.Slot0.kA = 0.0;
-    configs.Slot0.kS = 0.02;
-
-    configs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-
-    var status = motor.getConfigurator().apply(configs, 1.0);
-    if (!status.isOK()) {
-      System.err.println("Collector: config failed to config!");
-      return false;
+    @AutoLog
+    public static class CollectorInputs
+    {
+        public double velocity = 0.0;
+        public double force = 0.0;
     }
 
-    status = motor.setNeutralMode(NeutralModeValue.Brake, 1.0);
-    if (!status.isOK()) {
-      System.err.println("Collector: neutral mode failed to config :(!");
-      return false;
+    public static final int MotorId = 20;
+
+    public static final double wheelDiameterMeters = 1.25 * 0.0254;
+    public static final double gearRatio = 2.0;
+    public static final double turnsPerMeter = 1.0 / (wheelDiameterMeters * Math.PI);
+    public static final double ampsPerNewton = 10.0;
+    public static final double currentLimit = 50.0;
+
+    private final TalonFX motor;
+    private final StatusSignal<AngularVelocity> velocitySig;
+    private final StatusSignal<Current> currentSig;
+    private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
+    private final SlewRateLimiter limiter = new SlewRateLimiter(10.0);
+    private final CollectorInputsAutoLogged inputs = new CollectorInputsAutoLogged();
+
+    private boolean hasCommand = false;
+    private double targetVelocity = 0.0;
+
+    private double velocity = 0.0;
+    private double force = 0.0;
+
+    public Collector()
+    {
+        setName("Collector");
+
+        motor = new TalonFX(MotorId, new CANBus("rio"));
+        velocitySig = motor.getVelocity();
+        currentSig = motor.getTorqueCurrent();
+
+        boolean hardwareConfigured = configureHardware();
+        if (!hardwareConfigured) {
+            System.err.println("Collector: Hardware Failed To Configure!");
+        }
+        SmartDashboard.putBoolean(DashboardNames.COLLECTOR_HW_CONFIGURED.getKey(), hardwareConfigured);
     }
 
-    return true;
-  }
+    private boolean configureHardware()
+    {
+        TalonFXConfiguration configs = new TalonFXConfiguration();
 
-  // Command the collector to spin at the given velocity, meters/second of wheel surface speed.
-  public void setVelocity(double metersPerSecond)
-  {
-    hasCommand = true;
-    targetVelocity = metersPerSecond;
-  }
+        configs.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
+        configs.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
 
-  public void stop()
-  {
-    hasCommand = false;
-  }
+        configs.Voltage.PeakForwardVoltage = 9.0;
+        configs.Voltage.PeakReverseVoltage = -9.0;
 
-  public double getVelocity()
-  {
-    return velocity;
-  }
+        configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
+        configs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-  public double getForce()
-  {
-    return force;
-  }
+        configs.Slot0.kV = 0.123;
+        configs.Slot0.kP = 0.3;
+        configs.Slot0.kI = 0.0;
+        configs.Slot0.kD = 0.0;
+        configs.Slot0.kA = 0.0;
+        configs.Slot0.kS = 0.02;
 
-  @Override
-  public void periodic()
-  {
-    velocitySig.refresh();
-    currentSig.refresh();
+        configs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-    force = MathUtils.currentToForce(currentSig.getValueAsDouble(), ampsPerNewton);
-    velocity = MathUtils.motorTurnsToMeters(velocitySig.getValueAsDouble(), turnsPerMeter, gearRatio);
+        var status = motor.getConfigurator().apply(configs, 1.0);
+        if (!status.isOK()) {
+            System.err.println("Collector: config failed to config!");
+            return false;
+        }
 
-    inputs.velocity = velocity;
-    inputs.force = force;
-    Logger.processInputs("Collector", inputs);
+        status = motor.setNeutralMode(NeutralModeValue.Brake, 1.0);
+        if (!status.isOK()) {
+            System.err.println("Collector: neutral mode failed to config :(!");
+            return false;
+        }
 
-    if (hasCommand) {
-      double motorVel = MathUtils.metersToMotorTurns(limiter.calculate(targetVelocity), turnsPerMeter, gearRatio);
-      motor.setControl(commandVelocityVoltage.withVelocity(motorVel));
-    } else {
-      motor.setControl(new NeutralOut());
-      limiter.reset(0.0);
+        return true;
     }
 
-    Logger.recordOutput("Collector/TargetVelocity", hasCommand ? limiter.lastValue() : 0.0);
-  }
+    // Command the collector to spin at the given velocity, meters/second of wheel surface speed.
+    public void setVelocity(double metersPerSecond)
+    {
+        hasCommand = true;
+        targetVelocity = metersPerSecond;
+    }
 
-  @Override
-  public void initSendable(SendableBuilder builder)
-  {
-    super.initSendable(builder);
-    builder.addDoubleProperty("Velocity", this::getVelocity, null);
-    builder.addDoubleProperty("Force", this::getForce, null);
-  }
+    public void stop()
+    {
+        hasCommand = false;
+    }
+
+    public double getVelocity()
+    {
+        return velocity;
+    }
+
+    public double getForce()
+    {
+        return force;
+    }
+
+    @Override
+    public void periodic()
+    {
+        velocitySig.refresh();
+        currentSig.refresh();
+
+        force = MathUtils.currentToForce(currentSig.getValueAsDouble(), ampsPerNewton);
+        velocity = MathUtils.motorTurnsToMeters(velocitySig.getValueAsDouble(), turnsPerMeter, gearRatio);
+
+        inputs.velocity = velocity;
+        inputs.force = force;
+        Logger.processInputs("Collector", inputs);
+
+        if (hasCommand) {
+            double motorVel = MathUtils.metersToMotorTurns(limiter.calculate(targetVelocity), turnsPerMeter, gearRatio);
+            motor.setControl(commandVelocityVoltage.withVelocity(motorVel));
+        } else {
+            motor.setControl(new NeutralOut());
+            limiter.reset(0.0);
+        }
+
+        Logger.recordOutput("Collector/TargetVelocity", hasCommand ? limiter.lastValue() : 0.0);
+    }
+
+    @Override
+    public void initSendable(SendableBuilder builder)
+    {
+        super.initSendable(builder);
+        builder.addDoubleProperty("Velocity", this::getVelocity, null);
+        builder.addDoubleProperty("Force", this::getForce, null);
+    }
 }

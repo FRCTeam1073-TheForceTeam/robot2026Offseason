@@ -25,173 +25,173 @@ import static org.mockito.Mockito.*;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class HoodTeleopTest
 {
-  @Mock
-  private ShooterHood mockShooterHood;
+    @Mock
+    private ShooterHood mockShooterHood;
 
-  @Mock
-  private OI mockOI;
+    @Mock
+    private OI mockOI;
 
-  @Mock
-  private TargetFinder mockTargetFinder;
+    @Mock
+    private TargetFinder mockTargetFinder;
 
-  @Mock
-  private ShooterTable mockShooterTable;
+    @Mock
+    private ShooterTable mockShooterTable;
 
-  @Mock
-  private ZoneFinder mockZoneFinder;
+    @Mock
+    private ZoneFinder mockZoneFinder;
 
-  @Mock
-  private BallisticShot mockBallisticShot;
+    @Mock
+    private BallisticShot mockBallisticShot;
 
-  @Test
-  public void testExecute_trenchZoneOverridesEverything()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_trenchZoneOverridesEverything()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> trenchZone = new HashSet<>();
-    trenchZone.add("TRENCH");
-    when(mockZoneFinder.getZones()).thenReturn(trenchZone);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
+        Set<String> trenchZone = new HashSet<>();
+        trenchZone.add("TRENCH");
+        when(mockZoneFinder.getZones()).thenReturn(trenchZone);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(ShooterHood.maxPositionRadians);
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(ShooterHood.maxPositionRadians);
+    }
 
-  @Test
-  public void testExecute_leftTriggerWithPassingModeClosest()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_leftTriggerWithPassingModeClosest()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
-    when(mockTargetFinder.isPassing()).thenReturn(true);
-    when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(Units.inchesToMeters(200));
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
+        when(mockTargetFinder.isPassing()).thenReturn(true);
+        when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(Units.inchesToMeters(200));
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(ShooterHood.minPositionRadians - Math.toRadians(10));
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(ShooterHood.minPositionRadians - Math.toRadians(10));
+    }
 
-  @Test
-  public void testExecute_leftTriggerWithPassingModeUnder330()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_leftTriggerWithPassingModeUnder330()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
-    when(mockTargetFinder.isPassing()).thenReturn(true);
-    when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(Units.inchesToMeters(300));
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
+        when(mockTargetFinder.isPassing()).thenReturn(true);
+        when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(Units.inchesToMeters(300));
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(ShooterHood.minPositionRadians - Math.toRadians(10));
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(ShooterHood.minPositionRadians - Math.toRadians(10));
+    }
 
-  @Test
-  public void testExecute_leftTriggerWithPassingModeFar()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_leftTriggerWithPassingModeFar()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
-    when(mockTargetFinder.isPassing()).thenReturn(true);
-    when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(Units.inchesToMeters(400));
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
+        when(mockTargetFinder.isPassing()).thenReturn(true);
+        when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(Units.inchesToMeters(400));
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(ShooterHood.minPositionRadians + Math.toRadians(13));
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(ShooterHood.minPositionRadians + Math.toRadians(13));
+    }
 
-  @Test
-  public void testExecute_leftTriggerWithBallisticShotMode()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_leftTriggerWithBallisticShotMode()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
-    when(mockTargetFinder.isPassing()).thenReturn(false);
-    when(mockOI.ballisticShotMode()).thenReturn(true);
-    when(mockBallisticShot.getShot()).thenReturn(new BallisticShot.Shot(12.5, 0.7, 2.0));
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
+        when(mockTargetFinder.isPassing()).thenReturn(false);
+        when(mockOI.ballisticShotMode()).thenReturn(true);
+        when(mockBallisticShot.getShot()).thenReturn(new BallisticShot.Shot(12.5, 0.7, 2.0));
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(0.7);
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(0.7);
+    }
 
-  @Test
-  public void testExecute_leftTriggerWithTableMode()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_leftTriggerWithTableMode()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
-    when(mockTargetFinder.isPassing()).thenReturn(false);
-    when(mockOI.ballisticShotMode()).thenReturn(false);
-    when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(2.0);
-    when(mockShooterTable.getHoodAngle(2.0)).thenReturn(0.6);
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
+        when(mockTargetFinder.isPassing()).thenReturn(false);
+        when(mockOI.ballisticShotMode()).thenReturn(false);
+        when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(2.0);
+        when(mockShooterTable.getHoodAngle(2.0)).thenReturn(0.6);
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(0.6);
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(0.6);
+    }
 
-  @Test
-  public void testExecute_yButtonCornerShot()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_yButtonCornerShot()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.0);
-    when(mockOI.getOperatorYButton()).thenReturn(true);
-    when(mockOI.getOperatorXButton()).thenReturn(false);
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.0);
+        when(mockOI.getOperatorYButton()).thenReturn(true);
+        when(mockOI.getOperatorXButton()).thenReturn(false);
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(Math.toRadians(55.0));
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(Math.toRadians(55.0));
+    }
 
-  @Test
-  public void testExecute_xButtonTowerShot()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_xButtonTowerShot()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.0);
-    when(mockOI.getOperatorYButton()).thenReturn(false);
-    when(mockOI.getOperatorXButton()).thenReturn(true);
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.0);
+        when(mockOI.getOperatorYButton()).thenReturn(false);
+        when(mockOI.getOperatorXButton()).thenReturn(true);
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(Math.toRadians(61.0));
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(Math.toRadians(61.0));
+    }
 
-  @Test
-  public void testExecute_noInputsRaisesHood()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+    @Test
+    public void testExecute_noInputsRaisesHood()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
-    Set<String> noTrench = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noTrench);
-    when(mockOI.getOperatorLeftTrigger()).thenReturn(0.0);
-    when(mockOI.getOperatorYButton()).thenReturn(false);
-    when(mockOI.getOperatorXButton()).thenReturn(false);
+        Set<String> noTrench = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noTrench);
+        when(mockOI.getOperatorLeftTrigger()).thenReturn(0.0);
+        when(mockOI.getOperatorYButton()).thenReturn(false);
+        when(mockOI.getOperatorXButton()).thenReturn(false);
 
-    cmd.execute();
-    verify(mockShooterHood).setPosition(ShooterHood.maxPositionRadians);
-  }
+        cmd.execute();
+        verify(mockShooterHood).setPosition(ShooterHood.maxPositionRadians);
+    }
 
-  @Test
-  public void testEnd_callsStop()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
-    cmd.end(false);
-    verify(mockShooterHood).stop();
-  }
+    @Test
+    public void testEnd_callsStop()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+        cmd.end(false);
+        verify(mockShooterHood).stop();
+    }
 
-  @Test
-  public void testIsFinished_alwaysFalse()
-  {
-    HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
-    assert !cmd.isFinished();
-  }
+    @Test
+    public void testIsFinished_alwaysFalse()
+    {
+        HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
+        assert !cmd.isFinished();
+    }
 }

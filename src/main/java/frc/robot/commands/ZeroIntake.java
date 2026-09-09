@@ -12,40 +12,40 @@ import frc.robot.subsystems.Intake;
  */
 public class ZeroIntake extends Command
 {
-  private final Intake intake;
+    private final Intake intake;
 
-  public ZeroIntake(Intake intake)
-  {
-    this.intake = intake;
+    public ZeroIntake(Intake intake)
+    {
+        this.intake = intake;
 
-    addRequirements(intake);
-  }
-
-  @Override
-  public void initialize()
-  {
-  }
-
-  @Override
-  public void execute()
-  {
-    double velocity = -1.0;
-    intake.setVelocity(velocity);
-  }
-
-  @Override
-  public void end(boolean interrupted)
-  {
-    intake.zero();
-    intake.stop();
-  }
-
-  @Override
-  public boolean isFinished()
-  {
-    if (Math.abs(intake.getTorqueNm()) > 2.5) {
-      return true;
+        addRequirements(intake);
     }
-    return false;
-  }
+
+    @Override
+    public void initialize()
+    {
+    }
+
+    @Override
+    public void execute()
+    {
+        double velocity = -1.0;
+        intake.setVelocity(velocity);
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        intake.zero();
+        intake.stop();
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        if (Math.abs(intake.getTorqueNm()) > 2.5) {
+            return true;
+        }
+        return false;
+    }
 }

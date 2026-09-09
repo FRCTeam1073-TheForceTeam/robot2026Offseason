@@ -12,79 +12,79 @@ import org.mockito.InOrder;
 import frc.robot.subsystems.Intake;
 
 public class ZeroIntakeTest {
-  private static final double LIMIT_NM = 2.5;
+    private static final double LIMIT_NM = 2.5;
 
-  @Test
-  public void testIsFinished_belowThreshold() {
-    Intake mockIntake = mock(Intake.class);
-    when(mockIntake.getTorqueNm()).thenReturn(2.0);
+    @Test
+    public void testIsFinished_belowThreshold() {
+        Intake mockIntake = mock(Intake.class);
+        when(mockIntake.getTorqueNm()).thenReturn(2.0);
 
-    ZeroIntake command = new ZeroIntake(mockIntake);
+        ZeroIntake command = new ZeroIntake(mockIntake);
 
-    assertFalse(command.isFinished());
-  }
+        assertFalse(command.isFinished());
+    }
 
-  @Test
-  public void testIsFinished_aboveThreshold() {
-    Intake mockIntake = mock(Intake.class);
-    when(mockIntake.getTorqueNm()).thenReturn(3.0);
+    @Test
+    public void testIsFinished_aboveThreshold() {
+        Intake mockIntake = mock(Intake.class);
+        when(mockIntake.getTorqueNm()).thenReturn(3.0);
 
-    ZeroIntake command = new ZeroIntake(mockIntake);
+        ZeroIntake command = new ZeroIntake(mockIntake);
 
-    assertTrue(command.isFinished());
-  }
+        assertTrue(command.isFinished());
+    }
 
-  @Test
-  public void testIsFinished_exactlyAtThreshold_returnsFalse() {
-    Intake mockIntake = mock(Intake.class);
-    when(mockIntake.getTorqueNm()).thenReturn(LIMIT_NM);
+    @Test
+    public void testIsFinished_exactlyAtThreshold_returnsFalse() {
+        Intake mockIntake = mock(Intake.class);
+        when(mockIntake.getTorqueNm()).thenReturn(LIMIT_NM);
 
-    ZeroIntake command = new ZeroIntake(mockIntake);
+        ZeroIntake command = new ZeroIntake(mockIntake);
 
-    assertFalse(command.isFinished());
-  }
+        assertFalse(command.isFinished());
+    }
 
-  @Test
-  public void testExecute_setsVelocity() {
-    Intake mockIntake = mock(Intake.class);
-    when(mockIntake.getTorqueNm()).thenReturn(0.0);
+    @Test
+    public void testExecute_setsVelocity() {
+        Intake mockIntake = mock(Intake.class);
+        when(mockIntake.getTorqueNm()).thenReturn(0.0);
 
-    ZeroIntake command = new ZeroIntake(mockIntake);
-    command.execute();
+        ZeroIntake command = new ZeroIntake(mockIntake);
+        command.execute();
 
-    verify(mockIntake).setVelocity(-1.0);
-  }
+        verify(mockIntake).setVelocity(-1.0);
+    }
 
-  @Test
-  public void testEnd_notInterrupted_callsZeroThenStop() {
-    Intake mockIntake = mock(Intake.class);
+    @Test
+    public void testEnd_notInterrupted_callsZeroThenStop() {
+        Intake mockIntake = mock(Intake.class);
 
-    ZeroIntake command = new ZeroIntake(mockIntake);
-    command.end(false);
+        ZeroIntake command = new ZeroIntake(mockIntake);
+        command.end(false);
 
-    InOrder inOrder = inOrder(mockIntake);
-    inOrder.verify(mockIntake).zero();
-    inOrder.verify(mockIntake).stop();
-  }
+        InOrder inOrder = inOrder(mockIntake);
+        inOrder.verify(mockIntake).zero();
+        inOrder.verify(mockIntake).stop();
+    }
 
-  @Test
-  public void testEnd_interrupted_callsZeroThenStop() {
-    Intake mockIntake = mock(Intake.class);
+    @Test
+    public void testEnd_interrupted_callsZeroThenStop() {
+        Intake mockIntake = mock(Intake.class);
 
-    ZeroIntake command = new ZeroIntake(mockIntake);
-    command.end(true);
+        ZeroIntake command = new ZeroIntake(mockIntake);
+        command.end(true);
 
-    InOrder inOrder = inOrder(mockIntake);
-    inOrder.verify(mockIntake).zero();
-    inOrder.verify(mockIntake).stop();
-  }
+        InOrder inOrder = inOrder(mockIntake);
+        inOrder.verify(mockIntake).zero();
+        inOrder.verify(mockIntake).stop();
+    }
 
-  @Test
-  public void testConstructor_addsRequirements() {
-    Intake mockIntake = mock(Intake.class);
+    @Test
+    public void testConstructor_addsRequirements() {
+        Intake mockIntake = mock(Intake.class);
 
-    ZeroIntake command = new ZeroIntake(mockIntake);
+        ZeroIntake command = new ZeroIntake(mockIntake);
 
-    assertTrue(command.getRequirements().contains(mockIntake));
-  }
+        assertTrue(command.getRequirements().contains(mockIntake));
+    }
 }

@@ -10,32 +10,32 @@ import frc.robot.utilities.DashboardNames;
 
 public class SmartDashPrint extends Command
 {
-  private final String s;
+    private final String s;
 
-  public SmartDashPrint(String s)
-  {
-    this.s = s;
-  }
+    public SmartDashPrint(String s)
+    {
+        this.s = s;
+    }
 
-  @Override
-  public void initialize()
-  {
-    SmartDashboard.putString(DashboardNames.AUTO_EVENT.getKey(), s);
-  }
+    @Override
+    public void initialize()
+    {
+        SmartDashboard.putString(DashboardNames.AUTO_EVENT.getKey(), s);
+    }
 
-  @Override
-  public void execute()
-  {
-  }
+    @Override
+    public void execute()
+    {
+    }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-  }
+    @Override
+    public void end(boolean interrupted)
+    {
+    }
 
-  @Override
-  public boolean isFinished()
-  {
-    return true;
-  }
+    @Override
+    public boolean isFinished()
+    {
+        return true;
+    }
 }

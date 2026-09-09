@@ -14,10 +14,10 @@ public class TunerConstants {
     public static final int kPigeonId = 5;
 
     public static final SwerveDrivetrainConstants DrivetrainConstants =
-        new SwerveDrivetrainConstants()
-            .withCANBusName(kCANBus)
-            .withPigeon2Id(kPigeonId)
-            .withPigeon2Configs(new Pigeon2Configuration());
+    new SwerveDrivetrainConstants()
+    .withCANBusName(kCANBus)
+    .withPigeon2Id(kPigeonId)
+    .withPigeon2Configs(new Pigeon2Configuration());
 
     // Physical constants from legacy SwerveModuleConfig
     private static final double kDriveGearRatio = 6.03;
@@ -30,12 +30,12 @@ public class TunerConstants {
 
     // PID gains from legacy SwerveModuleConfig
     private static final com.ctre.phoenix6.configs.Slot0Configs steerGains =
-        new com.ctre.phoenix6.configs.Slot0Configs()
-            .withKP(11.0).withKI(0.8).withKD(0.04).withKV(0.153).withKS(0.04);
+    new com.ctre.phoenix6.configs.Slot0Configs()
+    .withKP(11.0).withKI(0.8).withKD(0.04).withKV(0.153).withKS(0.04);
 
     private static final com.ctre.phoenix6.configs.Slot0Configs driveGains =
-        new com.ctre.phoenix6.configs.Slot0Configs()
-            .withKP(0.35).withKI(0.0).withKD(0.0).withKV(0.12).withKA(0.0).withKS(0.015);
+    new com.ctre.phoenix6.configs.Slot0Configs()
+    .withKP(0.35).withKI(0.0).withKD(0.0).withKV(0.12).withKA(0.0).withKS(0.015);
 
     // Preserve legacy voltage/current limit behavior
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration();
@@ -55,19 +55,19 @@ public class TunerConstants {
     }
 
     private static final SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
-        ConstantCreator = new SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>()
-            .withDriveMotorGearRatio(kDriveGearRatio)
-            .withSteerMotorGearRatio(kSteerGearRatio)
-            .withWheelRadius(kWheelRadiusMeters)
-            .withSteerMotorGains(steerGains)
-            .withDriveMotorGains(driveGains)
-            .withSteerMotorClosedLoopOutput(SwerveModuleConstants.ClosedLoopOutputType.Voltage)
-            .withDriveMotorClosedLoopOutput(SwerveModuleConstants.ClosedLoopOutputType.Voltage)
-            .withFeedbackSource(SwerveModuleConstants.SteerFeedbackType.RemoteCANcoder)
-            .withCouplingGearRatio(0)
-            .withSlipCurrent(kDriveCurrentLimit)
-            .withSteerMotorInitialConfigs(steerInitialConfigs)
-            .withDriveMotorInitialConfigs(driveInitialConfigs);
+    ConstantCreator = new SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>()
+    .withDriveMotorGearRatio(kDriveGearRatio)
+    .withSteerMotorGearRatio(kSteerGearRatio)
+    .withWheelRadius(kWheelRadiusMeters)
+    .withSteerMotorGains(steerGains)
+    .withDriveMotorGains(driveGains)
+    .withSteerMotorClosedLoopOutput(SwerveModuleConstants.ClosedLoopOutputType.Voltage)
+    .withDriveMotorClosedLoopOutput(SwerveModuleConstants.ClosedLoopOutputType.Voltage)
+    .withFeedbackSource(SwerveModuleConstants.SteerFeedbackType.RemoteCANcoder)
+    .withCouplingGearRatio(0)
+    .withSlipCurrent(kDriveCurrentLimit)
+    .withSteerMotorInitialConfigs(steerInitialConfigs)
+    .withDriveMotorInitialConfigs(driveInitialConfigs);
 
     // CANcoder offsets from magnet-offsets.md
     // Module numbering: 0=FL, 1=FR, 2=BL, 3=BR

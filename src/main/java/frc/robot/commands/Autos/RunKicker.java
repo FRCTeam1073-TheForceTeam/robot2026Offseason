@@ -12,38 +12,38 @@ import frc.robot.subsystems.Kicker;
  */
 public class RunKicker extends Command
 {
-  private final Kicker kicker;
+    private final Kicker kicker;
 
-  private double targetVelocity;
+    private double targetVelocity;
 
-  public RunKicker(Kicker kicker)
-  {
-    this.kicker = kicker;
+    public RunKicker(Kicker kicker)
+    {
+        this.kicker = kicker;
 
-    addRequirements(kicker);
-  }
+        addRequirements(kicker);
+    }
 
-  @Override
-  public void initialize()
-  {
-    targetVelocity = 4.5;
-  }
+    @Override
+    public void initialize()
+    {
+        targetVelocity = 4.5;
+    }
 
-  @Override
-  public void execute()
-  {
-    kicker.setVelocity(targetVelocity);
-  }
+    @Override
+    public void execute()
+    {
+        kicker.setVelocity(targetVelocity);
+    }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-    kicker.stop();
-  }
+    @Override
+    public void end(boolean interrupted)
+    {
+        kicker.stop();
+    }
 
-  @Override
-  public boolean isFinished()
-  {
-    return false;
-  }
+    @Override
+    public boolean isFinished()
+    {
+        return false;
+    }
 }

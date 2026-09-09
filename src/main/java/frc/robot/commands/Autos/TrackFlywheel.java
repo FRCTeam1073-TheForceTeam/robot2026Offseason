@@ -12,56 +12,56 @@ import frc.robot.utilities.ShooterTable;
 
 public class TrackFlywheel extends Command
 {
-  private final Flywheel flywheel;
-  private final TargetFinder tf;
-  private final ShooterTable st;
-  private final BallisticShot bs;
-  private final boolean lookupTable;
+    private final Flywheel flywheel;
+    private final TargetFinder tf;
+    private final ShooterTable st;
+    private final BallisticShot bs;
+    private final boolean lookupTable;
 
-  public TrackFlywheel(Flywheel flywheel, TargetFinder tf, ShooterTable st, BallisticShot bs, boolean lookupTable)
-  {
-    this.flywheel = flywheel;
-    this.tf = tf;
-    this.st = st;
-    this.bs = bs;
-    this.lookupTable = lookupTable;
+    public TrackFlywheel(Flywheel flywheel, TargetFinder tf, ShooterTable st, BallisticShot bs, boolean lookupTable)
+    {
+        this.flywheel = flywheel;
+        this.tf = tf;
+        this.st = st;
+        this.bs = bs;
+        this.lookupTable = lookupTable;
 
-    addRequirements(flywheel);
-  }
-
-  public TrackFlywheel(Flywheel flywheel, TargetFinder tf, ShooterTable st, BallisticShot bs)
-  {
-    this(flywheel, tf, st, bs, false);
-  }
-
-  @Override
-  public void initialize()
-  {
-  }
-
-  @Override
-  public void execute()
-  {
-    double range = tf.getRangeToTargetMeters();
-
-    if (lookupTable) {
-      double targetSpeed = st.getFlywheelVelocity(range);
-      flywheel.setVelocity(targetSpeed);
-    } else {
-      BallisticShot.Shot shot = bs.getShot();
-      flywheel.setVelocity(shot.flywheelSpeed);
+        addRequirements(flywheel);
     }
-  }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-    flywheel.stop();
-  }
+    public TrackFlywheel(Flywheel flywheel, TargetFinder tf, ShooterTable st, BallisticShot bs)
+    {
+        this(flywheel, tf, st, bs, false);
+    }
 
-  @Override
-  public boolean isFinished()
-  {
-    return false;
-  }
+    @Override
+    public void initialize()
+    {
+    }
+
+    @Override
+    public void execute()
+    {
+        double range = tf.getRangeToTargetMeters();
+
+        if (lookupTable) {
+            double targetSpeed = st.getFlywheelVelocity(range);
+            flywheel.setVelocity(targetSpeed);
+        } else {
+            BallisticShot.Shot shot = bs.getShot();
+            flywheel.setVelocity(shot.flywheelSpeed);
+        }
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        flywheel.stop();
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        return false;
+    }
 }

@@ -144,8 +144,8 @@ public class AprilTagFinderTest {
 
         // Should handle null results gracefully
         assertThrows(NullPointerException.class, () -> {
-            finder.getCamMeasurements(null, transform, "TestCamera");
-        }, "Should throw when results is null");
+                finder.getCamMeasurements(null, transform, "TestCamera");
+            }, "Should throw when results is null");
     }
 
     @Test

@@ -17,42 +17,42 @@ import frc.robot.utilities.ShooterTable;
 
 public final class Autos
 {
-  private Autos()
-  {
-  }
+    private Autos()
+    {
+    }
 
-  // Fully track hub with turret, flywheel and hood for shooting, requires localization.
-  public static Command trackHub(Turret turret, Flywheel flywheel, ShooterHood shooterHood, TargetFinder hf, ShooterTable st, BallisticShot bs)
-  {
-    return Commands.parallel(
-        new TrackHood(shooterHood, hf, st, bs),
-        new TrackFlywheel(flywheel, hf, st, bs),
-        new TrackTurret(turret, hf));
-  }
+    // Fully track hub with turret, flywheel and hood for shooting, requires localization.
+    public static Command trackHub(Turret turret, Flywheel flywheel, ShooterHood shooterHood, TargetFinder hf, ShooterTable st, BallisticShot bs)
+    {
+        return Commands.parallel(
+            new TrackHood(shooterHood, hf, st, bs),
+            new TrackFlywheel(flywheel, hf, st, bs),
+            new TrackTurret(turret, hf));
+    }
 
-  // Shoots with tracking into hub, requires localization.
-  public static Command basicAutoShot(Spindexer spindexer, Kicker kicker, Turret turret, Flywheel flywheel, ShooterHood shooterHood, TargetFinder hf, ShooterTable st, BallisticShot bs)
-  {
-    return Commands.parallel(
-        new TrackHood(shooterHood, hf, st, bs),
-        new TrackFlywheel(flywheel, hf, st, bs),
-        new TrackTurret(turret, hf),
-        Commands.sequence(Commands.waitSeconds(2.0),
-            Commands.parallel(
-                new RunSpindexer(spindexer),
-                new RunKicker(kicker)))).withTimeout(10.0);
-  }
+    // Shoots with tracking into hub, requires localization.
+    public static Command basicAutoShot(Spindexer spindexer, Kicker kicker, Turret turret, Flywheel flywheel, ShooterHood shooterHood, TargetFinder hf, ShooterTable st, BallisticShot bs)
+    {
+        return Commands.parallel(
+            new TrackHood(shooterHood, hf, st, bs),
+            new TrackFlywheel(flywheel, hf, st, bs),
+            new TrackTurret(turret, hf),
+            Commands.sequence(Commands.waitSeconds(2.0),
+                Commands.parallel(
+                    new RunSpindexer(spindexer),
+                    new RunKicker(kicker)))).withTimeout(10.0);
+    }
 
-  // Simple fixed shot auto directly in front of hub requires no localization.
-  public static Command hubAuto(Spindexer spindexer, Kicker kicker, Turret turret, Flywheel flywheel, ShooterHood shooterHood)
-  {
-    return Commands.parallel(
-        Commands.runOnce(() -> shooterHood.setPosition(Math.toRadians(69.2)), shooterHood),
-        Commands.runOnce(() -> flywheel.setVelocity(8.0), flywheel),
-        Commands.runOnce(() -> turret.setPosition(0.0), turret),
-        Commands.sequence(Commands.waitSeconds(2.0),
-            Commands.parallel(
-                new RunSpindexer(spindexer),
-                new RunKicker(kicker)))).withTimeout(10.0);
-  }
+    // Simple fixed shot auto directly in front of hub requires no localization.
+    public static Command hubAuto(Spindexer spindexer, Kicker kicker, Turret turret, Flywheel flywheel, ShooterHood shooterHood)
+    {
+        return Commands.parallel(
+            Commands.runOnce(() -> shooterHood.setPosition(Math.toRadians(69.2)), shooterHood),
+            Commands.runOnce(() -> flywheel.setVelocity(8.0), flywheel),
+            Commands.runOnce(() -> turret.setPosition(0.0), turret),
+            Commands.sequence(Commands.waitSeconds(2.0),
+                Commands.parallel(
+                    new RunSpindexer(spindexer),
+                    new RunKicker(kicker)))).withTimeout(10.0);
+    }
 }

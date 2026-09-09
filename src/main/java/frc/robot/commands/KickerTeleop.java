@@ -10,45 +10,45 @@ import frc.robot.subsystems.OI;
 
 public class KickerTeleop extends Command
 {
-  private final Kicker kicker;
-  private final OI oi;
+    private final Kicker kicker;
+    private final OI oi;
 
-  public KickerTeleop(Kicker kicker, OI oi)
-  {
-    this.kicker = kicker;
-    this.oi = oi;
+    public KickerTeleop(Kicker kicker, OI oi)
+    {
+        this.kicker = kicker;
+        this.oi = oi;
 
-    addRequirements(kicker);
-  }
-
-  @Override
-  public void initialize()
-  {
-  }
-
-  @Override
-  public void execute()
-  {
-    boolean bButton = oi.getOperatorBButton();
-
-    if (oi.getOperatorRightTrigger() >= 0.1) {
-      kicker.setVelocity(Kicker.shotSpeed);
-    } else if (bButton) {
-      kicker.setVelocity(-1.65); // Jam clearing.
-    } else {
-      kicker.stop();
+        addRequirements(kicker);
     }
-  }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-    kicker.stop();
-  }
+    @Override
+    public void initialize()
+    {
+    }
 
-  @Override
-  public boolean isFinished()
-  {
-    return false;
-  }
+    @Override
+    public void execute()
+    {
+        boolean bButton = oi.getOperatorBButton();
+
+        if (oi.getOperatorRightTrigger() >= 0.1) {
+            kicker.setVelocity(Kicker.shotSpeed);
+        } else if (bButton) {
+            kicker.setVelocity(-1.65); // Jam clearing.
+        } else {
+            kicker.stop();
+        }
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        kicker.stop();
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        return false;
+    }
 }

@@ -20,140 +20,140 @@ import static org.mockito.Mockito.*;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ClimberTeleopTest
 {
-  @Mock
-  private Climber mockClimber;
+    @Mock
+    private Climber mockClimber;
 
-  @Mock
-  private OI mockOI;
+    @Mock
+    private OI mockOI;
 
-  @Mock
-  private ZoneFinder mockZoneFinder;
+    @Mock
+    private ZoneFinder mockZoneFinder;
 
-  @Test
-  public void testInitialize_storesCurrentPosition()
-  {
-    when(mockClimber.getClimberPosition()).thenReturn(0.03);
+    @Test
+    public void testInitialize_storesCurrentPosition()
+    {
+        when(mockClimber.getClimberPosition()).thenReturn(0.03);
 
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    cmd.initialize();
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        cmd.initialize();
 
-    Set<String> noZone = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noZone);
-    when(mockOI.getDriverMenuButton()).thenReturn(false);
-    when(mockOI.getDriverViewButton()).thenReturn(false);
+        Set<String> noZone = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noZone);
+        when(mockOI.getDriverMenuButton()).thenReturn(false);
+        when(mockOI.getDriverViewButton()).thenReturn(false);
 
-    cmd.execute();
-    verify(mockClimber).setPosition(0.03);
-  }
+        cmd.execute();
+        verify(mockClimber).setPosition(0.03);
+    }
 
-  @Test
-  public void testExecute_menuButtonIncreasesPosition()
-  {
-    when(mockClimber.getClimberPosition()).thenReturn(0.03);
+    @Test
+    public void testExecute_menuButtonIncreasesPosition()
+    {
+        when(mockClimber.getClimberPosition()).thenReturn(0.03);
 
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    cmd.initialize();
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        cmd.initialize();
 
-    Set<String> noZone = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noZone);
-    when(mockOI.getDriverMenuButton()).thenReturn(true);
-    when(mockOI.getDriverViewButton()).thenReturn(false);
-    when(mockOI.getOperatorViewButton()).thenReturn(false);
-    when(mockOI.getOperatorMenuButton()).thenReturn(false);
+        Set<String> noZone = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noZone);
+        when(mockOI.getDriverMenuButton()).thenReturn(true);
+        when(mockOI.getDriverViewButton()).thenReturn(false);
+        when(mockOI.getOperatorViewButton()).thenReturn(false);
+        when(mockOI.getOperatorMenuButton()).thenReturn(false);
 
-    cmd.execute();
-    verify(mockClimber).setPosition(0.03 + 0.1);
-  }
+        cmd.execute();
+        verify(mockClimber).setPosition(0.03 + 0.1);
+    }
 
-  @Test
-  public void testExecute_viewButtonDecreasesPosition()
-  {
-    when(mockClimber.getClimberPosition()).thenReturn(0.04);
+    @Test
+    public void testExecute_viewButtonDecreasesPosition()
+    {
+        when(mockClimber.getClimberPosition()).thenReturn(0.04);
 
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    cmd.initialize();
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        cmd.initialize();
 
-    Set<String> noZone = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noZone);
-    when(mockOI.getDriverMenuButton()).thenReturn(false);
-    when(mockOI.getDriverViewButton()).thenReturn(true);
-    when(mockOI.getOperatorViewButton()).thenReturn(false);
-    when(mockOI.getOperatorMenuButton()).thenReturn(false);
+        Set<String> noZone = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noZone);
+        when(mockOI.getDriverMenuButton()).thenReturn(false);
+        when(mockOI.getDriverViewButton()).thenReturn(true);
+        when(mockOI.getOperatorViewButton()).thenReturn(false);
+        when(mockOI.getOperatorMenuButton()).thenReturn(false);
 
-    cmd.execute();
-    verify(mockClimber).setPosition(0.04 - 0.1);
-  }
+        cmd.execute();
+        verify(mockClimber).setPosition(0.04 - 0.1);
+    }
 
-  @Test
-  public void testExecute_operatorViewButtonSetsMaxPosition()
-  {
-    when(mockClimber.getClimberPosition()).thenReturn(0.03);
+    @Test
+    public void testExecute_operatorViewButtonSetsMaxPosition()
+    {
+        when(mockClimber.getClimberPosition()).thenReturn(0.03);
 
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    cmd.initialize();
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        cmd.initialize();
 
-    Set<String> noZone = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noZone);
-    when(mockOI.getDriverMenuButton()).thenReturn(false);
-    when(mockOI.getDriverViewButton()).thenReturn(false);
-    when(mockOI.getOperatorViewButton()).thenReturn(true);
-    when(mockOI.getOperatorMenuButton()).thenReturn(false);
+        Set<String> noZone = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noZone);
+        when(mockOI.getDriverMenuButton()).thenReturn(false);
+        when(mockOI.getDriverViewButton()).thenReturn(false);
+        when(mockOI.getOperatorViewButton()).thenReturn(true);
+        when(mockOI.getOperatorMenuButton()).thenReturn(false);
 
-    cmd.execute();
-    verify(mockClimber).setPosition(0.0582);
-  }
+        cmd.execute();
+        verify(mockClimber).setPosition(0.0582);
+    }
 
-  @Test
-  public void testExecute_operatorMenuButtonSetsMinPosition()
-  {
-    when(mockClimber.getClimberPosition()).thenReturn(0.05);
+    @Test
+    public void testExecute_operatorMenuButtonSetsMinPosition()
+    {
+        when(mockClimber.getClimberPosition()).thenReturn(0.05);
 
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    cmd.initialize();
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        cmd.initialize();
 
-    Set<String> noZone = new HashSet<>();
-    when(mockZoneFinder.getZones()).thenReturn(noZone);
-    when(mockOI.getDriverMenuButton()).thenReturn(false);
-    when(mockOI.getDriverViewButton()).thenReturn(false);
-    when(mockOI.getOperatorViewButton()).thenReturn(false);
-    when(mockOI.getOperatorMenuButton()).thenReturn(true);
+        Set<String> noZone = new HashSet<>();
+        when(mockZoneFinder.getZones()).thenReturn(noZone);
+        when(mockOI.getDriverMenuButton()).thenReturn(false);
+        when(mockOI.getDriverViewButton()).thenReturn(false);
+        when(mockOI.getOperatorViewButton()).thenReturn(false);
+        when(mockOI.getOperatorMenuButton()).thenReturn(true);
 
-    cmd.execute();
-    verify(mockClimber).setPosition(0.0);
-  }
+        cmd.execute();
+        verify(mockClimber).setPosition(0.0);
+    }
 
-  @Test
-  public void testExecute_trenchZoneOverridesButtons()
-  {
-    when(mockClimber.getClimberPosition()).thenReturn(0.05);
+    @Test
+    public void testExecute_trenchZoneOverridesButtons()
+    {
+        when(mockClimber.getClimberPosition()).thenReturn(0.05);
 
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    cmd.initialize();
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        cmd.initialize();
 
-    Set<String> trenchZone = new HashSet<>();
-    trenchZone.add("TRENCH");
-    when(mockZoneFinder.getZones()).thenReturn(trenchZone);
-    when(mockOI.getDriverMenuButton()).thenReturn(true);
-    when(mockOI.getDriverViewButton()).thenReturn(false);
-    when(mockOI.getOperatorViewButton()).thenReturn(false);
-    when(mockOI.getOperatorMenuButton()).thenReturn(false);
+        Set<String> trenchZone = new HashSet<>();
+        trenchZone.add("TRENCH");
+        when(mockZoneFinder.getZones()).thenReturn(trenchZone);
+        when(mockOI.getDriverMenuButton()).thenReturn(true);
+        when(mockOI.getDriverViewButton()).thenReturn(false);
+        when(mockOI.getOperatorViewButton()).thenReturn(false);
+        when(mockOI.getOperatorMenuButton()).thenReturn(false);
 
-    cmd.execute();
-    verify(mockClimber).setPosition(0.0);
-  }
+        cmd.execute();
+        verify(mockClimber).setPosition(0.0);
+    }
 
-  @Test
-  public void testEnd_callsStop()
-  {
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    cmd.end(false);
-    verify(mockClimber).stop();
-  }
+    @Test
+    public void testEnd_callsStop()
+    {
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        cmd.end(false);
+        verify(mockClimber).stop();
+    }
 
-  @Test
-  public void testIsFinished_alwaysFalse()
-  {
-    ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
-    assert !cmd.isFinished();
-  }
+    @Test
+    public void testIsFinished_alwaysFalse()
+    {
+        ClimberTeleop cmd = new ClimberTeleop(mockClimber, mockOI, mockZoneFinder);
+        assert !cmd.isFinished();
+    }
 }

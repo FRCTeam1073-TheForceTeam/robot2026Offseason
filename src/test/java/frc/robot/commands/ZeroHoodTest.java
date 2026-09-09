@@ -12,79 +12,79 @@ import org.mockito.InOrder;
 import frc.robot.subsystems.ShooterHood;
 
 public class ZeroHoodTest {
-  private static final double LIMIT_NM = 2.2;
+    private static final double LIMIT_NM = 2.2;
 
-  @Test
-  public void testIsFinished_belowThreshold() {
-    ShooterHood mockHood = mock(ShooterHood.class);
-    when(mockHood.getTorqueNm()).thenReturn(2.0);
+    @Test
+    public void testIsFinished_belowThreshold() {
+        ShooterHood mockHood = mock(ShooterHood.class);
+        when(mockHood.getTorqueNm()).thenReturn(2.0);
 
-    ZeroHood command = new ZeroHood(mockHood);
+        ZeroHood command = new ZeroHood(mockHood);
 
-    assertFalse(command.isFinished());
-  }
+        assertFalse(command.isFinished());
+    }
 
-  @Test
-  public void testIsFinished_aboveThreshold() {
-    ShooterHood mockHood = mock(ShooterHood.class);
-    when(mockHood.getTorqueNm()).thenReturn(3.0);
+    @Test
+    public void testIsFinished_aboveThreshold() {
+        ShooterHood mockHood = mock(ShooterHood.class);
+        when(mockHood.getTorqueNm()).thenReturn(3.0);
 
-    ZeroHood command = new ZeroHood(mockHood);
+        ZeroHood command = new ZeroHood(mockHood);
 
-    assertTrue(command.isFinished());
-  }
+        assertTrue(command.isFinished());
+    }
 
-  @Test
-  public void testIsFinished_exactlyAtThreshold_returnsFalse() {
-    ShooterHood mockHood = mock(ShooterHood.class);
-    when(mockHood.getTorqueNm()).thenReturn(LIMIT_NM);
+    @Test
+    public void testIsFinished_exactlyAtThreshold_returnsFalse() {
+        ShooterHood mockHood = mock(ShooterHood.class);
+        when(mockHood.getTorqueNm()).thenReturn(LIMIT_NM);
 
-    ZeroHood command = new ZeroHood(mockHood);
+        ZeroHood command = new ZeroHood(mockHood);
 
-    assertFalse(command.isFinished());
-  }
+        assertFalse(command.isFinished());
+    }
 
-  @Test
-  public void testExecute_setsVelocity() {
-    ShooterHood mockHood = mock(ShooterHood.class);
-    when(mockHood.getTorqueNm()).thenReturn(0.0);
+    @Test
+    public void testExecute_setsVelocity() {
+        ShooterHood mockHood = mock(ShooterHood.class);
+        when(mockHood.getTorqueNm()).thenReturn(0.0);
 
-    ZeroHood command = new ZeroHood(mockHood);
-    command.execute();
+        ZeroHood command = new ZeroHood(mockHood);
+        command.execute();
 
-    verify(mockHood).setVelocity(0.2);
-  }
+        verify(mockHood).setVelocity(0.2);
+    }
 
-  @Test
-  public void testEnd_notInterrupted_callsZeroThenStop() {
-    ShooterHood mockHood = mock(ShooterHood.class);
+    @Test
+    public void testEnd_notInterrupted_callsZeroThenStop() {
+        ShooterHood mockHood = mock(ShooterHood.class);
 
-    ZeroHood command = new ZeroHood(mockHood);
-    command.end(false);
+        ZeroHood command = new ZeroHood(mockHood);
+        command.end(false);
 
-    InOrder inOrder = inOrder(mockHood);
-    inOrder.verify(mockHood).zero();
-    inOrder.verify(mockHood).stop();
-  }
+        InOrder inOrder = inOrder(mockHood);
+        inOrder.verify(mockHood).zero();
+        inOrder.verify(mockHood).stop();
+    }
 
-  @Test
-  public void testEnd_interrupted_callsZeroThenStop() {
-    ShooterHood mockHood = mock(ShooterHood.class);
+    @Test
+    public void testEnd_interrupted_callsZeroThenStop() {
+        ShooterHood mockHood = mock(ShooterHood.class);
 
-    ZeroHood command = new ZeroHood(mockHood);
-    command.end(true);
+        ZeroHood command = new ZeroHood(mockHood);
+        command.end(true);
 
-    InOrder inOrder = inOrder(mockHood);
-    inOrder.verify(mockHood).zero();
-    inOrder.verify(mockHood).stop();
-  }
+        InOrder inOrder = inOrder(mockHood);
+        inOrder.verify(mockHood).zero();
+        inOrder.verify(mockHood).stop();
+    }
 
-  @Test
-  public void testConstructor_addsRequirements() {
-    ShooterHood mockHood = mock(ShooterHood.class);
+    @Test
+    public void testConstructor_addsRequirements() {
+        ShooterHood mockHood = mock(ShooterHood.class);
 
-    ZeroHood command = new ZeroHood(mockHood);
+        ZeroHood command = new ZeroHood(mockHood);
 
-    assertTrue(command.getRequirements().contains(mockHood));
-  }
+        assertTrue(command.getRequirements().contains(mockHood));
+    }
 }

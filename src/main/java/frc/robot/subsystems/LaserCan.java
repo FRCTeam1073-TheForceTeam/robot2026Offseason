@@ -18,68 +18,68 @@ import org.littletonrobotics.junction.Logger;
 
 public class LaserCan extends SubsystemBase
 {
-  @AutoLog
-  public static class LaserCanInputs
-  {
-    public boolean isValid = false;
-    public double rangeMeters = 0.0;
-  }
-
-  private final au.grapplerobotics.LaserCan laserCan;
-  private final LaserCanInputsAutoLogged inputs = new LaserCanInputsAutoLogged();
-
-  private boolean isValid = false;
-  private double rangeMeters = 0.0;
-
-  public LaserCan()
-  {
-    setName("LaserCan");
-
-    laserCan = new au.grapplerobotics.LaserCan(28);
-
-    boolean hardwareConfigured = configureHardware();
-    if (!hardwareConfigured) {
-      System.err.println("LaserCAN: Hardware Failed To Configure!");
-    }
-    SmartDashboard.putBoolean(DashboardNames.LASER_CAN_HW_CONFIGURED.getKey(), hardwareConfigured);
-  }
-
-  private boolean configureHardware()
-  {
-    try {
-      laserCan.setRangingMode(RangingMode.LONG); // TODO: set ranging mode
-      laserCan.setTimingBudget(TimingBudget.TIMING_BUDGET_100MS); // TODO: set timing budget
-      laserCan.setRegionOfInterest(new RegionOfInterest(8, 8, 16, 16)); // TODO: change values
-      return true;
-    } catch (ConfigurationFailedException e) {
-      return false;
-    }
-  }
-
-  @Override
-  public void periodic()
-  {
-    Measurement measurementData = laserCan.getMeasurement();
-    if (measurementData != null && measurementData.status == au.grapplerobotics.interfaces.LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT) {
-      isValid = true;
-      rangeMeters = measurementData.distance_mm / 1000.0;
-    } else {
-      isValid = false;
-      rangeMeters = 0.0;
+    @AutoLog
+    public static class LaserCanInputs
+    {
+        public boolean isValid = false;
+        public double rangeMeters = 0.0;
     }
 
-    inputs.isValid = isValid;
-    inputs.rangeMeters = rangeMeters;
-    Logger.processInputs("LaserCan", inputs);
-  }
+    private final au.grapplerobotics.LaserCan laserCan;
+    private final LaserCanInputsAutoLogged inputs = new LaserCanInputsAutoLogged();
 
-  public boolean isValid()
-  {
-    return isValid;
-  }
+    private boolean isValid = false;
+    private double rangeMeters = 0.0;
 
-  public double getRangeMeters()
-  {
-    return rangeMeters;
-  }
+    public LaserCan()
+    {
+        setName("LaserCan");
+
+        laserCan = new au.grapplerobotics.LaserCan(28);
+
+        boolean hardwareConfigured = configureHardware();
+        if (!hardwareConfigured) {
+            System.err.println("LaserCAN: Hardware Failed To Configure!");
+        }
+        SmartDashboard.putBoolean(DashboardNames.LASER_CAN_HW_CONFIGURED.getKey(), hardwareConfigured);
+    }
+
+    private boolean configureHardware()
+    {
+        try {
+            laserCan.setRangingMode(RangingMode.LONG); // TODO: set ranging mode
+            laserCan.setTimingBudget(TimingBudget.TIMING_BUDGET_100MS); // TODO: set timing budget
+            laserCan.setRegionOfInterest(new RegionOfInterest(8, 8, 16, 16)); // TODO: change values
+            return true;
+        } catch (ConfigurationFailedException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void periodic()
+    {
+        Measurement measurementData = laserCan.getMeasurement();
+        if (measurementData != null && measurementData.status == au.grapplerobotics.interfaces.LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT) {
+            isValid = true;
+            rangeMeters = measurementData.distance_mm / 1000.0;
+        } else {
+            isValid = false;
+            rangeMeters = 0.0;
+        }
+
+        inputs.isValid = isValid;
+        inputs.rangeMeters = rangeMeters;
+        Logger.processInputs("LaserCan", inputs);
+    }
+
+    public boolean isValid()
+    {
+        return isValid;
+    }
+
+    public double getRangeMeters()
+    {
+        return rangeMeters;
+    }
 }
