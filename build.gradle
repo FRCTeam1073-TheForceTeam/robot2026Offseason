@@ -150,3 +150,7 @@ gversion {
     timeZone     = "America/New_York" // Use preferred time zone
     indent       = "    "
 }
+
+task compile {
+    dependsOn compileJava
+}
