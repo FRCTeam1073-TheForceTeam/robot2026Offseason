@@ -189,6 +189,19 @@ public class Intake extends SubsystemBase
     return hasZero;
   }
 
+  // The limiter's state must track the physically-constrained position (clamped) to avoid jerky
+  // motion at boundaries. However, rate limiting should apply to the unconstrained target to
+  // provide responsive control. This dual-calculate pattern achieves both: the first call updates
+  // the limiter's internal state with the actual position we can reach (clamped), while the second
+  // call returns a rate-limited version of the requested target. This could be refactored by
+  // using separate state tracking, but the current approach works and matches hardware behavior.
+  static double computePositionCommandRadians(SlewRateLimiter limiter, double targetPosition, double minPositionRadians, double maxPositionRadians)
+  {
+    double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
+    limiter.calculate(clampedCommand);
+    return limiter.calculate(targetPosition);
+  }
+
   @Override
   public void periodic()
   {

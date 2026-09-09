@@ -185,9 +185,9 @@ public class Climber extends SubsystemBase
     currentSig.refresh();
     positionSig.refresh();
 
-    force = currentSig.getValueAsDouble() / ampsPerNewton;
-    velocity = velocitySig.getValueAsDouble() / (turnsPerMeter * gearRatio);
-    position = positionSig.getValueAsDouble() / (turnsPerMeter * gearRatio);
+    force = MathUtils.currentToForce(currentSig.getValueAsDouble(), ampsPerNewton);
+    velocity = MathUtils.motorTurnsToMeters(velocitySig.getValueAsDouble(), turnsPerMeter, gearRatio);
+    position = MathUtils.motorTurnsToMeters(positionSig.getValueAsDouble(), turnsPerMeter, gearRatio);
 
     inputs.positionMeters = position;
     inputs.velocityMetersPerSec = velocity;
@@ -196,16 +196,14 @@ public class Climber extends SubsystemBase
     Logger.processInputs("Climber", inputs);
 
     if (mode == Mode.VELOCITY) {
-      double limitedVel = limiter.calculate(targetVelocity);
-      double motorVel = limitedVel * turnsPerMeter * gearRatio;
+      double motorVel = MathUtils.metersToMotorTurns(limiter.calculate(targetVelocity), turnsPerMeter, gearRatio);
 
       motor.setControl(commandVelocityVoltage.withVelocity(motorVel));
       positionLimiter.reset(position);
     } else if (mode == Mode.POSITION) {
-      double limitedPos = positionLimiter.calculate(targetPosition);
-      double clampedCommand = MathUtil.clamp(limitedPos, minPositionMeters, maxPositionMeters);
+      double clampedCommand = MathUtils.limitThenClamp(positionLimiter, targetPosition, minPositionMeters, maxPositionMeters);
 
-      double motorPosition = clampedCommand * turnsPerMeter * gearRatio;
+      double motorPosition = MathUtils.metersToMotorTurns(clampedCommand, turnsPerMeter, gearRatio);
 
       motor.setControl(commandPositionVoltage.withPosition(motorPosition));
 

@@ -172,8 +172,8 @@ public class ShooterHood extends SubsystemBase
 
     double targetAngle = 0.0;
 
-    torque = currentSig.getValueAsDouble() / ampsPerNewtonMeter;
-    position = positionSig.getValueAsDouble() / hoodToMotorGearRatio * 2.0 * Math.PI;
+    torque = MathUtils.currentToForce(currentSig.getValueAsDouble(), ampsPerNewtonMeter);
+    position = MathUtils.motorTurnsToRadians(positionSig.getValueAsDouble(), hoodToMotorGearRatio);
 
     inputs.positionRadians = position;
     inputs.torqueNm = torque;
@@ -181,14 +181,13 @@ public class ShooterHood extends SubsystemBase
     Logger.processInputs("ShooterHood", inputs);
 
     if (mode == Mode.VELOCITY) {
-      double motorAngularVelocity = targetVelocity * hoodToMotorGearRatio / (2.0 * Math.PI);
+      double motorAngularVelocity = MathUtils.radiansToMotorTurns(targetVelocity, hoodToMotorGearRatio);
       motor.setControl(commandVelocityVoltage.withVelocity(motorAngularVelocity));
       limiter.reset(position); // Keep the limiter in sync in other control mode.
     } else if (mode == Mode.POSITION) {
-      double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
-      targetAngle = limiter.calculate(clampedCommand);
+      targetAngle = MathUtils.clampThenLimit(limiter, targetPosition, minPositionRadians, maxPositionRadians);
 
-      double motorAngle = targetAngle * hoodToMotorGearRatio / (2.0 * Math.PI);
+      double motorAngle = MathUtils.radiansToMotorTurns(targetAngle, hoodToMotorGearRatio);
 
       motor.setControl(commandPositionVoltage.withPosition(motorAngle));
     } else {

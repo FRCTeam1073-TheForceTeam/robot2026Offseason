@@ -135,16 +135,15 @@ public class Spindexer extends SubsystemBase
     velocitySig.refresh();
     currentSig.refresh();
 
-    force = currentSig.getValueAsDouble() / ampsPerNewton;
-    velocity = velocitySig.getValueAsDouble() / (turnsPerMeter * gearRatio);
+    force = MathUtils.currentToForce(currentSig.getValueAsDouble(), ampsPerNewton);
+    velocity = MathUtils.motorTurnsToMeters(velocitySig.getValueAsDouble(), turnsPerMeter, gearRatio);
 
     inputs.velocity = velocity;
     inputs.force = force;
     Logger.processInputs("Spindexer", inputs);
 
     if (hasCommand) {
-      double limitedVel = limiter.calculate(targetVelocity);
-      double motorVel = limitedVel * turnsPerMeter * gearRatio;
+      double motorVel = MathUtils.metersToMotorTurns(limiter.calculate(targetVelocity), turnsPerMeter, gearRatio);
       motor.setControl(commandVelocityVoltage.withVelocity(motorVel));
     } else {
       // Matches C++: forcibly braked while idle regardless of the Coast neutral mode configured above.

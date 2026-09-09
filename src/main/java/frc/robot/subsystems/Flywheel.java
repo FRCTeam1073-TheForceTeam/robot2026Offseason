@@ -170,9 +170,9 @@ public class Flywheel extends SubsystemBase
     currentSig.refresh();
     followerCurrentSig.refresh();
 
-    velocity = velocitySig.getValueAsDouble() / (turnsPerMeter * gearRatio);
+    velocity = MathUtils.motorTurnsToMeters(velocitySig.getValueAsDouble(), turnsPerMeter, gearRatio);
     // No separate follower velocity signal exists; matches C++ reusing the lead motor's velocity here.
-    followerVelocity = velocitySig.getValueAsDouble() / (turnsPerMeter * gearRatio);
+    followerVelocity = MathUtils.motorTurnsToMeters(velocitySig.getValueAsDouble(), turnsPerMeter, gearRatio);
     current = currentSig.getValueAsDouble();
     followerCurrent = followerCurrentSig.getValueAsDouble();
 
@@ -184,8 +184,7 @@ public class Flywheel extends SubsystemBase
 
     if (hasCommand) {
       // Compute a rate-limited velocity:
-      double limitedVelocity = limiter.calculate(targetVelocity);
-      double motorVelocity = limitedVelocity * turnsPerMeter * gearRatio;
+      double motorVelocity = MathUtils.metersToMotorTurns(limiter.calculate(targetVelocity), turnsPerMeter, gearRatio);
 
       // Send commands to motors:
       leadMotor.setControl(flywheelVelocityVoltage.withVelocity(motorVelocity));

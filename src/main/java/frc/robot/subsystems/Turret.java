@@ -193,26 +193,25 @@ public class Turret extends SubsystemBase
     velocitySig.refresh();
     currentSig.refresh();
 
-    torque = currentSig.getValueAsDouble() / ampsPerNewtonMeter;
-    position = positionSig.getValueAsDouble() * 2.0 * Math.PI / turretToMotorTurns;
-    velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / turretToMotorTurns;
+    torque = MathUtils.currentToForce(currentSig.getValueAsDouble(), ampsPerNewtonMeter);
+    position = MathUtils.motorTurnsToRadians(positionSig.getValueAsDouble(), turretToMotorTurns);
+    velocity = MathUtils.motorTurnsToRadians(velocitySig.getValueAsDouble(), turretToMotorTurns);
 
     inputs.positionRadians = position;
     inputs.velocityRadPerSec = velocity;
     inputs.torqueNm = torque;
     inputs.haveZero = haveZero;
-    locked = Math.abs(targetPosition - position) < Math.toRadians(2.0);
+    locked = MathUtils.withinTolerance(targetPosition, position, Math.toRadians(2.0));
     inputs.locked = locked;
     Logger.processInputs("Turret", inputs);
 
     if (mode == Mode.VELOCITY) {
-      double motorVelocity = targetVelocity * turretToMotorTurns / (2.0 * Math.PI);
+      double motorVelocity = MathUtils.radiansToMotorTurns(targetVelocity, turretToMotorTurns);
       limiter.reset(position); // Keep the limiter in sync in other control mode.
       motor.setControl(commandVelocityVoltage.withVelocity(motorVelocity));
     } else if (mode == Mode.POSITION) {
-      double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
-      double turretAngle = limiter.calculate(clampedCommand);
-      double motorAngle = turretAngle * turretToMotorTurns / (2.0 * Math.PI);
+      double turretAngle = MathUtils.clampThenLimit(limiter, targetPosition, minPositionRadians, maxPositionRadians);
+      double motorAngle = MathUtils.radiansToMotorTurns(turretAngle, turretToMotorTurns);
       motor.setControl(commandPositionVoltage.withPosition(motorAngle));
     } else {
       motor.setControl(new NeutralOut());
