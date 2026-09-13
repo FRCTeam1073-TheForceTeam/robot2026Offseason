@@ -32,7 +32,7 @@ public class SpindexerTeleop extends Command
   @Override
   public void execute()
   {
-    if (Math.abs(oi.getOperatorRightTrigger()) >= 0.1 && Math.abs(kicker.getVelocity()) >= 3.0) {
+    if (((Math.abs(oi.getOperatorRightTrigger()) >= 0.1) || oi.getDriverYButton()) && Math.abs(kicker.getVelocity()) >= 3.0) {
       spindexer.setVelocity(Spindexer.shotSpeed);
     } else if (oi.getOperatorBButton()) {
       spindexer.setVelocity(-2.0); // Jam clearing.

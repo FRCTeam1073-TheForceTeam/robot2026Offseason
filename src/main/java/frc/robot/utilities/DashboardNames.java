@@ -120,6 +120,9 @@ public enum DashboardNames {
   COLLECTOR_VELOCITY("Collector/Velocity(mps)"),
   COLLECTOR_TARGET_VELOCITY("Collector/TargetVelocity(mps)"),
 
+  // DumperBlocker
+  DUMPER_BLOCKER_HW_CONFIGURED("DumperBlocker/Dumper Blocker - hardware_configured"),
+
   // Localizer
   LOCALIZER_PS("Localizer/PS"),
   LOCALIZER_POSE_X("Localizer/Pose(x)"),

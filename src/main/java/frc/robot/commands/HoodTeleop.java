@@ -45,7 +45,7 @@ public class HoodTeleop extends Command
     if (zone.getZones().contains("TRENCH")) {
       // Put the hood "back" to be out of the way.
       shooterHood.setPosition(ShooterHood.maxPositionRadians);
-    } else if (Math.abs(oi.getOperatorLeftTrigger()) >= 0.1) {
+    } else if ((Math.abs(oi.getOperatorLeftTrigger()) >= 0.1) || oi.getDriverXButton()) {
       double rangeToTarget = tf.getRangeToTargetMeters();
 
       if (tf.isPassing()) {

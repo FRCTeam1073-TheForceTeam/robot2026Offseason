@@ -31,7 +31,7 @@ public class KickerTeleop extends Command
   {
     boolean bButton = oi.getOperatorBButton();
 
-    if (oi.getOperatorRightTrigger() >= 0.1) {
+    if ((oi.getOperatorRightTrigger() >= 0.1) || oi.getDriverYButton()) {
       kicker.setVelocity(Kicker.shotSpeed);
     } else if (bButton) {
       kicker.setVelocity(-1.65); // Jam clearing.

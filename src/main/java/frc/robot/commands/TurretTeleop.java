@@ -46,7 +46,7 @@ public class TurretTeleop extends Command
 
     if (Math.abs(leftX) > 0.1) {
       targetAngle = Math.toRadians(330) * leftX;
-    } else if (oi.getOperatorLeftTrigger() >= 0.1) {
+    } else if ((oi.getOperatorLeftTrigger() >= 0.1) || oi.getDriverXButton()) {
       targetAngle = targetFinder.getTurretToTargetAngleRadians();
     } else {
       targetAngle = 0.0;
