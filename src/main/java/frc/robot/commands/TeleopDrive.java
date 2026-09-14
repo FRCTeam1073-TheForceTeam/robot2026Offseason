@@ -117,19 +117,19 @@ public class TeleopDrive extends Command
         * (maximumRotationVelocity / (maximumRotationVelocity - 1))
         * (Math.pow(maximumRotationVelocity, Math.abs(rightX)) - 1), -maximumRotationVelocity, maximumRotationVelocity);
 
-    if (!lastYPressed && oi.getDriverYButton()) {
+    if (!lastYPressed && oi.getDriverDPadDown()) {
       slowMode = !slowMode;
     }
-    lastYPressed = oi.getDriverYButton();
+    lastYPressed = oi.getDriverDPadDown();
     if (slowMode) {
       vx *= 0.4;
       vy *= 0.4;
     }
 
-    if (!lastXPressed && oi.getDriverXButton()) {
+    if (!lastXPressed && oi.getDriverDPadRight()) {
       fastRotation = !fastRotation;
     }
-    lastXPressed = oi.getDriverXButton();
+    lastXPressed = oi.getDriverDPadRight();
 
     if (!fastRotation) {
       omega *= 0.4;
