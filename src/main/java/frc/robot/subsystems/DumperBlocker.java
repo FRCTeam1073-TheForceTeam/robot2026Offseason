@@ -129,9 +129,6 @@ public class DumperBlocker extends SubsystemBase
         currentSig.refresh();
         velocitySig.refresh();
 
-        torque = currentSig.getValueAsDouble() / ampsPerNewtonMeter;
-        velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
-
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_VELOCITY.getKey(), getVelocityRadPerSec());
 
     }
