@@ -18,19 +18,13 @@ import frc.robot.utilities.DashboardNames;
 
 public class DumperBlocker extends SubsystemBase
 {
-    public static class DumperBlockerInputs
-    {
-        public double positionRadians = 0.0;
-        public double velocityRadPerSec = 0.0;
-        public double torqueNm = 0.0;
-    }
 
     public static final int dumperBlockerMotorId = 31;
 
     public static final double gearRatio = 5.0;
     public static final double ampsPerNewtonMeter = 10.0;
     public static final double currentLimit = 10.0;
-    public static final double hardstopCurrent = 10.0;
+    public static final double hardstopCurrent = 8.0;
 
     public static final double extendVelocity = 2.0;
     public static final double retractVelocity = -2.0;
@@ -39,10 +33,7 @@ public class DumperBlocker extends SubsystemBase
     private final TalonFX dumperBlockerMotor;
     private final StatusSignal<AngularVelocity> velocitySig;
     private final StatusSignal<Current> currentSig;
-    private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(1);
-
-    private double velocity = 0.0;
-    private double torque = 0.0;
+    private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
 
     public DumperBlocker()
     {
@@ -72,21 +63,13 @@ public class DumperBlocker extends SubsystemBase
         configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
         configs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-        // Slot 0 for the position control loop:
+        // Slot 0
         configs.Slot0.kV = 0.153;
-        configs.Slot0.kP = 0.4;
-        configs.Slot0.kI = 0.04;
-        configs.Slot0.kD = 0.01;
+        configs.Slot0.kP = 0.3;
+        configs.Slot0.kI = 0.0;
+        configs.Slot0.kD = 0.0;
         configs.Slot0.kA = 0.0;
         configs.Slot0.kS = 0.02;
-
-        // Slot 1 for the velocity control loop:
-        configs.Slot1.kV = 0.153;
-        configs.Slot1.kP = 0.3;
-        configs.Slot1.kI = 0.0;
-        configs.Slot1.kD = 0.0;
-        configs.Slot1.kA = 0.0;
-        configs.Slot1.kS = 0.02;
 
         configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
@@ -118,24 +101,26 @@ public class DumperBlocker extends SubsystemBase
         );
     }
 
-    public double getTorqueCurrent() {
-        return currentSig.getValueAsDouble();
-    }
-
     public void stop() {
         dumperBlockerMotor.setControl(new NeutralOut());
     }
 
-    public void zero()
-    {
+    public void zero() {
         dumperBlockerMotor.setControl(
             commandVelocityVoltage.withVelocity(zeroVelocity)
         );
     }
 
-    public void setZero()
-    {
+    public void setZero() {
         dumperBlockerMotor.setPosition(0);
+    }
+
+    public double getTorqueCurrent() {
+        return currentSig.getValueAsDouble() / ampsPerNewtonMeter;
+    }
+
+    public double getVelocityRadPerSec() {
+        return velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
     }
 
     @Override
@@ -146,6 +131,8 @@ public class DumperBlocker extends SubsystemBase
 
         torque = currentSig.getValueAsDouble() / ampsPerNewtonMeter;
         velocity = velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
+
+        SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_VELOCITY.getKey(), getVelocityRadPerSec());
 
     }
 

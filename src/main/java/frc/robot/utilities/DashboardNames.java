@@ -122,6 +122,7 @@ public enum DashboardNames {
 
   // DumperBlocker
   DUMPER_BLOCKER_HW_CONFIGURED("DumperBlocker/Dumper Blocker - hardware_configured"),
+  DUMPER_BLOCKER_VELOCITY("DumperBlocker/Velocity(rps)"),
 
   // Localizer
   LOCALIZER_PS("Localizer/PS"),

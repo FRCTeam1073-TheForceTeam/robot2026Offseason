@@ -8,25 +8,11 @@ public class ZeroDumperBlocker extends Command
 {
     private final DumperBlocker dumperBlocker;
 
-    /**
-     * Creates a new ZeroDumperBlocker command.
-     *
-     * @param dumperBlocker The subsystem used by this command.
-     * @param unsafe If unsafe, don't require the subsystem. Use only for auto prep.
-     */
-
-    public ZeroDumperBlocker(DumperBlocker dumperBlocker, boolean unsafe) 
+    public ZeroDumperBlocker(DumperBlocker dumperBlocker) 
     {
         this.dumperBlocker = dumperBlocker;
 
-        if (!unsafe) {
-            addRequirements(dumperBlocker);
-        }
-    }
-
-    public ZeroDumperBlocker(DumperBlocker dumperBlocker)
-    {
-        this(dumperBlocker, false);
+        addRequirements(dumperBlocker);
     }
 
     @Override
@@ -59,6 +45,7 @@ public class ZeroDumperBlocker extends Command
         if (Math.abs(dumperBlocker.getTorqueCurrent()) > hardstopCurrent) {
             return true;
         }
+        // If it trigers too early add a hardstop counter.
         return false;
     }
 }
