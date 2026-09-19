@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.AutoRunner;
-import frc.robot.commands.BlingTeleop;
 import frc.robot.commands.ClimberTeleop;
 import frc.robot.commands.CollectorTeleop;
 import frc.robot.commands.FlywheelTeleop;
@@ -38,7 +37,6 @@ import frc.robot.commands.ZeroTurret;
 import frc.robot.commands.Autos.Autos;
 import frc.robot.subsystems.AprilTagFinder;
 import frc.robot.subsystems.BallisticShot;
-import frc.robot.subsystems.Bling;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.Drivetrain;
@@ -115,10 +113,9 @@ public class RobotContainer
   private final ShooterHood shooterHood = new ShooterHood();
   private final Flywheel flywheel = new Flywheel();
   // LaserCan laser; -- not instantiated, matching C++ (commented out there too).
-  private final Bling bling = new Bling();
 
   private final AutoRunner autoRunner = new AutoRunner(drivetrain, tagFinder, localizer, kicker, climber, flywheel, shooterHood,
-      spindexer, turret, collector, intake, null, shooterTable, targetFinder, bling, ballisticShot);
+      spindexer, turret, collector, intake, null, shooterTable, targetFinder, ballisticShot);
 
   private Optional<Trajectory<SwerveSample>> trajectory = Optional.empty();
 
@@ -288,7 +285,6 @@ public class RobotContainer
     flywheel.setDefaultCommand(new FlywheelTeleop(flywheel, oi, targetFinder, shooterTable, ballisticShot));
     turret.setDefaultCommand(new TurretTeleop(turret, oi, targetFinder, drivetrain));
     climber.setDefaultCommand(new ClimberTeleop(climber, oi, zoneFinder));
-    bling.setDefaultCommand(new BlingTeleop(bling, oi));
 
     // If the turret has not yet seen zero, zero it now.
     if (!turret.hasZero()) {

@@ -24,10 +24,10 @@ public class DumperBlocker extends SubsystemBase
     public static final double gearRatio = 5.0;
     public static final double ampsPerNewtonMeter = 10.0;
     public static final double currentLimit = 10.0;
-    public static final double hardstopCurrent = 8.0;
+    public static final double hardstopCurrent = 5.5;
 
-    public static final double extendVelocity = 2.0;
-    public static final double retractVelocity = -2.0;
+    public static final double extendVelocity = 5.0;
+    public static final double retractVelocity = -5.0;
     public static final double zeroVelocity = 1.0;
 
     private final TalonFX dumperBlockerMotor;
@@ -73,14 +73,14 @@ public class DumperBlocker extends SubsystemBase
 
         configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        var status = dumperBlockerMotor.getConfigurator().apply(configs, 1.0);
+        var status = dumperBlockerMotor.getConfigurator().apply(configs, 0.1);
         if (!status.isOK()) {
         System.err.println("Dumper Blocker: leader failed to config!");
         return false;
         }
 
         // Set our neutral mode to brake on:
-        status = dumperBlockerMotor.setNeutralMode(NeutralModeValue.Brake, 1.0);
+        status = dumperBlockerMotor.setNeutralMode(NeutralModeValue.Brake, 0.1);
         if (!status.isOK()) {
         System.err.println("Dumper Blocker: neutral mode failed to config :(!");
         return false;
@@ -123,6 +123,9 @@ public class DumperBlocker extends SubsystemBase
         return velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
     }
 
+    // public String getBrake() {
+    //     return dumperBlockerMotor.;
+
     @Override
     public void periodic()
     {
@@ -130,6 +133,8 @@ public class DumperBlocker extends SubsystemBase
         velocitySig.refresh();
 
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_VELOCITY.getKey(), getVelocityRadPerSec());
+        SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_TORQUE_CURRENT.getKey(), getTorqueCurrent());
+        // SmartDashboard.putString(DashboardNames.DUMPER_BLOCKER_BRAKEMODE.getKey(), getBrake());
 
     }
 
