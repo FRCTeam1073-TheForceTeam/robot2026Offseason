@@ -3,12 +3,17 @@ package frc.robot.subsystems;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -30,10 +35,22 @@ public class DumperBlocker extends SubsystemBase
     public static final double retractVelocity = -5.0;
     public static final double zeroVelocity = 1.0;
 
+    public static final double minPositionRadians = 0.0;
+    public static final double maxPositionRadians = 1.5;
+
+    private enum Mode { NONE, VELOCITY, POSITION }
+    private double targetVelocity = 0.0;
+    private double targetPosition = 0.0;
+
     private final TalonFX dumperBlockerMotor;
     private final StatusSignal<AngularVelocity> velocitySig;
+    private final StatusSignal<Angle> positionSig;
     private final StatusSignal<Current> currentSig;
     private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
+    private final PositionVoltage CommandedPositionVoltage = new PositionVoltage(0).withSlot(1);
+    private final SlewRateLimiter limiter = new SlewRateLimiter(5);
+
+    private Mode mode = Mode.NONE;
 
     public DumperBlocker()
     {
@@ -41,6 +58,7 @@ public class DumperBlocker extends SubsystemBase
 
         dumperBlockerMotor = new TalonFX(dumperBlockerMotorId, new CANBus("rio"));
         velocitySig = dumperBlockerMotor.getVelocity();
+        positionSig = dumperBlockerMotor.getPosition();
         currentSig = dumperBlockerMotor.getTorqueCurrent();
 
         boolean hardwareConfigured = configureHardware();
@@ -63,13 +81,22 @@ public class DumperBlocker extends SubsystemBase
         configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
         configs.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-        // Slot 0
+        // Slot 0 Velocity
         configs.Slot0.kV = 0.153;
         configs.Slot0.kP = 0.3;
         configs.Slot0.kI = 0.0;
         configs.Slot0.kD = 0.0;
         configs.Slot0.kA = 0.0;
         configs.Slot0.kS = 0.02;
+
+        // Slot 1 Position
+        configs.Slot1.kV = 0.153;
+        configs.Slot1.kP = 2.0;
+        configs.Slot1.kI = 0.04;
+        configs.Slot1.kD = 0.01;
+        configs.Slot1.kA = 0.0;
+        configs.Slot1.kS = 0.02;
+        // configs.Slot1.kG = 0.15;
 
         configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
@@ -86,19 +113,19 @@ public class DumperBlocker extends SubsystemBase
         return false;
         }
 
+        dumperBlockerMotor.setPosition(0);
+
         return true;
     }
 
-    public void extend() {
-        dumperBlockerMotor.setControl(
-            commandVelocityVoltage.withVelocity(extendVelocity)
-        );
+    public void setVelocity(double radiansPerSecond) {
+        mode = Mode.VELOCITY;
+        targetVelocity = radiansPerSecond;
     }
 
-    public void retract() {
-        dumperBlockerMotor.setControl(
-            commandVelocityVoltage.withVelocity(retractVelocity)
-        );
+    public void setPosition(double radians) {
+        mode = Mode.POSITION;
+        targetPosition = radians;
     }
 
     public void stop() {
@@ -106,6 +133,7 @@ public class DumperBlocker extends SubsystemBase
     }
 
     public void zero() {
+        mode = Mode.VELOCITY;
         dumperBlockerMotor.setControl(
             commandVelocityVoltage.withVelocity(zeroVelocity)
         );
@@ -123,6 +151,10 @@ public class DumperBlocker extends SubsystemBase
         return velocitySig.getValueAsDouble() * 2.0 * Math.PI / gearRatio;
     }
 
+    public double getPositionRadians() {
+        return positionSig.getValueAsDouble();
+    }
+
     // public String getBrake() {
     //     return dumperBlockerMotor.;
 
@@ -131,10 +163,20 @@ public class DumperBlocker extends SubsystemBase
     {
         currentSig.refresh();
         velocitySig.refresh();
+        positionSig.refresh();
+    
+        if (mode == Mode.POSITION) {
+            double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
+            double limitedDumperTarget = limiter.calculate(clampedCommand);
+            dumperBlockerMotor.setControl(CommandedPositionVoltage.withPosition(limitedDumperTarget));
+            SmartDashboard.putNumber("DumperBlocker/clampedCommand", limitedDumperTarget);
+        } 
 
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_VELOCITY.getKey(), getVelocityRadPerSec());
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_TORQUE_CURRENT.getKey(), getTorqueCurrent());
         // SmartDashboard.putString(DashboardNames.DUMPER_BLOCKER_BRAKEMODE.getKey(), getBrake());
+        SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_POSITION.getKey(), getPositionRadians());
+        SmartDashboard.putNumber("DumperBlocker/TargetPosition", targetPosition);
 
     }
 

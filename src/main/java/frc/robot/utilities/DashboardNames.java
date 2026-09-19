@@ -126,6 +126,7 @@ public enum DashboardNames {
   DUMPER_BLOCKER_TORQUE_CURRENT("DumperBlocker/Torque Current"),
   DUMPER_BLOCKER_HARDSTOP("DumperBlocker/Hardstop"),
   DUMPER_BLOCKER_BRAKEMODE("DumperBlocker/Brakemode"),
+  DUMPER_BLOCKER_POSITION("DumperBlocker/Position"),
 
   // Localizer
   LOCALIZER_PS("Localizer/PS"),

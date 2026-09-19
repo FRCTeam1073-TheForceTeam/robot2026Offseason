@@ -15,7 +15,6 @@ public class DumperBlockerTeleop extends Command
     
     private boolean extended = false;
     private boolean lastAButton = false;
-    private boolean atHardstop = false;
 
     public DumperBlockerTeleop(DumperBlocker dumperBlocker, OI oi)
     {
@@ -28,40 +27,31 @@ public class DumperBlockerTeleop extends Command
     @Override
     public void initialize()
     {
-        dumperBlocker.stop();
-        atHardstop = false; 
+        // dumperBlocker.stop();
+        extended = false; 
     }
 
     @Override
     public void execute()
     {
+        dumperBlocker.setVelocity(0);
         boolean aButton = oi.getDriverAButton();
 
         if (!lastAButton && aButton) {
             extended = !extended;
-            atHardstop = false;
-        }
+        } 
 
         lastAButton = aButton;
 
-        if (atHardstop) {
-            dumperBlocker.stop();
-            return;
-        }
-
         if (extended) {
-            dumperBlocker.extend();
-        }
-        else {
-            dumperBlocker.retract();
-        }
-
-        if (Math.abs(dumperBlocker.getTorqueCurrent()) > hardstopCurrent) {
-            dumperBlocker.stop();
-            atHardstop = true;
+            dumperBlocker.setPosition(1.25);
+        } else {
+            dumperBlocker.setPosition(0.0);
         }
 
-        SmartDashboard.putBoolean(DashboardNames.DUMPER_BLOCKER_HARDSTOP.getKey(), atHardstop);
+        SmartDashboard.putBoolean("DumperBlocker/extended", extended);
+
+        // SmartDashboard.putBoolean(DashboardNames.DUMPER_BLOCKER_HARDSTOP.getKey(), atHardstop)
     }
 
     @Override
@@ -76,3 +66,4 @@ public class DumperBlockerTeleop extends Command
         return false;
     }
 }
+
