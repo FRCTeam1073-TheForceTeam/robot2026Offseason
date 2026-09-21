@@ -6,7 +6,9 @@ import frc.robot.subsystems.DumperBlocker;
 import frc.robot.subsystems.OI;
 import frc.robot.utilities.DashboardNames;
 
+import static frc.robot.subsystems.DumperBlocker.deployedPosition;
 import static frc.robot.subsystems.DumperBlocker.hardstopCurrent;
+import static frc.robot.subsystems.DumperBlocker.stowedPosition;
 
 public class DumperBlockerTeleop extends Command
 {
@@ -44,9 +46,9 @@ public class DumperBlockerTeleop extends Command
         lastAButton = aButton;
 
         if (extended) {
-            dumperBlocker.setPosition(1.25);
+            dumperBlocker.setPosition(deployedPosition);
         } else {
-            dumperBlocker.setPosition(0.0);
+            dumperBlocker.setPosition(stowedPosition);
         }
 
         SmartDashboard.putBoolean("DumperBlocker/extended", extended);
