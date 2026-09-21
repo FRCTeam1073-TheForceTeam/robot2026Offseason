@@ -96,7 +96,7 @@ public class DumperBlocker extends SubsystemBase
         configs.Slot1.kD = 0.01;
         configs.Slot1.kA = 0.0;
         configs.Slot1.kS = 0.02;
-        // configs.Slot1.kG = 0.15;
+        configs.Slot1.kG = 0.25;
 
         configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
