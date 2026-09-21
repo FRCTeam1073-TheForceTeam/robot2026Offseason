@@ -8,10 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.littletonrobotics.junction.Logger;
+import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonUtils;
-import org.photonvision.EstimatedRobotPose;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -25,303 +26,429 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
-import org.littletonrobotics.junction.Logger;
 
 public class AprilTagFinder extends SubsystemBase
 {
-  public static class VisionMeasurement
-  {
-    public final Pose2d pose; // this is in field coordinates
-    public final Transform2d relativePose; // this is in robot coordinates.
-    public final double timeStamp;
-    public final int tagID;
-    public final double[] stddevs; // Error in this measurement (standard deviations)
-
-    public VisionMeasurement(Pose2d pose, Transform2d relativePose, double timeStamp, int tagID, double[] stddevs)
+    public static class VisionMeasurement
     {
-      this.pose = pose;
-      this.relativePose = relativePose;
-      this.timeStamp = timeStamp;
-      this.tagID = tagID;
-      this.stddevs = stddevs;
+        public final Pose2d pose; // this is in field coordinates
+        public final Transform2d relativePose; // this is in robot coordinates.
+        public final double timeStamp;
+        public final int tagID;
+        public final double[] stddevs; // Error in this measurement (standard deviations)
+
+        public VisionMeasurement(Pose2d pose, Transform2d relativePose, double timeStamp, int tagID, double[] stddevs)
+        {
+            this.pose = pose;
+            this.relativePose = relativePose;
+            this.timeStamp = timeStamp;
+            this.tagID = tagID;
+            this.stddevs = stddevs;
+        }
     }
-  }
 
-  private static class RobotCamera
-  {
-    final PhotonCamera camera;
-    final Transform3d transform;
-    final boolean isTurret;
-
-    RobotCamera(PhotonCamera camera, Transform3d transform)
+    private static class RobotCamera
     {
-      this(camera, transform, false);
+        final PhotonCamera camera;
+        final Transform3d transform;
+        final boolean isTurret;
+
+        RobotCamera(PhotonCamera camera, Transform3d transform)
+        {
+            this(camera, transform, false);
+        }
+
+        RobotCamera(PhotonCamera camera, Transform3d transform, boolean isTurret)
+        {
+            this.camera = camera;
+            this.transform = transform;
+            this.isTurret = isTurret;
+        }
     }
 
-    RobotCamera(PhotonCamera camera, Transform3d transform, boolean isTurret)
+    private final double ambiguityThreshold = 0.4;
+    private boolean hasAprilTags;
+    // Base stddevs for measurements:
+    private final double[] baseStddevs = {0.5, 0.5, 0.5};
+    // Ignore things farther away than this.
+    private static final double maxRange = 4.0;
+
+    private final List<VisionMeasurement> visionMeasurements = new ArrayList<>();
+    private final Turret turret;
+    private final List<RobotCamera> cameras = new ArrayList<>();
+    private final List<PhotonPoseEstimator> estimators = new ArrayList<>();
+
+    public AprilTagFinder(Turret turret)
     {
-      this.camera = camera;
-      this.transform = transform;
-      this.isTurret = isTurret;
+        this.turret = turret;
+
+        System.out.println("Creating April Tag Object");
+        //
+        // These are poses in *ROBOT* coordinates:
+        //
+        // Robot coordinates have +X forward, +Y out left of robot and +Z up (opposite of gravity)
+        // The origin of X,Y is the geometric center of the robot frame perimeter.
+        // The origin of Z is *ON THE FLOOR* it is a virtual point at zero field height that is not actually *inside* the robot. It is the
+        // projection of the X,Y geometric center onto the floor.
+        //
+        // Rotations are angles about these primary axes using the right-hand-rule.
+        //
+        // The turret height is to the center of the turret rotation bearing plane. Turret location is center of turret rotation bearing.
+        //
+        // Center of pigeon height is 4.75in, offset from X,Y center of robot ()
+        //
+
+        // We have coordinates from EM in "pigeon offset coordinates" not robot coordinates.
+        Translation3d pigeonOffset = new Translation3d(Units.inchesToMeters(-1.0), Units.inchesToMeters(2.5), Units.inchesToMeters(4.75));
+
+        cameras.add(new RobotCamera(new PhotonCamera("Left_Front"),
+                new Transform3d(new Translation3d(Units.inchesToMeters(-8.977), Units.inchesToMeters(8.448), Units.inchesToMeters(5.152)).plus(pigeonOffset),
+                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(65)))));
+        cameras.add(new RobotCamera(new PhotonCamera("Left_Back"),
+                new Transform3d(new Translation3d(Units.inchesToMeters(-10.858), Units.inchesToMeters(7.855), Units.inchesToMeters(7.562)).plus(pigeonOffset),
+                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(150)))));
+        cameras.add(new RobotCamera(new PhotonCamera("Right_Front"),
+                new Transform3d(new Translation3d(Units.inchesToMeters(-8.977), Units.inchesToMeters(-13.448), Units.inchesToMeters(5.152)).plus(pigeonOffset),
+                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-65)))));
+        cameras.add(new RobotCamera(new PhotonCamera("Right_Back"),
+                new Transform3d(new Translation3d(Units.inchesToMeters(-10.858), Units.inchesToMeters(-12.855), Units.inchesToMeters(7.652)).plus(pigeonOffset),
+                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-150)))));
+        cameras.add(new RobotCamera(new PhotonCamera("Turret"),
+                new Transform3d(new Translation3d(Units.inchesToMeters(-3.47), Units.inchesToMeters(-7.51), Units.inchesToMeters(12.0)).plus(pigeonOffset),
+                        new Rotation3d(0, 0, 0)),
+                true));
+
+        for (RobotCamera camera : cameras) {
+            estimators.add(new PhotonPoseEstimator(FieldMap.fieldMap, camera.transform));
+        }
     }
-  }
 
-  private final double ambiguityThreshold = 0.4;
-  private boolean hasAprilTags;
-  // Base stddevs for measurements:
-  private final double[] baseStddevs = {0.5, 0.5, 0.5};
-  // Ignore things farther away than this.
-  private static final double maxRange = 4.0;
-
-  private final List<VisionMeasurement> visionMeasurements = new ArrayList<>();
-  private final Turret turret;
-  private final Drivetrain drivetrain;
-  private final List<RobotCamera> cameras = new ArrayList<>();
-  private final List<PhotonPoseEstimator> estimators = new ArrayList<>();
-
-  public AprilTagFinder(Turret turret, Drivetrain drivetrain)
-  {
-    this.turret = turret;
-    this.drivetrain = drivetrain;
-
-    System.out.println("Creating April Tag Object");
-    //
-    // These are poses in *ROBOT* coordinates:
-    //
-    // Robot coordinates have +X forward, +Y out left of robot and +Z up (opposite of gravity)
-    // The origin of X,Y is the geometric center of the robot frame perimeter.
-    // The origin of Z is *ON THE FLOOR* it is a virtual point at zero field height that is not actually *inside* the robot. It is the
-    // projection of the X,Y geometric center onto the floor.
-    //
-    // Rotations are angles about these primary axes using the right-hand-rule.
-    //
-    // The turret height is to the center of the turret rotation bearing plane. Turret location is center of turret rotation bearing.
-    //
-    // Center of pigeon height is 4.75in, offset from X,Y center of robot ()
-    //
-
-    // We have coordinates from EM in "pigeon offset coordinates" not robot coordinates.
-    Translation3d pigeonOffset = new Translation3d(Units.inchesToMeters(-1.0), Units.inchesToMeters(2.5), Units.inchesToMeters(4.75));
-
-    cameras.add(new RobotCamera(new PhotonCamera("Left_Front"),
-        new Transform3d(new Translation3d(Units.inchesToMeters(-8.977), Units.inchesToMeters(8.448), Units.inchesToMeters(5.152)).plus(pigeonOffset),
-            new Rotation3d(0, Math.toRadians(-21), Math.toRadians(65)))));
-    cameras.add(new RobotCamera(new PhotonCamera("Left_Back"),
-        new Transform3d(new Translation3d(Units.inchesToMeters(-10.858), Units.inchesToMeters(7.855), Units.inchesToMeters(7.562)).plus(pigeonOffset),
-            new Rotation3d(0, Math.toRadians(-21), Math.toRadians(150)))));
-    cameras.add(new RobotCamera(new PhotonCamera("Right_Front"),
-        new Transform3d(new Translation3d(Units.inchesToMeters(-8.977), Units.inchesToMeters(-13.448), Units.inchesToMeters(5.152)).plus(pigeonOffset),
-            new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-65)))));
-    cameras.add(new RobotCamera(new PhotonCamera("Right_Back"),
-        new Transform3d(new Translation3d(Units.inchesToMeters(-10.858), Units.inchesToMeters(-12.855), Units.inchesToMeters(7.652)).plus(pigeonOffset),
-            new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-150)))));
-    cameras.add(new RobotCamera(new PhotonCamera("Turret"),
-        new Transform3d(new Translation3d(Units.inchesToMeters(-3.47), Units.inchesToMeters(-7.51), Units.inchesToMeters(12.0)).plus(pigeonOffset),
-            new Rotation3d(0, 0, 0)),
-        true));
-
-    for (RobotCamera camera : cameras) {
-      estimators.add(new PhotonPoseEstimator(FieldMap.fieldMap, camera.transform));
+    public List<VisionMeasurement> getAllMeasurements()
+    {
+        return visionMeasurements;
     }
-  }
 
-  public List<VisionMeasurement> getAllMeasurements()
-  {
-    return visionMeasurements;
-  }
-
-  public List<PhotonTrackedTarget> getCamTargets(PhotonCamera camera)
-  {
-    List<PhotonPipelineResult> results = camera.getAllUnreadResults();
-    List<PhotonTrackedTarget> targets = new ArrayList<>();
-
-    for (PhotonPipelineResult result : results) {
-      if (result.hasTargets()) {
-        targets.addAll(result.getTargets());
-      }
+    public boolean hasAprilTags()
+    {
+        return hasAprilTags;
     }
-    return targets;
-  }
 
-  public Transform2d toTransform2d(Transform3d t3d)
-  {
-    return new Transform2d(t3d.getX(), t3d.getY(), t3d.getRotation().toRotation2d());
-  }
+    public List<PhotonTrackedTarget> getCamTargets(PhotonCamera camera)
+    {
+        List<PhotonPipelineResult> results = camera.getAllUnreadResults();
+        List<PhotonTrackedTarget> targets = new ArrayList<>();
 
-  public List<VisionMeasurement> getCamMeasurements(List<PhotonPipelineResult> results, Transform3d camTransform3d)
-  {
-    List<VisionMeasurement> measurements = new ArrayList<>();
-    for (PhotonPipelineResult result : results) {
-      if (result.hasTargets()) {
-        double resultTimestamp = result.getTimestampSeconds(); // Adjusted for each result for time compensation.
-
-        for (PhotonTrackedTarget target : result.getTargets()) {
-          Optional<Pose3d> tagPose = FieldMap.fieldMap.getTagPose(target.getFiducialId());
-          if (tagPose.isPresent()) {
-            if (target.getPoseAmbiguity() != -1 && target.getPoseAmbiguity() < ambiguityThreshold) {
-              Transform3d best = target.getBestCameraToTarget();
-              // Field coordinates:
-              Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(best, tagPose.get(), camTransform3d.inverse());
-
-              // In robot coordinates:
-              Transform2d relativePose = toTransform2d(camTransform3d.plus(best));
-              double range = relativePose.getTranslation().getNorm();
-
-              // Ignore things that are too far away:
-              if (range < maxRange) {
-                // TODO: Estimated STD Deviations from Photon vision:
-                double[] stdDevs = estimateStddevs(range, relativePose.getRotation().getRadians() + robotPose.getRotation().getZ());
-
-                measurements.add(new VisionMeasurement(robotPose.toPose2d(), relativePose, resultTimestamp,
-                    target.getFiducialId(), stdDevs));
-              }
+        for (PhotonPipelineResult result : results) {
+            if (result.hasTargets()) {
+                targets.addAll(result.getTargets());
             }
-          }
-        } // End loop over targets.
-      }
+        }
+        return targets;
     }
-    return measurements;
-  }
 
-  public Transform3d getRobotCamTransform(int index)
-  {
-    return cameras.get(index).transform;
-  }
-
-  public List<VisionMeasurement> getMultiTagEstimate(List<PhotonPipelineResult> results, PhotonPoseEstimator estimator, Transform3d camTransform3d)
-  {
-    estimator.setRobotToCameraTransform(camTransform3d);
-    List<VisionMeasurement> measurements = new ArrayList<>();
-    for (PhotonPipelineResult result : results) {
-      // In field coordinates:
-      Optional<EstimatedRobotPose> pose = estimator.estimateCoprocMultiTagPose(result);
-
-      if (pose.isEmpty()) {
-        // TODO: This seems like redundant work if we're doing multi tag poses?
-        pose = estimator.estimateLowestAmbiguityPose(result);
-        if (pose.isEmpty()) {
-          continue;
-        }
-        if (pose.get().targetsUsed.isEmpty() || pose.get().targetsUsed.get(0).getPoseAmbiguity() > ambiguityThreshold) {
-          continue;
-        }
-      }
-      EstimatedRobotPose estimatedPose = pose.get();
-      double minDist = 100.0;
-      double minAngle = 0.0;
-      for (PhotonTrackedTarget t : estimatedPose.targetsUsed) {
-        Transform3d best = t.getBestCameraToTarget();
-        double dist = best.getTranslation().getNorm();
-        if (dist < minDist) {
-          minDist = dist;
-          minAngle = best.getRotation().getZ(); // Yaw angle.
-        }
-      }
-
-      double[] stdDevs = estimateStddevs(minDist, minAngle); // TODO: find the actual value
-      hasAprilTags = true;
-      measurements.add(new VisionMeasurement(estimatedPose.estimatedPose.toPose2d(), new Transform2d(), estimatedPose.timestampSeconds, 0, stdDevs));
+    public Transform2d toTransform2d(Transform3d t3d)
+    {
+        return new Transform2d(t3d.getX(), t3d.getY(), t3d.getRotation().toRotation2d());
     }
-    return measurements;
-  }
 
-  public void clearMeasurements()
-  {
-    visionMeasurements.clear();
-  }
+    private TargetProcessingResult processTargetForMeasurement(PhotonTrackedTarget target, double resultTimestamp, Transform3d camTransform3d)
+    {
+        Optional<Pose3d> tagPose = FieldMap.fieldMap.getTagPose(target.getFiducialId());
 
-  @Override
-  public void periodic()
-  {
-    hasAprilTags = false;
-    double turretVelocity = turret.getVelocityRadPerSec();
+        if (!tagPose.isPresent()) {
+            return TargetProcessingResult.rejected(RejectionReason.POSE_NOT_FOUND);
+        }
 
-    for (int i = 0; i < cameras.size(); i++) {
-      RobotCamera cam = cameras.get(i);
+        if (target.getPoseAmbiguity() == -1 || target.getPoseAmbiguity() >= ambiguityThreshold) {
+            return TargetProcessingResult.rejected(RejectionReason.AMBIGUITY);
+        }
 
-      List<PhotonPipelineResult> results = cam.camera.getAllUnreadResults();
-      Transform3d transform = cam.transform;
+        Transform3d best = target.getBestCameraToTarget();
+        // Field coordinates:
+        Pose3d robotPose = PhotonUtils.estimateFieldToRobotAprilTag(best, tagPose.get(), camTransform3d.inverse());
 
-      // If the camera is the turrets camera, and the velocty of the turret is acceptable we will use it. And if not we will skip over using the camera.
-      if (cam.isTurret) {
+        // In robot coordinates:
+        Transform2d relativePose = toTransform2d(camTransform3d.plus(best));
+        double range = relativePose.getTranslation().getNorm();
+
+        // Ignore things that are too far away:
+        if (range >= maxRange) {
+            return TargetProcessingResult.rejected(RejectionReason.RANGE);
+        }
+
+        // TODO: Estimated STD Deviations from Photon vision:
+        double[] stdDevs = estimateStddevs(range, relativePose.getRotation().getRadians() + robotPose.getRotation().getZ());
+
+        VisionMeasurement measurement = new VisionMeasurement(
+            robotPose.toPose2d(),
+            relativePose,
+            resultTimestamp,
+            target.getFiducialId(),
+            stdDevs
+        );
+
+        return TargetProcessingResult.accepted(measurement);
+    }
+
+    enum RejectionReason
+    {
+        POSE_NOT_FOUND,
+        AMBIGUITY,
+        RANGE
+    }
+
+    private static class TargetProcessingResult
+    {
+        private final boolean rejected;
+        private final RejectionReason rejectionReason;
+        private final VisionMeasurement measurement;
+
+        private TargetProcessingResult(boolean rejected, RejectionReason rejectionReason, VisionMeasurement measurement)
+        {
+            this.rejected = rejected;
+            this.rejectionReason = rejectionReason;
+            this.measurement = measurement;
+        }
+
+        static TargetProcessingResult rejected(RejectionReason reason)
+        {
+            return new TargetProcessingResult(true, reason, null);
+        }
+
+        static TargetProcessingResult accepted(VisionMeasurement measurement)
+        {
+            return new TargetProcessingResult(false, null, measurement);
+        }
+
+        boolean isRejected()
+        {
+            return rejected;
+        }
+
+        RejectionReason getRejectionReason()
+        {
+            return rejectionReason;
+        }
+
+        VisionMeasurement getMeasurement()
+        {
+            return measurement;
+        }
+    }
+
+    public List<VisionMeasurement> getCamMeasurements(List<PhotonPipelineResult> results, Transform3d camTransform3d, String cameraName)
+    {
+        List<VisionMeasurement> measurements = new ArrayList<>();
+        int rawTargetCount = 0;
+        int rejectedAmbiguity = 0;
+        int rejectedRange = 0;
+        int rejectedPoseNotFound = 0;
+
+        for (PhotonPipelineResult result : results) {
+            if (result.hasTargets()) {
+                double resultTimestamp = result.getTimestampSeconds(); // Adjusted for each result for time compensation.
+
+                for (PhotonTrackedTarget target : result.getTargets()) {
+                    rawTargetCount++;
+
+                    TargetProcessingResult processingResult = processTargetForMeasurement(target, resultTimestamp, camTransform3d);
+
+                    if (processingResult.isRejected()) {
+                        switch (processingResult.getRejectionReason()) {
+                            case POSE_NOT_FOUND:
+                                rejectedPoseNotFound++;
+                                break;
+                            case AMBIGUITY:
+                                rejectedAmbiguity++;
+                                break;
+                            case RANGE:
+                                rejectedRange++;
+                                break;
+                        }
+                    } else {
+                        measurements.add(processingResult.getMeasurement());
+                    }
+                } // End loop over targets.
+            }
+        }
+
+        Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/RawTargetCount", rawTargetCount);
+        Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/RejectedAmbiguity", rejectedAmbiguity);
+        Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/RejectedRange", rejectedRange);
+        Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/RejectedPoseNotFound", rejectedPoseNotFound);
+        Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/MeasurementCount", measurements.size());
+
+        return measurements;
+    }
+
+    public Transform3d getRobotCamTransform(int index)
+    {
+        return cameras.get(index).transform;
+    }
+
+    public List<VisionMeasurement> getMultiTagEstimate(List<PhotonPipelineResult> results, PhotonPoseEstimator estimator, Transform3d camTransform3d)
+    {
+        estimator.setRobotToCameraTransform(camTransform3d);
+        List<VisionMeasurement> measurements = new ArrayList<>();
+        for (PhotonPipelineResult result : results) {
+            // In field coordinates:
+            Optional<EstimatedRobotPose> pose = estimator.estimateCoprocMultiTagPose(result);
+
+            if (pose.isEmpty()) {
+                // TODO: This seems like redundant work if we're doing multi tag poses?
+                pose = estimator.estimateLowestAmbiguityPose(result);
+                if (pose.isEmpty()) {
+                    continue;
+                }
+                if (pose.get().targetsUsed.isEmpty() || pose.get().targetsUsed.get(0).getPoseAmbiguity() > ambiguityThreshold) {
+                    continue;
+                }
+            }
+            EstimatedRobotPose estimatedPose = pose.get();
+            double minDist = 100.0;
+            double minAngle = 0.0;
+            for (PhotonTrackedTarget t : estimatedPose.targetsUsed) {
+                Transform3d best = t.getBestCameraToTarget();
+                double dist = best.getTranslation().getNorm();
+                if (dist < minDist) {
+                    minDist = dist;
+                    minAngle = best.getRotation().getZ(); // Yaw angle.
+                }
+            }
+
+            double[] stdDevs = estimateStddevs(minDist, minAngle); // TODO: find the actual value
+            hasAprilTags = true;
+            measurements.add(new VisionMeasurement(estimatedPose.estimatedPose.toPose2d(), new Transform2d(), estimatedPose.timestampSeconds, 0, stdDevs));
+        }
+        return measurements;
+    }
+
+    public void clearMeasurements()
+    {
+        visionMeasurements.clear();
+    }
+
+    private void processCameraForMeasurements(int cameraIndex, double turretVelocityRadPerSec)
+    {
+        RobotCamera cam = cameras.get(cameraIndex);
+        String cameraName = cam.camera.getName();
+
+        List<PhotonPipelineResult> results = cam.camera.getAllUnreadResults();
+        Transform3d transform = cam.transform;
+
+        // If the camera is the turrets camera, and the velocty of the turret is acceptable we will use it. And if not we will skip over using the camera.
+        if (cam.isTurret) {
+            transform = processTurretCameraTransform(cameraName, turretVelocityRadPerSec, results, transform);
+            if (transform == null) {
+                return; // Skip this camera
+            }
+        }
+
+        Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/ResultCount", results.size());
+        List<VisionMeasurement> measurements = getCamMeasurements(results, transform, cameraName);
+        // estimator.addHeadingData(drivetrain.getPreviousUpdateTime(), drivetrain.getGyroHeading());
+        // List<VisionMeasurement> measurements = getMultiTagEstimate(results, estimators.get(cameraIndex), transform);
+        if (!measurements.isEmpty()) {
+            hasAprilTags = true;
+        }
+        visionMeasurements.addAll(measurements);
+    }
+
+    Transform3d processTurretCameraTransform(String cameraName, double turretVelocityRadPerSec,
+            List<PhotonPipelineResult> results, Transform3d originalTransform)
+    {
         // If the camera is the turret but it is not zeroed/indexed skip it.
         if (!turret.hasZero()) {
-          SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), false);
-          continue;
+            Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/SkipReason", "Turret Not Zeroed");
+            SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), false);
+            return null;
         }
 
         // If the turret is moving too quickly then skip it otherwise try to use it.
         // TODO: Revisit threshold
-        if (Math.abs(turretVelocity) < 1.0) {
-          double totalLatencyMs = 0;
-          double count = 0.0;
-          for (PhotonPipelineResult result : results) {
+        if (Math.abs(turretVelocityRadPerSec) >= 1.0) {
+            Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/SkipReason", "Turret Moving (" + turretVelocityRadPerSec + " rad/s)");
+            SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), false);
+            return null;
+        }
+
+        double totalLatencyMs = 0;
+        double count = 0.0;
+        for (PhotonPipelineResult result : results) {
             totalLatencyMs += result.metadata.getLatencyMillis();
             count = count + 1.0;
-          }
-          double averageLatencySec = 0.0;
-          if (count > 0.0) {
-            averageLatencySec = (totalLatencyMs / count) / 1000.0;
-          }
-
-          // Estimate turret angle at point of average latency from measurements:
-          double turretAngle = turret.getPositionRadians() - turretVelocity * averageLatencySec; // TODO: Tweak this number
-          transform = transform.plus(new Transform3d(new Translation3d(), new Rotation3d(0, 0, turretAngle)))
-              .plus(new Transform3d(
-                  new Translation3d(Units.inchesToMeters(-0.136), Units.inchesToMeters(-6.125), Units.inchesToMeters(5.187)),
-                  new Rotation3d(0, Math.toRadians(-15), 0)));
-          SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), true);
-        } else {
-          SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), false);
-          continue; // Skip turret if it's moving too fast.
         }
-      } // End camera is turret.
+        double averageLatencySec = 0.0;
+        if (count > 0.0) {
+            averageLatencySec = (totalLatencyMs / count) / 1000.0;
+        }
 
-      List<VisionMeasurement> measurements = getCamMeasurements(results, transform);
-      // estimator.addHeadingData(drivetrain.getPreviousUpdateTime(), drivetrain.getGyroHeading());
-      // List<VisionMeasurement> measurements = getMultiTagEstimate(results, estimators.get(i), transform);
-      visionMeasurements.addAll(measurements);
+        // Estimate turret angle at point of average latency from measurements:
+        double turretAngle = turret.getPositionRadians() - turretVelocityRadPerSec * averageLatencySec; // TODO: Tweak this number
+        Transform3d adjustedTransform = originalTransform.plus(new Transform3d(new Translation3d(), new Rotation3d(0, 0, turretAngle)))
+                .plus(new Transform3d(
+                        new Translation3d(Units.inchesToMeters(-0.136), Units.inchesToMeters(-6.125), Units.inchesToMeters(5.187)),
+                        new Rotation3d(0, Math.toRadians(-15), 0)));
+
+        Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/SkipReason", "");
+        SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), true);
+
+        return adjustedTransform;
     }
 
-    // Flatten vision measurements to parallel arrays for logging
-    int n = visionMeasurements.size();
-    Pose2d[] measurementPoses = new Pose2d[n];
-    double[] measurementTimestamps = new double[n];
-    int[] measurementTagIds = new int[n];
-    double[] measurementStddevX = new double[n];
-    double[] measurementStddevY = new double[n];
-    double[] measurementStddevTheta = new double[n];
+    @Override
+    public void periodic()
+    {
+        hasAprilTags = false;
+        double turretVelocityRadPerSec = turret.getVelocityRadPerSec();
 
-    for (int i = 0; i < n; i++) {
-      VisionMeasurement m = visionMeasurements.get(i);
-      measurementPoses[i] = m.pose;
-      measurementTimestamps[i] = m.timeStamp;
-      measurementTagIds[i] = m.tagID;
-      measurementStddevX[i] = m.stddevs[0];
-      measurementStddevY[i] = m.stddevs[1];
-      measurementStddevTheta[i] = m.stddevs[2];
+        for (int i = 0; i < cameras.size(); i++) {
+            processCameraForMeasurements(i, turretVelocityRadPerSec);
+        }
+
+        logMeasurements();
     }
 
-    Logger.recordOutput("AprilTagFinder/MeasurementPoses", measurementPoses);
-    Logger.recordOutput("AprilTagFinder/MeasurementTimestamps", measurementTimestamps);
-    Logger.recordOutput("AprilTagFinder/MeasurementTagIds", measurementTagIds);
-    Logger.recordOutput("AprilTagFinder/MeasurementStdDevX", measurementStddevX);
-    Logger.recordOutput("AprilTagFinder/MeasurementStdDevY", measurementStddevY);
-    Logger.recordOutput("AprilTagFinder/MeasurementStdDevTheta", measurementStddevTheta);
-    Logger.recordOutput("AprilTagFinder/HasAprilTags", hasAprilTags);
+    private void logMeasurements()
+    {
+        int n = visionMeasurements.size();
+        Pose2d[] measurementPoses = new Pose2d[n];
+        double[] measurementTimestamps = new double[n];
+        int[] measurementTagIds = new int[n];
+        double[] measurementStddevX = new double[n];
+        double[] measurementStddevY = new double[n];
+        double[] measurementStddevTheta = new double[n];
 
-    SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_HAS_TAGS.getKey(), hasAprilTags);
-  }
+        for (int i = 0; i < n; i++) {
+            VisionMeasurement m = visionMeasurements.get(i);
+            measurementPoses[i] = m.pose;
+            measurementTimestamps[i] = m.timeStamp;
+            measurementTagIds[i] = m.tagID;
+            measurementStddevX[i] = m.stddevs[0];
+            measurementStddevY[i] = m.stddevs[1];
+            measurementStddevTheta[i] = m.stddevs[2];
+        }
 
-  private double[] estimateStddevs(double range, double bearing)
-  {
-    double[] result = baseStddevs.clone();
+        Logger.recordOutput("AprilTagFinder/MeasurementPoses", measurementPoses);
+        Logger.recordOutput("AprilTagFinder/MeasurementTimestamps", measurementTimestamps);
+        Logger.recordOutput("AprilTagFinder/MeasurementTagIds", measurementTagIds);
+        Logger.recordOutput("AprilTagFinder/MeasurementStdDevX", measurementStddevX);
+        Logger.recordOutput("AprilTagFinder/MeasurementStdDevY", measurementStddevY);
+        Logger.recordOutput("AprilTagFinder/MeasurementStdDevTheta", measurementStddevTheta);
+        Logger.recordOutput("AprilTagFinder/HasAprilTags", hasAprilTags);
 
-    // TODO: Use bearing + range error model so that position errors are not symmertric.
+        SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_HAS_TAGS.getKey(), hasAprilTags);
+    }
 
-    result[0] += 0.2 * range;
-    result[1] += 0.2 * range;
-    result[2] += 0.15 * range;
-    return result;
-  }
+    private double[] estimateStddevs(double range, double bearing)
+    {
+        double[] result = baseStddevs.clone();
+
+        // TODO: Use bearing + range error model so that position errors are not symmertric.
+
+        result[0] += 0.2 * range;
+        result[1] += 0.2 * range;
+        result[2] += 0.15 * range;
+        return result;
+    }
 }

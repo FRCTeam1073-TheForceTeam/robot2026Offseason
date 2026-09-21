@@ -94,7 +94,7 @@ public class RobotContainer
   private final Turret turret = new Turret();
 
   private final FieldMap fieldMap = new FieldMap();
-  private final AprilTagFinder tagFinder = new AprilTagFinder(turret, drivetrain);
+  private final AprilTagFinder tagFinder = new AprilTagFinder(turret);
   private final Localizer localizer = new Localizer(drivetrain, tagFinder);
   private final FieldMapDisplay fieldDisplay = new FieldMapDisplay(drivetrain, localizer, fieldMap);
   private final ZoneFinder zoneFinder = new ZoneFinder(localizer);
