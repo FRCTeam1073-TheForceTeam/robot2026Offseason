@@ -5,14 +5,13 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.NeutralOut;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -35,6 +34,13 @@ public class DumperBlocker extends SubsystemBase
     public static final double retractVelocity = -5.0;
     public static final double zeroVelocity = 1.0;
 
+    /** Volts required to hold the arm against gravity at horizontal, where its torque peaks. */
+    public static final double gravityFeedforwardVolts = 0.5;
+
+    /** Motion Magic profile limits, in rotor rotations per second and per second squared. */
+    public static final double cruiseVelocity = 6.0;
+    public static final double acceleration = 40.0;
+
     public static final double minPositionRadians = 0.0;
     public static final double maxPositionRadians = 1.5;
 
@@ -47,8 +53,7 @@ public class DumperBlocker extends SubsystemBase
     private final StatusSignal<Angle> positionSig;
     private final StatusSignal<Current> currentSig;
     private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
-    private final PositionVoltage CommandedPositionVoltage = new PositionVoltage(0).withSlot(1);
-    private final SlewRateLimiter limiter = new SlewRateLimiter(5);
+    private final MotionMagicVoltage commandedMotionMagic = new MotionMagicVoltage(0).withSlot(1);
 
     private Mode mode = Mode.NONE;
 
@@ -91,12 +96,21 @@ public class DumperBlocker extends SubsystemBase
 
         // Slot 1 Position
         configs.Slot1.kV = 0.153;
-        configs.Slot1.kP = 2.0;
+        configs.Slot1.kP = 7.0;
         configs.Slot1.kI = 0.04;
         configs.Slot1.kD = 0.01;
         configs.Slot1.kA = 0.0;
         configs.Slot1.kS = 0.02;
-        configs.Slot1.kG = 0.25;
+        // Gravity is compensated in periodic() via gravityFeedforward(), because position 0
+        // is the arm straight down rather than horizontal, which is what Slot1.GravityType
+        // (Arm_Cosine) would require. Leave the slot's kG at zero so it isn't applied twice.
+        configs.Slot1.kG = 0.0;
+
+        // Motion Magic generates a trapezoidal profile with a real deceleration phase and
+        // applies the slot's kS/kV/kA along it, so the arm eases into the target instead of
+        // arriving at full speed the way a slew-limited setpoint did.
+        configs.MotionMagic.MotionMagicCruiseVelocity = cruiseVelocity;
+        configs.MotionMagic.MotionMagicAcceleration = acceleration;
 
         configs.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
@@ -155,6 +169,16 @@ public class DumperBlocker extends SubsystemBase
         return positionSig.getValueAsDouble();
     }
 
+    /**
+     * Volts of gravity compensation for a given arm position. Position 0 is the arm hanging
+     * straight down, where gravity pulls along the arm and produces no torque about the pivot;
+     * torque peaks a quarter turn later at horizontal. So the load scales with sin(angle).
+     */
+    private double gravityFeedforward(double positionRotations) {
+        double mechanismRadians = positionRotations * 2.0 * Math.PI / gearRatio;
+        return gravityFeedforwardVolts * Math.sin(mechanismRadians);
+    }
+
     // public String getBrake() {
     //     return dumperBlockerMotor.;
 
@@ -167,9 +191,13 @@ public class DumperBlocker extends SubsystemBase
     
         if (mode == Mode.POSITION) {
             double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
-            double limitedDumperTarget = limiter.calculate(clampedCommand);
-            dumperBlockerMotor.setControl(CommandedPositionVoltage.withPosition(limitedDumperTarget));
-            SmartDashboard.putNumber("DumperBlocker/clampedCommand", limitedDumperTarget);
+            double gravityVolts = gravityFeedforward(getPositionRadians());
+            dumperBlockerMotor.setControl(
+                commandedMotionMagic.withPosition(clampedCommand).withFeedForward(gravityVolts));
+            SmartDashboard.putNumber("DumperBlocker/clampedCommand", clampedCommand);
+            SmartDashboard.putNumber("DumperBlocker/GravityFeedforward", gravityVolts);
+            SmartDashboard.putNumber("DumperBlocker/ProfileSetpoint",
+                dumperBlockerMotor.getClosedLoopReference().getValueAsDouble());
         } 
 
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_VELOCITY.getKey(), getVelocityRadPerSec());
