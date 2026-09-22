@@ -48,7 +48,7 @@ public class DumperBlocker extends SubsystemBase
      * no load and driving into it only stalls the motor. Keep this just short of the stop so the
      * arm holds in free space against gravity alone.
      */
-    public static final double deployedPosition = 1.20;
+    public static final double deployedPosition = 1.24;
     public static final double stowedPosition = 0.0;
 
     /** Error below which the arm has arrived and drops to an open-loop gravity hold. */

@@ -48,6 +48,13 @@ public class Intake extends SubsystemBase
   public static final double maxPositionRadians = 0.0;
   public static final double minPositionRadians = -2.13;
 
+  /** All the way in. More negative is further in, so this is the low end of the range. */
+  public static final double stowedPositionRadians = Math.toRadians(-122.0);
+  /** All the way out, which is the down position. */
+  public static final double deployedPositionRadians = Math.toRadians(-0.1);
+  /** How far short of stowed still counts as all the way in. */
+  public static final double stowedToleranceRadians = 0.15;
+
   private enum Mode { NONE, VELOCITY, POSITION }
 
   private final TalonFX leadMotor;
@@ -187,6 +194,12 @@ public class Intake extends SubsystemBase
   public boolean hasZero()
   {
     return hasZero;
+  }
+
+  /** True once the intake is all the way in, leaving the dumper blocker room to deploy. */
+  public boolean isStowed()
+  {
+    return position <= stowedPositionRadians + stowedToleranceRadians;
   }
 
   @Override
