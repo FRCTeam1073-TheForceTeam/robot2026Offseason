@@ -277,7 +277,7 @@ public class RobotContainer
     // uninitialized subsystems in default commands.
     drivetrain.setDefaultCommand(new TeleopDrive(drivetrain, oi, localizer));
     intake.setDefaultCommand(new IntakeTeleop(intake, oi, zoneFinder));
-    dumperBlocker.setDefaultCommand(new DumperBlockerTeleop(dumperBlocker, oi));
+    dumperBlocker.setDefaultCommand(new DumperBlockerTeleop(dumperBlocker, intake, oi));
     collector.setDefaultCommand(new CollectorTeleop(collector, oi, drivetrain));
     spindexer.setDefaultCommand(new SpindexerTeleop(spindexer, kicker, oi));
     kicker.setDefaultCommand(new KickerTeleop(kicker, oi));

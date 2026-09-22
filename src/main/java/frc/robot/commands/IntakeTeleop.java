@@ -52,12 +52,12 @@ public class IntakeTeleop extends Command
     lastAButton = aButton;
 
     if (positionIn) {
-      intake.setPosition(Math.toRadians(-122.0));
+      intake.setPosition(Intake.stowedPositionRadians);
     } else {
       if (Math.abs(intake.getPositionRadians()) <= 0.2) {
         intake.stop();
       } else {
-        intake.setPosition(Math.toRadians(-0.1));
+        intake.setPosition(Intake.deployedPositionRadians);
       }
     }
   }
