@@ -37,7 +37,7 @@ public class DumperBlocker extends SubsystemBase
     public static final double zeroVelocity = 1.0;
 
     /** Volts required to hold the arm against gravity at horizontal, where its torque peaks. */
-    public static final double gravityFeedforwardVolts = 0.5;
+    public static final double gravityFeedforwardVolts = 0.67;
 
     /** Motion Magic profile limits, in rotor rotations per second and per second squared. */
     public static final double cruiseVelocity = 6.0;
