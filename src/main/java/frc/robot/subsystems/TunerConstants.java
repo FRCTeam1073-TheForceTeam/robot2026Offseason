@@ -31,11 +31,11 @@ public class TunerConstants {
     // PID gains from legacy SwerveModuleConfig
     private static final com.ctre.phoenix6.configs.Slot0Configs steerGains =
         new com.ctre.phoenix6.configs.Slot0Configs()
-            .withKP(11.0).withKI(0.8).withKD(0.04).withKV(0.153).withKS(0.04);
+            .withKP(10.0).withKI(0.1).withKD(0.0).withKV(0.12).withKS(0.05);
 
     private static final com.ctre.phoenix6.configs.Slot0Configs driveGains =
         new com.ctre.phoenix6.configs.Slot0Configs()
-            .withKP(0.35).withKI(0.0).withKD(0.0).withKV(0.12).withKA(0.0).withKS(0.015);
+            .withKP(0.3).withKI(0.0).withKD(0.0).withKV(0.12).withKA(0.01).withKS(0.0);
 
     // Preserve legacy voltage/current limit behavior
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration();
