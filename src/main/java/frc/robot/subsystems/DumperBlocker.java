@@ -7,7 +7,6 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -51,14 +50,7 @@ public class DumperBlocker extends SubsystemBase
     public static final double deployedPosition = 1.24;
     public static final double stowedPosition = 0.0;
 
-    /** Error below which the arm has arrived and drops to an open-loop gravity hold. */
-    public static final double holdEnterTolerance = 0.03;
-    /** Error above which the arm has drifted and the profile re-engages. */
-    public static final double holdExitTolerance = 0.10;
-    /** Rotor speed below which the arm counts as not moving, in rotations per second. */
-    public static final double stallVelocity = 0.25;
-    /** Loops of no motion before a blocked arm gives up and holds (~0.25 s at 50 Hz). */
-    public static final int stallLoops = 12;
+
 
     public static final double minPositionRadians = 0.0;
     public static final double maxPositionRadians = 1.5;
@@ -76,10 +68,6 @@ public class DumperBlocker extends SubsystemBase
     private final StatusSignal<Current> statorCurrentSig;
     private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
     private final MotionMagicVoltage commandedMotionMagic = new MotionMagicVoltage(0).withSlot(1);
-    private final VoltageOut commandedHoldVoltage = new VoltageOut(0);
-
-    private boolean holding = false;
-    private int stallCount = 0;
 
     private Mode mode = Mode.NONE;
 
@@ -127,9 +115,9 @@ public class DumperBlocker extends SubsystemBase
 
         // Slot 1 Position
         configs.Slot1.kV = 0.153;
-        configs.Slot1.kP = 7.0;
+        configs.Slot1.kP = 15.0;
         configs.Slot1.kI = 0.0;
-        configs.Slot1.kD = 0.01;
+        configs.Slot1.kD = 0.15;
         configs.Slot1.kA = 0.0;
         configs.Slot1.kS = 0.02;
         // Gravity is compensated in periodic() via gravityFeedforward(), because position 0
@@ -169,16 +157,8 @@ public class DumperBlocker extends SubsystemBase
     }
 
     public void setPosition(double radians) {
-        if (radians != targetPosition || mode != Mode.POSITION) {
-            holding = false;
-            stallCount = 0;
-        }
         mode = Mode.POSITION;
         targetPosition = radians;
-    }
-
-    public boolean isHolding() {
-        return holding;
     }
 
     public double getDeviceTempCelsius() {
@@ -248,32 +228,17 @@ public class DumperBlocker extends SubsystemBase
         if (mode == Mode.POSITION) {
             double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
             double gravityVolts = gravityFeedforward(getPositionRadians());
-            double error = clampedCommand - getPositionRadians();
 
-            stallCount = Math.abs(velocitySig.getValueAsDouble()) < stallVelocity ? stallCount + 1 : 0;
-
-            // Once the arm has arrived - or has clearly run into something and stopped - drop the
-            // closed loop and hold with gravity feedforward alone. Holding closed loop against a
-            // target it cannot reach burns kP * error forever with nothing to show for it.
-            if (holding) {
-                if (Math.abs(error) > holdExitTolerance) {
-                    holding = false;
-                    stallCount = 0;
-                }
-            } else if (Math.abs(error) < holdEnterTolerance || stallCount >= stallLoops) {
-                holding = true;
-            }
-
-            if (holding) {
-                dumperBlockerMotor.setControl(commandedHoldVoltage.withOutput(gravityVolts));
-            } else {
-                dumperBlockerMotor.setControl(
-                    commandedMotionMagic.withPosition(clampedCommand).withFeedForward(gravityVolts));
-            }
+            // Always closed loop. Any open-loop hold leaves the arm with no restoring force, so
+            // a hard spin can throw it off target and nothing pulls it back until the error is
+            // big enough to notice. Holding the profile costs almost nothing once error is zero.
+            dumperBlockerMotor.setControl(
+                commandedMotionMagic.withPosition(clampedCommand).withFeedForward(gravityVolts));
 
             SmartDashboard.putNumber("DumperBlocker/clampedCommand", clampedCommand);
             SmartDashboard.putNumber("DumperBlocker/GravityFeedforward", gravityVolts);
-            SmartDashboard.putBoolean("DumperBlocker/Holding", holding);
+            SmartDashboard.putNumber("DumperBlocker/PositionError",
+                clampedCommand - getPositionRadians());
             SmartDashboard.putNumber("DumperBlocker/ProfileSetpoint",
                 dumperBlockerMotor.getClosedLoopReference().getValueAsDouble());
         } 
