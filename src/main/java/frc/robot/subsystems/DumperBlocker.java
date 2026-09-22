@@ -37,7 +37,7 @@ public class DumperBlocker extends SubsystemBase
     public static final double zeroVelocity = 1.0;
 
     /** Volts required to hold the arm against gravity at horizontal, where its torque peaks. */
-    public static final double gravityFeedforwardVolts = 0.5;
+    public static final double gravityFeedforwardVolts = 0.67;
 
     /** Motion Magic profile limits, in rotor rotations per second and per second squared. */
     public static final double cruiseVelocity = 6.0;
@@ -48,7 +48,7 @@ public class DumperBlocker extends SubsystemBase
      * no load and driving into it only stalls the motor. Keep this just short of the stop so the
      * arm holds in free space against gravity alone.
      */
-    public static final double deployedPosition = 1.20;
+    public static final double deployedPosition = 1.24;
     public static final double stowedPosition = 0.0;
 
     /** Error below which the arm has arrived and drops to an open-loop gravity hold. */
