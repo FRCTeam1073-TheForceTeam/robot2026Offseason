@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import frc.robot.commands.Autos.Autos;
 import frc.robot.subsystems.AprilTagFinder;
 import frc.robot.subsystems.BallisticShot;
-import frc.robot.subsystems.Bling;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.Drivetrain;
@@ -47,7 +46,6 @@ public class AutoRunner
   private final Intake intake;
   private final ShooterTable shooterTable;
   private final TargetFinder targetFinder;
-  private final Bling bling;
   private final BallisticShot bs;
 
   public AutoRunner(
@@ -65,7 +63,6 @@ public class AutoRunner
       LaserCan laser,
       ShooterTable table,
       TargetFinder finder,
-      Bling bling,
       BallisticShot bs)
   {
     this.drivetrain = drivetrain;
@@ -80,7 +77,6 @@ public class AutoRunner
     this.intake = intake;
     this.targetFinder = finder;
     this.shooterTable = table;
-    this.bling = bling;
     this.bs = bs;
   }
 
@@ -358,24 +354,18 @@ public class AutoRunner
                     spindexerSpeed(6.5),
                     kickerSpeed(6.6),
                     Commands.waitSeconds(0.5),
-                    Commands.runOnce(bling::blingPurple, bling), // purple: about to go in
                     Commands.waitSeconds(0.5),
                     intakeIn(),
-                    Commands.runOnce(bling::blingWhite, bling),
                     Commands.waitSeconds(1.0),
                     intakeOut(),
                     Commands.waitSeconds(3.5),
-                    Commands.runOnce(bling::blingPurple, bling),
                     Commands.waitSeconds(0.5),
                     intakeIn(),
-                    Commands.runOnce(bling::blingWhite, bling),
                     Commands.waitSeconds(2.0),
                     intakeOut(),
                     Commands.waitSeconds(1.5),
-                    Commands.runOnce(bling::blingPurple, bling),
                     Commands.waitSeconds(0.5),
-                    intakeIn(),
-                    Commands.runOnce(bling::blingWhite, bling))).withTimeout(15.0));
+                    intakeIn()).withTimeout(15.0)));
             break;
           case "ShootDoublePath":
             autoRoutine.add(Commands.parallel(

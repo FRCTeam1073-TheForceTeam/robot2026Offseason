@@ -120,6 +120,17 @@ public enum DashboardNames {
   COLLECTOR_VELOCITY("Collector/Velocity(mps)"),
   COLLECTOR_TARGET_VELOCITY("Collector/TargetVelocity(mps)"),
 
+  // DumperBlocker
+  DUMPER_BLOCKER_HW_CONFIGURED("DumperBlocker/Dumper Blocker - hardware_configured"),
+  DUMPER_BLOCKER_VELOCITY("DumperBlocker/Velocity(rps)"),
+  DUMPER_BLOCKER_TORQUE_CURRENT("DumperBlocker/Torque Current"),
+  DUMPER_BLOCKER_HARDSTOP("DumperBlocker/Hardstop"),
+  DUMPER_BLOCKER_BRAKEMODE("DumperBlocker/Brakemode"),
+  DUMPER_BLOCKER_POSITION("DumperBlocker/Position"),
+  DUMPER_BLOCKER_TEMP("DumperBlocker/Motor Temp(C)"),
+  DUMPER_BLOCKER_SUPPLY_CURRENT("DumperBlocker/Supply Current(A)"),
+  DUMPER_BLOCKER_STATOR_CURRENT("DumperBlocker/Stator Current(A)"),
+
   // Localizer
   LOCALIZER_PS("Localizer/PS"),
   LOCALIZER_POSE_X("Localizer/Pose(x)"),

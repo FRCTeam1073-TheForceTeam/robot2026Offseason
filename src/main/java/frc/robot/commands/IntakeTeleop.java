@@ -17,6 +17,7 @@ public class IntakeTeleop extends Command
 
   private boolean positionIn = true;
   private boolean lastBumperRight = false; // For click detect on button A.
+  private boolean lastAButton = false;
 
   public IntakeTeleop(Intake intake, OI oi, ZoneFinder zone)
   {
@@ -36,15 +37,19 @@ public class IntakeTeleop extends Command
   public void execute()
   {
     boolean bumperRight = oi.getDriverRightBumper();
+    boolean aButton = oi.getDriverAButton();
 
     if (zone.getZones().contains("TRENCH")) {
       positionIn = false;
     } else if (!lastBumperRight && bumperRight) {
       // Toggle position:
       positionIn = !positionIn;
+    } else if (!lastAButton && aButton) {
+      positionIn = true;
     }
 
     lastBumperRight = bumperRight; // Keep track of button for toggle.
+    lastAButton = aButton;
 
     if (positionIn) {
       intake.setPosition(Math.toRadians(-122.0));

@@ -17,12 +17,12 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.AutoRunner;
-import frc.robot.commands.BlingTeleop;
 import frc.robot.commands.ClimberTeleop;
 import frc.robot.commands.CollectorTeleop;
 import frc.robot.commands.FlywheelTeleop;
 import frc.robot.commands.HoodTeleop;
 import frc.robot.commands.IntakeTeleop;
+import frc.robot.commands.DumperBlockerTeleop;
 import frc.robot.commands.KickerTeleop;
 import frc.robot.commands.SpindexerTeleop;
 import frc.robot.commands.TeleopDrive;
@@ -32,11 +32,11 @@ import frc.robot.commands.TurretTeleop;
 import frc.robot.commands.ZeroClimber;
 import frc.robot.commands.ZeroHood;
 import frc.robot.commands.ZeroIntake;
+import frc.robot.commands.ZeroDumperBlocker;
 import frc.robot.commands.ZeroTurret;
 import frc.robot.commands.Autos.Autos;
 import frc.robot.subsystems.AprilTagFinder;
 import frc.robot.subsystems.BallisticShot;
-import frc.robot.subsystems.Bling;
 import frc.robot.subsystems.Climber;
 import frc.robot.subsystems.Collector;
 import frc.robot.subsystems.Drivetrain;
@@ -44,6 +44,7 @@ import frc.robot.subsystems.FieldMap;
 import frc.robot.subsystems.FieldMapDisplay;
 import frc.robot.subsystems.Flywheel;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.DumperBlocker;
 import frc.robot.subsystems.Kicker;
 import frc.robot.subsystems.Localizer;
 import frc.robot.subsystems.OI;
@@ -105,16 +106,16 @@ public class RobotContainer
 
   private final ShooterTable shooterTable = new ShooterTable();
   private final Intake intake = new Intake();
+  private final DumperBlocker dumperBlocker = new DumperBlocker();
   private final Collector collector = new Collector();
   private final Spindexer spindexer = new Spindexer();
   private final Kicker kicker = new Kicker();
   private final ShooterHood shooterHood = new ShooterHood();
   private final Flywheel flywheel = new Flywheel();
   // LaserCan laser; -- not instantiated, matching C++ (commented out there too).
-  private final Bling bling = new Bling();
 
   private final AutoRunner autoRunner = new AutoRunner(drivetrain, tagFinder, localizer, kicker, climber, flywheel, shooterHood,
-      spindexer, turret, collector, intake, null, shooterTable, targetFinder, bling, ballisticShot);
+      spindexer, turret, collector, intake, null, shooterTable, targetFinder, ballisticShot);
 
   private Optional<Trajectory<SwerveSample>> trajectory = Optional.empty();
 
@@ -133,6 +134,7 @@ public class RobotContainer
 
     System.err.println("\tShooter table created...");
     System.err.println("\tIntake created...");
+    System.err.println("\tDumper Blocker created...");
     System.err.println("\tCollector created...");
     System.err.println("\tSpindexer created...");
     System.err.println("\tKicker created...");
@@ -275,6 +277,7 @@ public class RobotContainer
     // uninitialized subsystems in default commands.
     drivetrain.setDefaultCommand(new TeleopDrive(drivetrain, oi, localizer));
     intake.setDefaultCommand(new IntakeTeleop(intake, oi, zoneFinder));
+    dumperBlocker.setDefaultCommand(new DumperBlockerTeleop(dumperBlocker, oi));
     collector.setDefaultCommand(new CollectorTeleop(collector, oi, drivetrain));
     spindexer.setDefaultCommand(new SpindexerTeleop(spindexer, kicker, oi));
     kicker.setDefaultCommand(new KickerTeleop(kicker, oi));
@@ -282,7 +285,6 @@ public class RobotContainer
     flywheel.setDefaultCommand(new FlywheelTeleop(flywheel, oi, targetFinder, shooterTable, ballisticShot));
     turret.setDefaultCommand(new TurretTeleop(turret, oi, targetFinder, drivetrain));
     climber.setDefaultCommand(new ClimberTeleop(climber, oi, zoneFinder));
-    bling.setDefaultCommand(new BlingTeleop(bling, oi));
 
     // If the turret has not yet seen zero, zero it now.
     if (!turret.hasZero()) {
@@ -297,22 +299,34 @@ public class RobotContainer
       operatorController.povRight().onTrue(new ZeroHood(shooterHood));
       operatorController.povDown().onTrue(new ZeroClimber(climber));
 
-      // Parking brake: toggle with driver B button
       new edu.wpi.first.wpilibj2.command.button.Trigger(() -> {
-          boolean bPressed = oi.getDriverBButton();
-          if (bPressed) {
-              System.err.println("DEBUG: Driver B button pressed! Current brake state: " + drivetrain.getParkingBrake());
+          boolean aPressed = oi.getOperatorAButton();
+          if (aPressed) {
+            System.out.println("DEBUG: Operator A Button Pressed");
           }
-          return bPressed;
+          return aPressed;
       })
-          .onTrue(edu.wpi.first.wpilibj2.command.Commands.runOnce(() -> {
-              System.err.println("DEBUG: Executing parking brake toggle");
-              drivetrain.parkingBrake(!drivetrain.getParkingBrake());
-              System.err.println("DEBUG: Parking brake toggled to: " + drivetrain.getParkingBrake());
-          }, drivetrain));
+          .onTrue(new ZeroDumperBlocker(dumperBlocker));
 
       controlBindings = true;
     }
+
+      // Parking brake: toggle with driver B button
+    //   new edu.wpi.first.wpilibj2.command.button.Trigger(() -> {
+    //       boolean bPressed = oi.getDriverBButton();
+    //       if (bPressed) {
+    //           System.err.println("DEBUG: Driver B button pressed! Current brake state: " + drivetrain.getParkingBrake());
+    //       }
+    //       return bPressed;
+    //   })
+    //       .onTrue(edu.wpi.first.wpilibj2.command.Commands.runOnce(() -> {
+    //           System.err.println("DEBUG: Executing parking brake toggle");
+    //           drivetrain.parkingBrake(!drivetrain.getParkingBrake());
+    //           System.err.println("DEBUG: Parking brake toggled to: " + drivetrain.getParkingBrake());
+    //       }, drivetrain));
+
+    //   controlBindings = true;
+    // }
   }
 
   private void configureBindings()

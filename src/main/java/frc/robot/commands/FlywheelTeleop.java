@@ -40,7 +40,7 @@ public class FlywheelTeleop extends Command
   @Override
   public void execute()
   {
-    if (Math.abs(oi.getOperatorLeftTrigger()) >= 0.1) {
+    if ((Math.abs(oi.getOperatorLeftTrigger()) >= 0.1) || oi.getDriverXButton()) {
       double rangeToTarget = tf.getRangeToTargetMeters();
 
       if (tf.isPassing()) {
