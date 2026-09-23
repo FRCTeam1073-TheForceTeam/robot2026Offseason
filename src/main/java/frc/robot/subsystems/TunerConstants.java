@@ -32,13 +32,19 @@ public class TunerConstants {
      * break traction - not the supply limit. CTRE defaults this to 120.
      */
     private static final double kDriveSlipCurrent = 80;
-    private static final double kSteerVoltageLimit = 8.5;
+    private static final double kSteerVoltageLimit = 12.0;
     private static final double kDriveVoltageLimit = 12.0;
 
     // PID gains from legacy SwerveModuleConfig
+    // Steer feedback is a RemoteCANcoder, so this loop runs in MODULE rotations: CTRE sets
+    // RotorToSensorRatio to the steer ratio and SensorToMechanismRatio to 1.0. The legacy gains
+    // were scaled for rotor rotations, which made them ~26x too small - kP of 10 produced only
+    // 2.5 V on a 90 degree error. These are CTRE's generated defaults for this configuration,
+    // with kV carrying the same gear-ratio factor CTRE applies to MotionMagicExpo_kV.
     private static final com.ctre.phoenix6.configs.Slot0Configs steerGains =
         new com.ctre.phoenix6.configs.Slot0Configs()
-            .withKP(10.0).withKI(0.1).withKD(0.0).withKV(0.12).withKS(0.05);
+            .withKP(100.0).withKI(0.0).withKD(0.5)
+            .withKV(0.12 * kSteerGearRatio).withKS(0.1);
 
     private static final com.ctre.phoenix6.configs.Slot0Configs driveGains =
         new com.ctre.phoenix6.configs.Slot0Configs()
