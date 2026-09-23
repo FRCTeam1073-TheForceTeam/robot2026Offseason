@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -28,7 +29,7 @@ public class DumperBlocker extends SubsystemBase
 
     public static final double gearRatio = 5.0;
     public static final double ampsPerNewtonMeter = 10.0;
-    public static final double currentLimit = 10.0;
+    public static final double currentLimit = 15.0;
     public static final double hardstopCurrent = 5.5;
 
     public static final double extendVelocity = 5.0;
@@ -68,6 +69,13 @@ public class DumperBlocker extends SubsystemBase
     private final StatusSignal<Current> statorCurrentSig;
     private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(0);
     private final MotionMagicVoltage commandedMotionMagic = new MotionMagicVoltage(0).withSlot(1);
+    private final PositionVoltage commandedPositionVoltage = new PositionVoltage(0).withSlot(1);
+
+    /** True while a commanded move is still running the profile. */
+    private boolean profiling = false;
+
+    /** Error below which a commanded move counts as complete, in rotor rotations. */
+    public static final double arrivedTolerance = 0.05;
 
     private Mode mode = Mode.NONE;
 
@@ -97,12 +105,12 @@ public class DumperBlocker extends SubsystemBase
         configs.TorqueCurrent.PeakForwardTorqueCurrent = 10.0;
         configs.TorqueCurrent.PeakReverseTorqueCurrent = -10.0;
 
-        configs.Voltage.PeakForwardVoltage = 8.0;
-        configs.Voltage.PeakReverseVoltage = -8.0;
+        configs.Voltage.PeakForwardVoltage = 12.0;
+        configs.Voltage.PeakReverseVoltage = -12.0;
 
         configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
         configs.CurrentLimits.SupplyCurrentLimitEnable = true;
-        configs.CurrentLimits.StatorCurrentLimit = 25.0;
+        configs.CurrentLimits.StatorCurrentLimit = 40.0;
         configs.CurrentLimits.StatorCurrentLimitEnable = true;
 
         // Slot 0 Velocity
@@ -157,6 +165,9 @@ public class DumperBlocker extends SubsystemBase
     }
 
     public void setPosition(double radians) {
+        if (radians != targetPosition) {
+            profiling = true;
+        }
         mode = Mode.POSITION;
         targetPosition = radians;
     }
@@ -228,17 +239,32 @@ public class DumperBlocker extends SubsystemBase
         if (mode == Mode.POSITION) {
             double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
             double gravityVolts = gravityFeedforward(getPositionRadians());
+            double error = clampedCommand - getPositionRadians();
 
-            // Always closed loop. Any open-loop hold leaves the arm with no restoring force, so
-            // a hard spin can throw it off target and nothing pulls it back until the error is
-            // big enough to notice. Holding the profile costs almost nothing once error is zero.
-            dumperBlockerMotor.setControl(
-                commandedMotionMagic.withPosition(clampedCommand).withFeedForward(gravityVolts));
+            if (profiling && Math.abs(error) < arrivedTolerance) {
+                profiling = false;
+            }
+
+            // Profile only the moves we asked for. Holding with Motion Magic is soft against a
+            // disturbance: it regenerates the profile from wherever the arm has been pushed to,
+            // so kP sees the error to that fresh reference rather than the full displacement,
+            // and the return is bounded by the profile's acceleration instead of by kP. A plain
+            // position loop puts the whole displacement in front of kP, which is what resists
+            // the arm being thrown out mid-spin.
+            if (profiling) {
+                dumperBlockerMotor.setControl(
+                    commandedMotionMagic.withPosition(clampedCommand).withFeedForward(gravityVolts));
+            } else {
+                dumperBlockerMotor.setControl(
+                    commandedPositionVoltage.withPosition(clampedCommand).withFeedForward(gravityVolts));
+            }
 
             SmartDashboard.putNumber("DumperBlocker/clampedCommand", clampedCommand);
             SmartDashboard.putNumber("DumperBlocker/GravityFeedforward", gravityVolts);
-            SmartDashboard.putNumber("DumperBlocker/PositionError",
-                clampedCommand - getPositionRadians());
+            SmartDashboard.putNumber("DumperBlocker/PositionError", error);
+            SmartDashboard.putBoolean("DumperBlocker/Profiling", profiling);
+            SmartDashboard.putNumber("DumperBlocker/AppliedVolts",
+                dumperBlockerMotor.getMotorVoltage().getValueAsDouble());
             SmartDashboard.putNumber("DumperBlocker/ProfileSetpoint",
                 dumperBlockerMotor.getClosedLoopReference().getValueAsDouble());
         } 
