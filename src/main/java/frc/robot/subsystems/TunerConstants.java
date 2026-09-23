@@ -24,9 +24,16 @@ public class TunerConstants {
     private static final double kSteerGearRatio = 287.0 / 11.0;
     private static final double kWheelRadiusMeters = 0.1016 / 2.0; // diameter 0.1016 m -> radius
     private static final double kSteerCurrentLimit = 25;
+    /** Supply current, which is what the drive breaker sees. */
     private static final double kDriveCurrentLimit = 40;
+    /**
+     * Stator current, which is what makes torque. This is passed to withSlipCurrent and becomes
+     * the drive StatorCurrentLimit, so it should be the current at which the wheels actually
+     * break traction - not the supply limit. CTRE defaults this to 120.
+     */
+    private static final double kDriveSlipCurrent = 80;
     private static final double kSteerVoltageLimit = 8.5;
-    private static final double kDriveVoltageLimit = 8.5;
+    private static final double kDriveVoltageLimit = 12.0;
 
     // PID gains from legacy SwerveModuleConfig
     private static final com.ctre.phoenix6.configs.Slot0Configs steerGains =
@@ -65,7 +72,7 @@ public class TunerConstants {
             .withDriveMotorClosedLoopOutput(SwerveModuleConstants.ClosedLoopOutputType.Voltage)
             .withFeedbackSource(SwerveModuleConstants.SteerFeedbackType.RemoteCANcoder)
             .withCouplingGearRatio(0)
-            .withSlipCurrent(kDriveCurrentLimit)
+            .withSlipCurrent(kDriveSlipCurrent)
             .withSteerMotorInitialConfigs(steerInitialConfigs)
             .withDriveMotorInitialConfigs(driveInitialConfigs);
 
