@@ -18,11 +18,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 public class Drivetrain extends SubsystemBase {
     private final CommandSwerveDrivetrain ctre;
-    private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+    private final SwerveRequest.ApplyRobotSpeeds applyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds()
+        .withDriveRequestType(SwerveModule.DriveRequestType.Velocity);
 
     private boolean parkingBrakeOn = false;
 
