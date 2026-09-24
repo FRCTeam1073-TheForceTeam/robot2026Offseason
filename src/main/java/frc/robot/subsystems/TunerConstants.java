@@ -43,7 +43,7 @@ public class TunerConstants {
     // with kV carrying the same gear-ratio factor CTRE applies to MotionMagicExpo_kV.
     private static final com.ctre.phoenix6.configs.Slot0Configs steerGains =
         new com.ctre.phoenix6.configs.Slot0Configs()
-            .withKP(100.0).withKI(0.0).withKD(0.5)
+            .withKP(60.0).withKI(0.0).withKD(0.5)
             .withKV(0.12 * kSteerGearRatio).withKS(0.1)
             // Without this, kS is applied in the direction of MEASURED velocity. At rest the
             // velocity sign is just noise, so kS chatters +/- 0.1 V every loop and the modules
