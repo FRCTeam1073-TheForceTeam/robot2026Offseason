@@ -44,7 +44,12 @@ public class TunerConstants {
     private static final com.ctre.phoenix6.configs.Slot0Configs steerGains =
         new com.ctre.phoenix6.configs.Slot0Configs()
             .withKP(100.0).withKI(0.0).withKD(0.5)
-            .withKV(0.12 * kSteerGearRatio).withKS(0.1);
+            .withKV(0.12 * kSteerGearRatio).withKS(0.1)
+            // Without this, kS is applied in the direction of MEASURED velocity. At rest the
+            // velocity sign is just noise, so kS chatters +/- 0.1 V every loop and the modules
+            // grind. Following the closed-loop error sign instead is stable at rest.
+            .withStaticFeedforwardSign(
+                com.ctre.phoenix6.signals.StaticFeedforwardSignValue.UseClosedLoopSign);
 
     private static final com.ctre.phoenix6.configs.Slot0Configs driveGains =
         new com.ctre.phoenix6.configs.Slot0Configs()
