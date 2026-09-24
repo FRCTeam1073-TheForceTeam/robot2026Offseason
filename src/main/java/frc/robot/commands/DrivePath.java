@@ -35,9 +35,9 @@ public class DrivePath extends Command
 
   private Pose2d robotPose;
 
-  private final PIDController xController = new PIDController(5.5, 0, 0.3);
-  private final PIDController yController = new PIDController(5.5, 0, 0.3);
-  private final PIDController thetaController = new PIDController(2.5, 0.0, 0.3);
+  private final PIDController xController = new PIDController(5.5, 0, 0.0);
+  private final PIDController yController = new PIDController(5.5, 0, 0.0);
+  private final PIDController thetaController = new PIDController(2.5, 0.0, 0.0);
 
   private double currentTime;
   private double startTime;
@@ -120,8 +120,15 @@ public class DrivePath extends Command
         yVelocity = yController.calculate(robotPose.getY(), trajSample.y) + trajectorySpeeds.vyMetersPerSecond;
         thetaVelocity = thetaController.calculate(robotPose.getRotation().getRadians(), trajSample.heading) + trajectorySpeeds.omegaRadiansPerSecond;
 
-        xVelocity = MathUtil.clamp(xVelocity, -maxVelocity, maxVelocity);
-        yVelocity = MathUtil.clamp(yVelocity, -maxVelocity, maxVelocity);
+        // Scale the translation vector as a whole rather than clamping each axis. Clamping
+        // x and y independently changes the DIRECTION of travel whenever either saturates -
+        // (3.0, 2.0) would become (2.5, 2.0), pointing somewhere the path never asked for.
+        double translationSpeed = Math.hypot(xVelocity, yVelocity);
+        if (translationSpeed > maxVelocity) {
+          double scale = maxVelocity / translationSpeed;
+          xVelocity *= scale;
+          yVelocity *= scale;
+        }
         thetaVelocity = MathUtil.clamp(thetaVelocity, -maxAngularVelocity, maxAngularVelocity);
 
         SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_TARGET_X.getKey(), trajectorySpeeds.vxMetersPerSecond);
@@ -140,7 +147,7 @@ public class DrivePath extends Command
                 xVelocity,
                 yVelocity,
                 thetaVelocity,
-                localizer.getPose().getRotation()));
+                robotPose.getRotation()));
       } else {
         System.err.println("DrivePath No Sample Found");
         drivetrain.setTargetChassisSpeeds(new ChassisSpeeds(0, 0, 0));
