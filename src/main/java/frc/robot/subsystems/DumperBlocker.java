@@ -110,7 +110,10 @@ public class DumperBlocker extends SubsystemBase
 
         configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
         configs.CurrentLimits.SupplyCurrentLimitEnable = true;
-        configs.CurrentLimits.StatorCurrentLimit = 40.0;
+        // Measured at the stall: 40 A stator, 1.5 V applied, 5 A supply - pegged exactly at the
+        // old 40 A limit, which is why gain changes had no effect. R = 1.5/40 = 0.0375 ohm, so
+        // supply = stator^2 * R / 12; at 70 A that is ~13 A, still inside the 15 A supply limit.
+        configs.CurrentLimits.StatorCurrentLimit = 70.0;
         configs.CurrentLimits.StatorCurrentLimitEnable = true;
 
         // Slot 0 Velocity
