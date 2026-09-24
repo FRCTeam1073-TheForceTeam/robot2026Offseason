@@ -98,6 +98,7 @@ public class DumperBlocker extends SubsystemBase
         SmartDashboard.putBoolean(DashboardNames.DUMPER_BLOCKER_HW_CONFIGURED.getKey(), hardwareConfigured);
     }
 
+    
     private boolean configureHardware()
     {
         TalonFXConfiguration configs = new TalonFXConfiguration();
@@ -120,6 +121,9 @@ public class DumperBlocker extends SubsystemBase
         configs.Slot0.kD = 0.0;
         configs.Slot0.kA = 0.0;
         configs.Slot0.kS = 0.02;
+
+
+
 
         // Slot 1 Position
         configs.Slot1.kV = 0.153;
