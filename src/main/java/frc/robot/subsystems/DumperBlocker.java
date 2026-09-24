@@ -98,7 +98,6 @@ public class DumperBlocker extends SubsystemBase
         SmartDashboard.putBoolean(DashboardNames.DUMPER_BLOCKER_HW_CONFIGURED.getKey(), hardwareConfigured);
     }
 
-    
     private boolean configureHardware()
     {
         TalonFXConfiguration configs = new TalonFXConfiguration();
@@ -111,7 +110,7 @@ public class DumperBlocker extends SubsystemBase
 
         configs.CurrentLimits.SupplyCurrentLimit = currentLimit;
         configs.CurrentLimits.SupplyCurrentLimitEnable = true;
-        configs.CurrentLimits.StatorCurrentLimit = 60.0;
+        configs.CurrentLimits.StatorCurrentLimit = 40.0;
         configs.CurrentLimits.StatorCurrentLimitEnable = true;
 
         // Slot 0 Velocity
@@ -122,18 +121,13 @@ public class DumperBlocker extends SubsystemBase
         configs.Slot0.kA = 0.0;
         configs.Slot0.kS = 0.02;
 
-
-
-
         // Slot 1 Position
         configs.Slot1.kV = 0.153;
-        configs.Slot1.kP = 25.0;
+        configs.Slot1.kP = 15.0;
         configs.Slot1.kI = 0.0;
-        configs.Slot1.kD = 0.5;
+        configs.Slot1.kD = 0.15;
         configs.Slot1.kA = 0.0;
-        configs.Slot1.kS = 0.15;
-        configs.Slot1.StaticFeedforwardSign =
-            com.ctre.phoenix6.signals.StaticFeedforwardSignValue.UseClosedLoopSign;
+        configs.Slot1.kS = 0.02;
         // Gravity is compensated in periodic() via gravityFeedforward(), because position 0
         // is the arm straight down rather than horizontal, which is what Slot1.GravityType
         // (Arm_Cosine) would require. Leave the slot's kG at zero so it isn't applied twice.
