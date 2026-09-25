@@ -8,6 +8,7 @@ import au.grapplerobotics.CanBridge;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -31,6 +32,13 @@ public class Robot extends LoggedRobot
   private Command autonomousCommand;
 
   private RobotContainer container;
+
+  // Opening the PDH/PDP is what makes the roboRIO send current data to the DS logs.
+  // The no-arg constructor only finds the board at its default CAN ID (REV PDH = 1, CTRE PDP = 0).
+  // For a REV PDH on a different CAN ID, pass the ID and type instead (also import
+  // edu.wpi.first.wpilibj.PowerDistribution.ModuleType), e.g. for CAN ID 5:
+  //   new PowerDistribution(5, ModuleType.kRev);
+  private final PowerDistribution powerDistribution = new PowerDistribution();
 
   private String gameData = "";
   private double shiftTime = 0.0;
