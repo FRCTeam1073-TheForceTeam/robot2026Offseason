@@ -36,9 +36,9 @@ public class CollectorTeleop extends Command
   public void execute()
   {
     // TODO: ASK SILLY DIRIVE TEAM!!
-    if (Math.abs(oi.getDriverLeftTrigger()) >= 0.1) { // To eject fuel.
+    if (Math.abs(oi.getDriverRightTrigger()) >= 0.1) { // To eject fuel.
       collector.setVelocity(-4.0);
-    } else if (Math.abs(oi.getDriverRightTrigger()) >= 0.1) {
+    } else if (Math.abs(oi.getDriverLeftTrigger()) >= 0.1) {
       collector.setVelocity(9.14);
     } else {
       collector.stop();
