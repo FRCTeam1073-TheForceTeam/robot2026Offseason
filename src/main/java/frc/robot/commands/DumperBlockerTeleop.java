@@ -43,7 +43,6 @@ public class DumperBlockerTeleop extends Command
     @Override
     public void execute()
     {
-        dumperBlocker.setVelocity(0);
         boolean aButton = oi.getDriverAButton();
 
         if (!lastAButton && aButton) {

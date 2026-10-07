@@ -34,7 +34,14 @@ public class DumperBlocker extends SubsystemBase
 
     public static final double extendVelocity = 5.0;
     public static final double retractVelocity = -5.0;
-    public static final double zeroVelocity = 1.0;
+    /** Rotor rotations per second used to drive down into the bottom hardstop when zeroing. */
+    public static final double zeroVelocity = -1.0;
+    /** Below this rotor speed, while zeroing, the arm is considered stalled on the hardstop. */
+    public static final double zeroStallVelocity = 0.25;
+    /** Time to let the arm get moving before stall detection starts, in seconds. */
+    public static final double zeroStartupSeconds = 0.25;
+    /** How long the arm must stay stalled before it counts as on the hardstop, in seconds. */
+    public static final double zeroStallSeconds = 0.1;
 
     /** Volts required to hold the arm against gravity at horizontal, where its torque peaks. */
     public static final double gravityFeedforwardVolts = 0.67;
@@ -57,7 +64,6 @@ public class DumperBlocker extends SubsystemBase
     public static final double maxPositionRadians = 1.5;
 
     private enum Mode { NONE, VELOCITY, POSITION }
-    private double targetVelocity = 0.0;
     private double targetPosition = 0.0;
 
     private final TalonFX dumperBlockerMotor;
@@ -162,11 +168,6 @@ public class DumperBlocker extends SubsystemBase
         return true;
     }
 
-    public void setVelocity(double radiansPerSecond) {
-        mode = Mode.VELOCITY;
-        targetVelocity = radiansPerSecond;
-    }
-
     public void setPosition(double radians) {
         if (radians != targetPosition) {
             profiling = true;
@@ -193,6 +194,7 @@ public class DumperBlocker extends SubsystemBase
         dumperBlockerMotor.setControl(new NeutralOut());
     }
 
+    /** Drive down at a constant velocity. Only ZeroDumperBlocker should use velocity control. */
     public void zero() {
         mode = Mode.VELOCITY;
         dumperBlockerMotor.setControl(
@@ -200,8 +202,16 @@ public class DumperBlocker extends SubsystemBase
         );
     }
 
+    /** Call once the arm is on the bottom hardstop: resets the encoder and all targets to zero. */
     public void setZero() {
         dumperBlockerMotor.setPosition(0);
+        targetPosition = 0.0;
+        profiling = false;
+        mode = Mode.NONE;
+    }
+
+    public double getVelocityRotorRps() {
+        return velocitySig.getValueAsDouble();
     }
 
     public double getTorqueCurrent() {
