@@ -18,8 +18,13 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
+import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 
 
 public class DumperBlocker extends SubsystemBase
@@ -57,6 +62,8 @@ public class DumperBlocker extends SubsystemBase
      */
     public static final double deployedPosition = 1.24;
     public static final double stowedPosition = 0.0;
+    /** How far short of deployedPosition still counts as deployed, in rotor rotations. */
+    public static final double deployedTolerance = 0.1;
 
 
 
@@ -85,9 +92,41 @@ public class DumperBlocker extends SubsystemBase
 
     private Mode mode = Mode.NONE;
 
+    // Side-view diagram, robot facing right, traced from the CAD side view at 1/10 scale.
+    // The blocker hangs straight down from the top back corner when stowed (position 0) and
+    // swings out to horizontal when deployed.
+    private static final Color8Bit deployedColor = new Color8Bit(0, 200, 0);
+    private static final Color8Bit notDeployedColor = new Color8Bit(220, 0, 0);
+    private static final double blockerPivotX = 122.0;
+    private static final double blockerPivotY = 87.0;
+    private static final double blockerLength = 35.0;
+
+    private final LoggedMechanism2d diagram = new LoggedMechanism2d(160.0, 95.0);
+    private final LoggedMechanismLigament2d blockerSetpoint;
+    private final LoggedMechanismLigament2d blockerArm;
+
     public DumperBlocker()
     {
         setName("DumperBlocker");
+
+        LoggedMechanismRoot2d bumperRoot = diagram.getRoot("Bumper", 25.0, 12.0);
+        bumperRoot.append(new LoggedMechanismLigament2d("Bumper", 107.5, 0.0, 20.0, new Color8Bit(0, 0, 230)));
+
+        LoggedMechanismRoot2d frameRoot = diagram.getRoot("Frame", 34.0, 19.0);
+        frameRoot
+            .append(new LoggedMechanismLigament2d("FrameBack", 68.0, 90.0, 2.0, new Color8Bit(180, 180, 180)))
+            .append(new LoggedMechanismLigament2d("FrameTop", 84.0, -90.0, 2.0, new Color8Bit(180, 180, 180)))
+            .append(new LoggedMechanismLigament2d("FrameFront", 68.0, -90.0, 2.0, new Color8Bit(180, 180, 180)))
+            .append(new LoggedMechanismLigament2d("FrameBottom", 84.0, -90.0, 2.0, new Color8Bit(180, 180, 180)));
+
+        // The thin gray line is where the blocker is commanded to go; the thick one is where it is.
+        LoggedMechanismRoot2d blockerRoot = diagram.getRoot("Blocker", blockerPivotX, blockerPivotY);
+        blockerSetpoint = blockerRoot.append(
+            new LoggedMechanismLigament2d("Setpoint", blockerLength, -90.0, 2.0, new Color8Bit(128, 128, 128)));
+        blockerArm = blockerRoot.append(
+            new LoggedMechanismLigament2d("Arm", blockerLength, -90.0, 8.0, notDeployedColor));
+
+        SmartDashboard.putData("DumperBlocker/Diagram", diagram);
 
         dumperBlockerMotor = new TalonFX(dumperBlockerMotorId, new CANBus("rio"));
         velocitySig = dumperBlockerMotor.getVelocity();
@@ -226,6 +265,11 @@ public class DumperBlocker extends SubsystemBase
         return positionSig.getValueAsDouble();
     }
 
+    /** True when the arm is measured at the deployed position, not just commanded there. */
+    public boolean isDeployed() {
+        return Math.abs(getPositionRadians() - deployedPosition) < deployedTolerance;
+    }
+
     /**
      * Volts of gravity compensation for a given arm position. Position 0 is the arm hanging
      * straight down, where gravity pulls along the arm and produces no torque about the pivot;
@@ -234,6 +278,11 @@ public class DumperBlocker extends SubsystemBase
     private double gravityFeedforward(double positionRotations) {
         double mechanismRadians = positionRotations * 2.0 * Math.PI / gearRatio;
         return gravityFeedforwardVolts * Math.sin(mechanismRadians);
+    }
+
+    /** Diagram angle for a rotor position: 0 hangs straight down (-90), deployed is about horizontal. */
+    private double diagramAngleDegrees(double positionRotations) {
+        return -90.0 + positionRotations / gearRatio * 360.0;
     }
 
     // public String getBrake() {
@@ -286,10 +335,17 @@ public class DumperBlocker extends SubsystemBase
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_TORQUE_CURRENT.getKey(), getTorqueCurrent());
         // SmartDashboard.putString(DashboardNames.DUMPER_BLOCKER_BRAKEMODE.getKey(), getBrake());
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_POSITION.getKey(), getPositionRadians());
+        SmartDashboard.putBoolean(DashboardNames.DUMPER_BLOCKER_DEPLOYED.getKey(), isDeployed());
         SmartDashboard.putNumber("DumperBlocker/TargetPosition", targetPosition);
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_TEMP.getKey(), getDeviceTempCelsius());
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_SUPPLY_CURRENT.getKey(), getSupplyCurrentAmps());
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_STATOR_CURRENT.getKey(), getStatorCurrentAmps());
+
+        blockerArm.setAngle(diagramAngleDegrees(getPositionRadians()));
+        blockerArm.setColor(isDeployed() ? deployedColor : notDeployedColor);
+        blockerSetpoint.setAngle(diagramAngleDegrees(
+            MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians)));
+        Logger.recordOutput("DumperBlocker/Diagram", diagram);
 
     }
 

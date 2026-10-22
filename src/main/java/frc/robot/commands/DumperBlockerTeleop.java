@@ -6,6 +6,7 @@ import frc.robot.subsystems.DumperBlocker;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.OI;
 import frc.robot.utilities.DashboardNames;
+import org.littletonrobotics.junction.Logger;
 
 import static frc.robot.subsystems.DumperBlocker.deployedPosition;
 import static frc.robot.subsystems.DumperBlocker.hardstopCurrent;
@@ -45,18 +46,22 @@ public class DumperBlockerTeleop extends Command
     {
         boolean aButton = oi.getDriverAButton();
 
-        if (!lastAButton && aButton) {
-            extended = !extended;
-        } 
-
-        lastAButton = aButton;
-
         // The blocker and a lowered intake want the same space, so the intake always wins:
         // the blocker only holds deployed while the intake is all the way in, and starts
         // retracting the same loop the intake leaves stowed - no latch, no waiting. The
         // extended toggle is left alone, so the blocker redeploys on its own once the intake
         // comes back in.
         boolean clearToDeploy = intake.isStowed();
+        boolean deployed = extended && clearToDeploy;
+
+        // Toggle off what the blocker is actually doing, not the stored flag. extended stays
+        // true while the intake is out, so flipping the flag there would turn a press meant
+        // to deploy into a retract - e.g. pressing A while the intake is still coming in.
+        if (!lastAButton && aButton) {
+            extended = !deployed;
+        }
+
+        lastAButton = aButton;
 
         if (extended && clearToDeploy) {
             dumperBlocker.setPosition(deployedPosition);
@@ -66,6 +71,9 @@ public class DumperBlockerTeleop extends Command
 
         SmartDashboard.putBoolean("DumperBlocker/extended", extended);
         SmartDashboard.putBoolean("DumperBlocker/WaitingForIntake", extended && !clearToDeploy);
+        Logger.recordOutput("DumperBlocker/Extended", extended);
+        Logger.recordOutput("DumperBlocker/WaitingForIntake", extended && !clearToDeploy);
+        Logger.recordOutput("DumperBlocker/IntakeStowed", clearToDeploy);
 
         // SmartDashboard.putBoolean(DashboardNames.DUMPER_BLOCKER_HARDSTOP.getKey(), atHardstop)
     }
