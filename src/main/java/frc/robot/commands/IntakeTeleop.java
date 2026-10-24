@@ -38,13 +38,15 @@ public class IntakeTeleop extends Command
   {
     boolean bumperRight = oi.getDriverRightBumper();
     boolean aButton = oi.getDriverAButton();
-
+    /* 
     if (zone.getZones().contains("TRENCH")) {
       positionIn = false;
-    } else if (!lastBumperRight && bumperRight) {
+    }*/
+    if (!lastBumperRight && bumperRight) {
       // Toggle position:
       positionIn = !positionIn;
-    } else if (!lastAButton && aButton) {
+    }
+    else if (!lastAButton && aButton) {
       positionIn = true;
     }
 
