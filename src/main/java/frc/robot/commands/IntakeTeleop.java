@@ -31,6 +31,10 @@ public class IntakeTeleop extends Command
   @Override
   public void initialize()
   {
+    // Start in whichever position the intake is closer to, so enabling teleop doesn't yank a
+    // deployed intake (e.g. left out by auto) back in.
+    double midpoint = (Intake.stowedPositionRadians + Intake.deployedPositionRadians) / 2.0;
+    positionIn = intake.getPositionRadians() < midpoint;
   }
 
   @Override
