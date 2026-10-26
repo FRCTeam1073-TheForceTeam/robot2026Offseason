@@ -60,7 +60,9 @@ public class DumperBlocker extends SubsystemBase
 
 
 
+    // FIXME: the name says radians, but periodic() clamps motor position, which is in rotor rotations.
     public static final double minPositionRadians = 0.0;
+    // FIXME: the name says radians, but periodic() clamps motor position, which is in rotor rotations.
     public static final double maxPositionRadians = 1.5;
 
     private enum Mode { NONE, VELOCITY, POSITION }

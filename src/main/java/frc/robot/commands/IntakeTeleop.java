@@ -5,6 +5,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.DumperBlocker;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.OI;
 import frc.robot.subsystems.ZoneFinder;
@@ -14,16 +15,19 @@ public class IntakeTeleop extends Command
   private final Intake intake;
   private final OI oi;
   private final ZoneFinder zone;
+  // Not used yet: the intake does not check the dumper blocker before deploying.
+  private final DumperBlocker dumperBlocker;
 
   private boolean positionIn = true;
   private boolean lastBumperRight = false; // For click detect on button A.
   private boolean lastAButton = false;
 
-  public IntakeTeleop(Intake intake, OI oi, ZoneFinder zone)
+  public IntakeTeleop(Intake intake, OI oi, ZoneFinder zone, DumperBlocker dumperBlocker)
   {
     this.intake = intake;
     this.oi = oi;
     this.zone = zone;
+    this.dumperBlocker = dumperBlocker;
 
     addRequirements(intake);
   }

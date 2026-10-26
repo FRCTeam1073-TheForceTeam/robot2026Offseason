@@ -276,7 +276,7 @@ public class RobotContainer
     // Default commands are assigned here after all subsystems are created, to avoid using
     // uninitialized subsystems in default commands.
     drivetrain.setDefaultCommand(new TeleopDrive(drivetrain, oi, localizer));
-    intake.setDefaultCommand(new IntakeTeleop(intake, oi, zoneFinder));
+    intake.setDefaultCommand(new IntakeTeleop(intake, oi, zoneFinder, dumperBlocker));
     dumperBlocker.setDefaultCommand(new DumperBlockerTeleop(dumperBlocker, intake, oi));
     collector.setDefaultCommand(new CollectorTeleop(collector, oi, drivetrain));
     spindexer.setDefaultCommand(new SpindexerTeleop(spindexer, kicker, oi));
