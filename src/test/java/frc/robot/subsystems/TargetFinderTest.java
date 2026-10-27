@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests TargetFinder's choice between the hub (our alliance zone) and a pass (anywhere else), and its range output.
  *
- * The no-alliance periodic test is expected to FAIL: ourZone stays null until an alliance is reported, and
- * getTargetPos() then calls contains(null) on the zone set, which throws.
+ * With no alliance reported, ourZone stays null, so periodic() must treat every position as a pass rather than
+ * looking up our zone.
  */
 public class TargetFinderTest {
     private static final double TOLERANCE = 1e-9;
@@ -116,7 +116,7 @@ public class TargetFinderTest {
 
     @Test
     public void testPeriodicWithNoAllianceDoesNotThrow() {
-        // Expected to fail today: ourZone is null until an alliance is seen, so getTargetPos() calls contains(null).
+        // ourZone is null until an alliance is seen, so getTargetPos() must not look it up in the zone set.
         DriverStationSim.resetData();
         DriverStationSim.notifyNewData();
         zoneFinder.zones.add("BLUEZONE");

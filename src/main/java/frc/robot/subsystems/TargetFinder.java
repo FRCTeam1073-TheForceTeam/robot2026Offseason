@@ -65,7 +65,8 @@ public class TargetFinder extends SubsystemBase
 
     public Pose2d getTargetPos()
     {
-        if (zonefinder.getZones().contains(ourZone)) {
+        // ourZone is null until an alliance has been reported; with no alliance we can't be in our zone.
+        if (ourZone != null && zonefinder.getZones().contains(ourZone)) {
             target = getHubPos();
             passing = false;
         } else {

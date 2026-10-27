@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests the TRENCH override in IntakeTeleop: when localization places the robot in a trench, the intake must deploy.
  *
- * The override is currently commented out in IntakeTeleop.execute(), so the trench tests here are expected to FAIL
- * until it is restored. The non-trench tests describe existing behavior and are expected to pass.
+ * The blocker is stowed in these tests, so the trench rule applies in full. The alliance-zone rules are covered in
+ * IntakeTeleopAllianceZoneTest.
  */
 public class IntakeTeleopTrenchTest {
     private RecordingIntake intake;

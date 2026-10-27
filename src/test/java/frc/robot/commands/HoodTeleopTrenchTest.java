@@ -25,8 +25,7 @@ import org.junit.jupiter.api.Test;
  * The exception is the trench inside our own alliance zone, where we shoot from, so the hood must stay active there.
  * Our alliance comes from the driver station, which these tests set through DriverStationSim.
  *
- * The override is currently commented out in HoodTeleop.execute(), so the retract tests here are expected to FAIL
- * until it is restored. The own-zone and non-trench tests describe existing behavior and are expected to pass.
+ * The own-zone exemption and the no-alliance rule are both covered here, along with the non-trench shot angles.
  */
 public class HoodTeleopTrenchTest {
     private static final double TOLERANCE = 1e-9;

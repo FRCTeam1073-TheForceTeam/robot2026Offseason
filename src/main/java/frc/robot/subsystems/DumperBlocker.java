@@ -212,6 +212,11 @@ public class DumperBlocker extends SubsystemBase
         mode = Mode.NONE;
     }
 
+    /** True once the blocker is back at the stowed end, leaving the intake room to deploy. */
+    public boolean isStowed() {
+        return getPositionRadians() <= stowedPosition + arrivedTolerance;
+    }
+
     public double getVelocityRotorRps() {
         return velocitySig.getValueAsDouble();
     }

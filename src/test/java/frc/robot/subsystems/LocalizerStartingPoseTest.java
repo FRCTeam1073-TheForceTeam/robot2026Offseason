@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
  * Tests the localizer's starting pose. Nothing seeds the pose from the robot's real starting position, so these tests
  * document the current behavior: it starts at the origin and only moves when reset or updated.
  *
- * These pass today. Seeding the starting pose from the field position is a design choice left to the students.
+ * Seeding the starting pose from the field position is a design choice left to the students.
  */
 public class LocalizerStartingPoseTest {
     private static final double TOLERANCE = 1e-9;

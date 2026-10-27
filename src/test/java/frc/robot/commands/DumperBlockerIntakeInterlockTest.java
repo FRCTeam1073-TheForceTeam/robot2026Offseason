@@ -90,7 +90,7 @@ public class DumperBlockerIntakeInterlockTest {
 
     @Test
     public void testIntakeDoesNotDeployWhileBlockerExtended() {
-        // Fails today: IntakeTeleop never reads the blocker, so the driver's right bumper deploys the intake anyway.
+        // IntakeTeleop reads the blocker, so the driver's right bumper cannot deploy the intake while it is extended.
         blocker.position = DumperBlocker.deployedPosition;
         intake.stowed = true;
         oi.driverRightBumper = true;
@@ -163,7 +163,6 @@ public class DumperBlockerIntakeInterlockTest {
 
     /**
      * Intake stowed, robot in a trench inside the given alliance zone, no button pressed. Expected to deploy the intake.
-     * These tests fail today because the trench rule in IntakeTeleop is commented out.
      */
     private void assertTrenchDeploysIntake(String allianceZone, double blockerPosition) {
         blocker.position = blockerPosition;
@@ -193,8 +192,7 @@ public class DumperBlockerIntakeInterlockTest {
 
     @Test
     public void testIntakeStaysStowedInTrenchWhileBlockerExtended() {
-        // Passes today only because the trench override in IntakeTeleop is disabled. It guards the interlock once
-        // that override is restored.
+        // Guards the interlock: the trench rule must not deploy the intake while the blocker is extended.
         blocker.position = DumperBlocker.deployedPosition;
         intake.stowed = true;
         zone.zones.add("TRENCH");

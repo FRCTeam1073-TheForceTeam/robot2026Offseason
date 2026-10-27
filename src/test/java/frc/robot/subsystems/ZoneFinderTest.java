@@ -18,8 +18,7 @@ import org.junit.jupiter.api.Test;
  * Tests ZoneFinder's field geometry: which zones the localized pose falls in, with TRENCH and BUMP regions checked
  * against the blue-alliance layout. Poses are given in inches to match the zone definitions.
  *
- * The no-alliance test below is expected to FAIL: periodic() calls alliance.get() for each occupied zone, which throws
- * when the driver station has not reported an alliance.
+ * periodic() must not throw when the driver station has not reported an alliance, including inside a trench.
  */
 public class ZoneFinderTest {
     private FakeLocalizer localizer;
@@ -123,7 +122,7 @@ public class ZoneFinderTest {
 
     @Test
     public void testPeriodicWithNoAllianceInsideTrenchDoesNotThrow() {
-        // Expected to fail today: periodic() calls alliance.get() for each occupied zone, and no alliance is present.
+        // No alliance is present, so periodic() must not assume one when it swaps the left and right halves.
         clearAlliance();
         localizer.fakePose = inches(150, 25);
 

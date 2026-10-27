@@ -12,6 +12,7 @@ import frc.robot.subsystems.ShooterHood;
 import frc.robot.subsystems.TargetFinder;
 import frc.robot.subsystems.ZoneFinder;
 import frc.robot.utilities.ShooterTable;
+import java.util.Set;
 
 public class HoodTeleop extends Command
 {
@@ -41,12 +42,11 @@ public class HoodTeleop extends Command
 
   @Override
   public void execute()
-  { /* 
-    if (zone.getZones().contains("TRENCH")) {
+  {
+    if (inRetractTrench()) {
       // Put the hood "back" to be out of the way.
       shooterHood.setPosition(ShooterHood.maxPositionRadians);
-    } */
-    if ((Math.abs(oi.getOperatorLeftTrigger()) >= 0.1) || oi.getDriverXButton()) {
+    } else if ((Math.abs(oi.getOperatorLeftTrigger()) >= 0.1) || oi.getDriverXButton()) {
       double rangeToTarget = tf.getRangeToTargetMeters();
 
       if (tf.isPassing()) {
@@ -76,6 +76,24 @@ public class HoodTeleop extends Command
       // Put the hood "back" to be out of the way.
       shooterHood.setPosition(ShooterHood.maxPositionRadians);
     }
+  }
+
+  /**
+   * True when the robot is in a trench the hood must stay out of. The trench inside our own alliance zone is where we
+   * shoot from, so it is exempt. With no alliance reported we can't tell whose zone it is, so a trench in either
+   * alliance zone is exempt too.
+   */
+  private boolean inRetractTrench()
+  {
+    Set<String> zones = zone.getZones();
+    if (!zones.contains("TRENCH")) {
+      return false;
+    }
+    String ownZone = ZoneFinder.ownAllianceZone();
+    if (ownZone == null) {
+      return !zones.contains("BLUEZONE") && !zones.contains("REDZONE");
+    }
+    return !zones.contains(ownZone);
   }
 
   @Override

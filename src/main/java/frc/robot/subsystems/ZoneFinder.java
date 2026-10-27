@@ -69,6 +69,19 @@ public class ZoneFinder extends SubsystemBase
         return new Translation2d(Units.inchesToMeters(xInches), Units.inchesToMeters(yInches));
     }
 
+    /**
+     * The alliance zone our own alliance shoots from, or null when no alliance has been reported. Zones are named
+     * from the blue alliance's point of view, so the red alliance's own zone is REDZONE.
+     */
+    public static String ownAllianceZone()
+    {
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        if (alliance.isEmpty()) {
+            return null;
+        }
+        return alliance.get() == Alliance.Red ? "REDZONE" : "BLUEZONE";
+    }
+
     public Set<String> getZones()
     {
         Set<String> result = new TreeSet<>();
@@ -89,14 +102,15 @@ public class ZoneFinder extends SubsystemBase
 
         Logger.recordOutput("ZoneFinder/Zones", result.toArray(new String[0]));
 
-        alliance = DriverStation.getAlliance();
+        // No alliance reported (e.g. before the driver station is set up): don't swap the halves.
+        boolean redAlliance = alliance.isPresent() && alliance.get() == Alliance.Red;
         StringBuilder zonelist = new StringBuilder();
         for (String zone : result) {
             String zonePortion = zone;
             // this part switches left and right for red alliance POV since all code is from blue alliance POV
-            if (alliance.get() == Alliance.Red && zone.contains("RIGHTHALF")) {
+            if (redAlliance && zone.contains("RIGHTHALF")) {
                 zonePortion = "LEFTHALF";
-            } else if (alliance.get() == Alliance.Red && zone.contains("LEFTHALF")) {
+            } else if (redAlliance && zone.contains("LEFTHALF")) {
                 zonePortion = "RIGHTHALF";
             }
             zonelist.append(zonePortion).append(", ");

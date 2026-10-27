@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests the TRENCH override in ClimberTeleop: while the robot is in a trench the climber must be held at zero.
  *
- * The override is active in ClimberTeleop.execute(), so these tests are expected to PASS. They guard against
- * regressions while the intake and hood trench behavior is restored.
+ * These guard the trench override in ClimberTeleop.execute().
  */
 public class ClimberTeleopTrenchTest {
     private static final double TOLERANCE = 1e-9;

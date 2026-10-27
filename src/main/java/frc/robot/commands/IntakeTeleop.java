@@ -9,13 +9,13 @@ import frc.robot.subsystems.DumperBlocker;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.OI;
 import frc.robot.subsystems.ZoneFinder;
+import java.util.Set;
 
 public class IntakeTeleop extends Command
 {
   private final Intake intake;
   private final OI oi;
   private final ZoneFinder zone;
-  // Not used yet: the intake does not check the dumper blocker before deploying.
   private final DumperBlocker dumperBlocker;
 
   private boolean positionIn = true;
@@ -42,10 +42,6 @@ public class IntakeTeleop extends Command
   {
     boolean bumperRight = oi.getDriverRightBumper();
     boolean aButton = oi.getDriverAButton();
-    /* 
-    if (zone.getZones().contains("TRENCH")) {
-      positionIn = false;
-    }*/
     if (!lastBumperRight && bumperRight) {
       // Toggle position:
       positionIn = !positionIn;
@@ -56,6 +52,21 @@ public class IntakeTeleop extends Command
 
     lastBumperRight = bumperRight; // Keep track of button for toggle.
     lastAButton = aButton;
+
+    // The intake and the dumper blocker want the same space, so the intake may only come out once the blocker is
+    // stowed. The exception is the trench inside our own alliance zone, where we shoot from and the blocker may
+    // stay out.
+    Set<String> zones = zone.getZones();
+    String ownZone = ZoneFinder.ownAllianceZone();
+    boolean ownTrench = zones.contains("TRENCH") && ownZone != null && zones.contains(ownZone);
+    boolean deployAllowed = dumperBlocker.isStowed() || ownTrench;
+
+    if (!deployAllowed) {
+      positionIn = true;
+    } else if (zones.contains("TRENCH")) {
+      // Trench: keep the intake out, so the driver can't stow it there.
+      positionIn = false;
+    }
 
     if (positionIn) {
       intake.setPosition(Intake.stowedPositionRadians);
