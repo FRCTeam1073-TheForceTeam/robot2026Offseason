@@ -6,8 +6,8 @@ public enum DashboardNames {
   AUTO_START_DELAY("Start Delay(s)"),
   AUTO_PUT_INTAKE_OUT("Autos/Put Intake Out"),
   AUTO_START_TIME("Autos/Start Auto"),
-  AUTO_GRABBED_CHOREO("Autos/Grabed Choreo"),
   AUTO_HAVE_TRAJECTORY("Autos/Have Trajectory"),
+  AUTO_PREWARMED("Autos/Prewarmed"),
   AUTO_TRAJECTORY("Autos/Trajectory"),
   AUTO_WINNERS("Auto Winners"),
 
