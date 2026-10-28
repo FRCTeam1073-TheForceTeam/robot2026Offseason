@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Optional;
 
 import choreo.Choreo;
@@ -55,6 +57,8 @@ import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.ZoneFinder;
 import frc.robot.utilities.DashboardNames;
 import frc.robot.utilities.ShooterTable;
+import frc.robot.utilities.TrajectoryCache;
+import frc.robot.utilities.TrajectoryWarmup;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -87,6 +91,14 @@ public class RobotContainer
   private boolean haveTraj = false;
   private String autoTraj = "none";
 
+  // Trajectories are loaded on a background thread once the robot is created. See preloadAutos().
+  private final TrajectoryCache trajectoryCache = new TrajectoryCache(name -> Choreo.loadTrajectory(name));
+  private volatile boolean trajectoriesReady = false;
+  private volatile boolean classesReady = false;
+  // Command construction must stay on the main thread, so it is spread across disabled loops.
+  private final Deque<String> commandWarmupQueue = new ArrayDeque<>();
+  private volatile boolean commandsReady = false;
+
   // Create these subsystems first!
   private final OI oi = new OI();
   private final Drivetrain drivetrain = new Drivetrain();
@@ -116,8 +128,6 @@ public class RobotContainer
 
   private final AutoRunner autoRunner = new AutoRunner(drivetrain, tagFinder, localizer, kicker, climber, flywheel, shooterHood,
       spindexer, turret, collector, intake, null, shooterTable, targetFinder, ballisticShot);
-
-  private Optional<Trajectory<SwerveSample>> trajectory = Optional.empty();
 
   // Just used for launching test commands, separate from OI and other controls.
   private final CommandXboxController operatorController = new CommandXboxController(1);
@@ -174,6 +184,8 @@ public class RobotContainer
     // Configure the button bindings
     configureBindings();
     System.err.println("Controller bindings configured...");
+
+    preloadAutos();
   }
 
   public Command getAutonomousCommand()
@@ -191,19 +203,15 @@ public class RobotContainer
       } else if (selected.equals(centerHub)) {
         return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber),
             Autos.hubAuto(spindexer, kicker, turret, flywheel, shooterHood));
-      } else if (
-          selected.equals(centerDepotOutpost)
-          || selected.equals(centerDepotClimb)
-          || selected.equals(rightBumpSteal)
-          || selected.equals(rightTrenchHalfOutpost)
-          || selected.equals(rightTrenchHalfDouble)
-          || selected.equals(rightTrenchHalfDoubleBump)
-          || selected.equals(leftTrenchHalfDouble)
-          || selected.equals(leftTrenchHalfDoubleBump)
-          || selected.equals(leftBumpFull)
-          || selected.equals(basicAuto)
-          || selected.equals(rightBumpFollow)
-          || selected.equals(leftBumpFollow)) {
+      } else if (AutoCatalog.runsRoutine(selected)) {
+        Optional<String> trajFile = AutoCatalog.trajectoryFile(selected);
+        Optional<Trajectory<SwerveSample>> trajectory = trajFile.map(trajectoryCache::get).orElse(Optional.empty());
+
+        if (trajFile.isPresent() && trajectory.isEmpty()) {
+          // Refuse to run a routine without its path rather than drive the wrong one.
+          System.err.println("AUTO MISSING TRAJECTORY: " + trajFile.get() + ", not running auto");
+          return Commands.idle();
+        }
 
         boolean putIntakeOut = true;
 
@@ -245,29 +253,66 @@ public class RobotContainer
     haveTraj = false;
   }
 
+  /** Called every disabled loop. Returns true if the selected auto can run as soon as it is enabled. */
   public boolean disabledPeriodic()
   {
-    return loadTrajectory();
+    String selected = levelChooser.getSelected();
+    autoTraj = selected;
+
+    // Cheap, non-blocking checks only. Loading happens on the preload thread.
+    prewarmCommandStep();
+
+    return AutoCatalog.trajectoryFile(selected).map(trajectoryCache::isReady).orElse(true);
   }
 
-  public boolean loadTrajectory()
+  public boolean isPrewarmed()
   {
-    String selected = levelChooser.getSelected();
-    if (selected.equals(centerDepotOutpost)
-        || selected.equals(centerDepotClimb)
-        || selected.equals(rightBumpSteal)
-        || selected.equals(rightTrenchHalfOutpost)
-        || selected.equals(rightTrenchHalfDouble)
-        || selected.equals(rightTrenchHalfDoubleBump)
-        || selected.equals(leftTrenchHalfDouble)
-        || selected.equals(leftTrenchHalfDoubleBump)
-        || selected.equals(leftBumpFull)
-        || selected.equals(basicTest)) {
-      autoTraj = selected;
-      SmartDashboard.putNumber(DashboardNames.AUTO_GRABBED_CHOREO.getKey(), edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
-      trajectory = Choreo.loadTrajectory(selected);
+    return trajectoriesReady && classesReady && commandsReady;
+  }
+
+  /**
+   * Starts loading trajectories on a background thread. Trajectory parsing is file I/O and can
+   * take long enough to overrun the main loop, so it does not run on the main thread.
+   */
+  private void preloadAutos()
+  {
+    Thread preload = new Thread(() -> {
+      long start = System.nanoTime();
+
+      TrajectoryWarmup.loadClasses();
+      classesReady = true;
+
+      for (String name : AutoCatalog.trajectoryFiles()) {
+        trajectoryCache.get(name).ifPresent(TrajectoryWarmup::touchSamples);
+      }
+      trajectoriesReady = true;
+
+      System.err.println("Auto preload finished in " + (System.nanoTime() - start) / 1e6 + " ms");
+    }, "auto-preload");
+    preload.setDaemon(true);
+    preload.start();
+
+    commandWarmupQueue.addAll(AutoCatalog.trajectoryFiles());
+  }
+
+  /**
+   * Builds one autonomous command per disabled loop, discarding it without scheduling, so the
+   * command classes are loaded before enable. Done one at a time to keep loop time flat.
+   */
+  private void prewarmCommandStep()
+  {
+    if (commandsReady || !trajectoriesReady) {
+      return;
     }
-    return trajectory.isPresent();
+
+    if (commandWarmupQueue.isEmpty()) {
+      commandsReady = true;
+      System.err.println("Auto command warmup finished");
+      return;
+    }
+
+    String name = commandWarmupQueue.poll();
+    autoRunner.create(trajectoryCache.get(name), startDelaySeconds, true);
   }
 
   // Called from Robot
