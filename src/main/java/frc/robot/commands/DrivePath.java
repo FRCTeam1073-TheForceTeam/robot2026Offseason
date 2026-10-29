@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Localizer;
+import frc.robot.utilities.AutoLog;
 import frc.robot.utilities.DashboardNames;
 
 public class DrivePath extends Command
@@ -84,7 +85,11 @@ public class DrivePath extends Command
         if (diff.getTranslation().getNorm() >= 2.0) {
           quit = true;
         }
+        AutoLog.event(String.format("DrivePath start: %.2f s long, %.2f m from start pose%s", endTime,
+            diff.getTranslation().getNorm(), quit ? " -> QUIT, too far from start" : ""));
       }
+    } else {
+      AutoLog.event("DrivePath start: no trajectory, quitting");
     }
 
     currentTime = 0.01;
@@ -145,6 +150,10 @@ public class DrivePath extends Command
         SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_COMMANDED_VY.getKey(), yVelocity);
         SmartDashboard.putNumber(DashboardNames.DRIVE_PATH_COMMANDED_VW.getKey(), thetaVelocity);
 
+        if (Math.hypot(xVelocity, yVelocity) > 0.05 || Math.abs(thetaVelocity) > 0.05) {
+          AutoLog.motion(String.format("DrivePath commanded vx %.2f vy %.2f omega %.2f", xVelocity, yVelocity, thetaVelocity));
+        }
+
         // set a field relative chassis speed
         drivetrain.setTargetChassisSpeeds(
             ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -154,6 +163,7 @@ public class DrivePath extends Command
                 robotPose.getRotation()));
       } else {
         System.err.println("DrivePath No Sample Found");
+        AutoLog.event("DrivePath no sample at t=" + currentTime + ", quitting");
         drivetrain.setTargetChassisSpeeds(new ChassisSpeeds(0, 0, 0));
         quit = true;
       }
