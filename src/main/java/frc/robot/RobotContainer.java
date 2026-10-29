@@ -55,6 +55,7 @@ import frc.robot.subsystems.Spindexer;
 import frc.robot.subsystems.TargetFinder;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.ZoneFinder;
+import frc.robot.utilities.AutoLog;
 import frc.robot.utilities.DashboardNames;
 import frc.robot.utilities.ShooterTable;
 import frc.robot.utilities.TrajectoryCache;
@@ -196,6 +197,8 @@ public class RobotContainer
       System.err.println("**Auto Start Delay(s): " + delay);
 
       String selected = levelChooser.getSelected();
+      AutoLog.event("selected '" + selected + "', start delay " + delay + " s, prewarmed " + isPrewarmed()
+          + " (trajectories " + trajectoriesReady + ", classes " + classesReady + ", commands " + commandsReady + ")");
 
       if (selected.equals(startLine)) {
         return Commands.sequence(Commands.waitSeconds(delay), new ZeroTurret(turret), new ZeroClimber(climber),
@@ -205,11 +208,18 @@ public class RobotContainer
             Autos.hubAuto(spindexer, kicker, turret, flywheel, shooterHood));
       } else if (AutoCatalog.runsRoutine(selected)) {
         Optional<String> trajFile = AutoCatalog.trajectoryFile(selected);
+        if (trajFile.isPresent()) {
+          AutoLog.event("trajectory " + trajFile.get() + " preloaded: " + trajectoryCache.isReady(trajFile.get()));
+        }
+
+        long trajStart = System.nanoTime();
         Optional<Trajectory<SwerveSample>> trajectory = trajFile.map(trajectoryCache::get).orElse(Optional.empty());
+        AutoLog.event(String.format("trajectory ready in %.1f ms", (System.nanoTime() - trajStart) / 1e6));
 
         if (trajFile.isPresent() && trajectory.isEmpty()) {
           // Refuse to run a routine without its path rather than drive the wrong one.
           System.err.println("AUTO MISSING TRAJECTORY: " + trajFile.get() + ", not running auto");
+          AutoLog.event("AUTO MISSING TRAJECTORY, not running auto");
           return Commands.idle();
         }
 
@@ -237,7 +247,11 @@ public class RobotContainer
 
         SmartDashboard.putBoolean(DashboardNames.AUTO_PUT_INTAKE_OUT.getKey(), putIntakeOut);
         SmartDashboard.putNumber(DashboardNames.AUTO_START_TIME.getKey(), edu.wpi.first.wpilibj.Timer.getFPGATimestamp());
-        return autoRunner.create(trajectory, delay, putIntakeOut);
+
+        long buildStart = System.nanoTime();
+        Command routine = autoRunner.create(trajectory, delay, putIntakeOut);
+        AutoLog.event(String.format("auto command built in %.1f ms", (System.nanoTime() - buildStart) / 1e6));
+        return routine;
       }
     } catch (RuntimeException e) {
       System.err.println("Get Autonomous Command Threw Exception");
@@ -282,8 +296,12 @@ public class RobotContainer
       TrajectoryWarmup.loadClasses();
       classesReady = true;
 
+      System.err.println("Auto preload classes loaded in " + (System.nanoTime() - start) / 1e6 + " ms");
+
       for (String name : AutoCatalog.trajectoryFiles()) {
+        long loadStart = System.nanoTime();
         trajectoryCache.get(name).ifPresent(TrajectoryWarmup::touchSamples);
+        System.err.println("Auto preload " + name + " in " + (System.nanoTime() - loadStart) / 1e6 + " ms");
       }
       trajectoriesReady = true;
 
