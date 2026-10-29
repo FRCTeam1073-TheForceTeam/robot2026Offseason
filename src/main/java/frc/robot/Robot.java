@@ -27,7 +27,6 @@ import org.littletonrobotics.urcl.URCL;
 
 public class Robot extends LoggedRobot
 {
-  private boolean firstInit = true;
   private Command autonomousCommand;
 
   private RobotContainer container;
@@ -131,9 +130,7 @@ public class Robot extends LoggedRobot
     System.err.println("Disabled Init...");
     try {
       // Delegate to container function:
-      if (firstInit) {
-        container.disabledInit();
-      }
+      container.disabledInit();
     } catch (RuntimeException e) {
       System.err.println("CONTAINER DISABLEDINIT THREW EXCEPTION!: " + e.getMessage());
     }
@@ -143,12 +140,11 @@ public class Robot extends LoggedRobot
   public void disabledPeriodic()
   {
     try {
+      // Delegate to container function:
+      container.setHaveTraj(container.disabledPeriodic());
       SmartDashboard.putBoolean(DashboardNames.AUTO_HAVE_TRAJECTORY.getKey(), container.getHaveTraj());
       SmartDashboard.putString(DashboardNames.AUTO_TRAJECTORY.getKey(), container.getAutoTraj());
-      // Delegate to container function:
-      if (!container.getSelectedAuto().equals(container.getAutoTraj())) {
-        container.setHaveTraj(container.disabledPeriodic());
-      }
+      SmartDashboard.putBoolean(DashboardNames.AUTO_PREWARMED.getKey(), container.isPrewarmed());
     } catch (RuntimeException e) {
       System.err.println("CONTAINER DISABLEDPERIODIC THREW EXCEPTION!: " + e.getMessage());
     }
@@ -160,7 +156,6 @@ public class Robot extends LoggedRobot
     System.err.println("Autonomous Init...");
 
     try {
-      firstInit = false;
       autonomousCommand = container.getAutonomousCommand();
 
       if (autonomousCommand != null) {

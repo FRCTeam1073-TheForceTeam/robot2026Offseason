@@ -25,6 +25,10 @@ import frc.robot.utilities.DashboardNames;
 
 public class DrivePath extends Command
 {
+  /** Speed caps applied to the trajectory feedforward plus feedback. Shared so tests can check paths against them. */
+  public static final double MAX_TRANSLATION_SPEED = 2.5; // m/s
+  public static final double MAX_ANGULAR_SPEED = 2.5; // rad/s
+
   private boolean quit;
 
   private final Drivetrain drivetrain;
@@ -111,8 +115,8 @@ public class DrivePath extends Command
       if (currentSample.isPresent()) {
         SwerveSample trajSample = currentSample.get();
         ChassisSpeeds trajectorySpeeds = trajSample.getChassisSpeeds();
-        maxVelocity = 2.5;
-        maxAngularVelocity = 2.5;
+        maxVelocity = MAX_TRANSLATION_SPEED;
+        maxAngularVelocity = MAX_ANGULAR_SPEED;
 
         // v = PID(Transform + Robot_Pose) + Forward_Velocity * alpha
         // velocity = feedback + feedforward
