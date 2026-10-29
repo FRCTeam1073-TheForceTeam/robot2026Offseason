@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.utilities.AutoLog;
 import frc.robot.utilities.DashboardNames;
 
 import com.revrobotics.util.StatusLogger;
@@ -90,6 +91,8 @@ public class Robot extends LoggedRobot
     } catch (RuntimeException e) {
       System.err.println("CREATION OF ROBOT CONTAINER THREW AN EXCEPTION!: " + e.getMessage());
     }
+
+    AutoLog.attachScheduler();
   }
 
   @Override
@@ -128,6 +131,7 @@ public class Robot extends LoggedRobot
   public void disabledInit()
   {
     System.err.println("Disabled Init...");
+    AutoLog.stop("disabled");
     try {
       // Delegate to container function:
       container.disabledInit();
@@ -154,11 +158,13 @@ public class Robot extends LoggedRobot
   public void autonomousInit()
   {
     System.err.println("Autonomous Init...");
+    AutoLog.start();
 
     try {
       autonomousCommand = container.getAutonomousCommand();
 
       if (autonomousCommand != null) {
+        AutoLog.event("scheduling auto command");
         CommandScheduler.getInstance().schedule(autonomousCommand);
       } else {
         System.err.println("UNEXPLAINED MISSING AUTONOMOUS COMMAND!");
@@ -177,6 +183,7 @@ public class Robot extends LoggedRobot
   public void teleopInit()
   {
     System.err.println("TeleopInit...");
+    AutoLog.stop("teleopInit");
 
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
