@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,17 +46,21 @@ public class HoodTeleopTest
     private BallisticShot mockBallisticShot;
 
     @Test
-    public void testExecute_trenchZoneOverridesEverything()
+    public void testExecute_trenchZoneDoesNotOverrideShot()
     {
+        // The trench zone override is disabled on main, so the lookup table still drives the hood.
         HoodTeleop cmd = new HoodTeleop(mockShooterHood, mockOI, mockTargetFinder, mockShooterTable, mockZoneFinder, mockBallisticShot);
 
         Set<String> trenchZone = new HashSet<>();
         trenchZone.add("TRENCH");
-        when(mockZoneFinder.getZones()).thenReturn(trenchZone);
+        lenient().when(mockZoneFinder.getZones()).thenReturn(trenchZone);
         when(mockOI.getOperatorLeftTrigger()).thenReturn(0.5);
+        when(mockTargetFinder.getRangeToTargetMeters()).thenReturn(Units.inchesToMeters(200));
+        when(mockShooterTable.getHoodAngle(Units.inchesToMeters(200))).thenReturn(0.5);
 
         cmd.execute();
-        verify(mockShooterHood).setPosition(ShooterHood.maxPositionRadians);
+        verify(mockShooterHood).setPosition(0.5);
+        verify(mockShooterHood, never()).setPosition(ShooterHood.maxPositionRadians);
     }
 
     @Test

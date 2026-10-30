@@ -87,8 +87,9 @@ public class IntakeTeleopTest
     }
 
     @Test
-    public void testExecute_trenchZoneForcesModeOut()
+    public void testExecute_trenchZoneDoesNotForceModeOut()
     {
+        // The trench zone override is disabled on main, so the intake stays stowed by default.
         when(mockIntake.getPositionRadians()).thenReturn(1.0);
 
         IntakeTeleop cmd = new IntakeTeleop(mockIntake, mockOI, mockZoneFinder);
@@ -99,12 +100,14 @@ public class IntakeTeleopTest
         when(mockOI.getDriverRightBumper()).thenReturn(false);
 
         cmd.execute();
-        verify(mockIntake).setPosition(Math.toRadians(-0.1));
+        verify(mockIntake).setPosition(Intake.stowedPositionRadians);
+        verify(mockIntake, never()).setPosition(Math.toRadians(-0.1));
     }
 
     @Test
-    public void testExecute_trenchZoneAutoStopsWhenNearZero()
+    public void testExecute_trenchZoneDoesNotAutoStop()
     {
+        // The trench zone override is disabled on main, so being near zero in the trench does not stop the intake.
         when(mockIntake.getPositionRadians()).thenReturn(0.15);
 
         IntakeTeleop cmd = new IntakeTeleop(mockIntake, mockOI, mockZoneFinder);
@@ -115,7 +118,7 @@ public class IntakeTeleopTest
         when(mockOI.getDriverRightBumper()).thenReturn(false);
 
         cmd.execute();
-        verify(mockIntake).stop();
+        verify(mockIntake, never()).stop();
     }
 
     @Test
