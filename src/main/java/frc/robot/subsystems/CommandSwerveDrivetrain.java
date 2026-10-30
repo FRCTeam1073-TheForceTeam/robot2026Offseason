@@ -16,8 +16,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     private double m_lastSimTime;
 
     public CommandSwerveDrivetrain(
-            SwerveDrivetrainConstants driveTrainConstants,
-            SwerveModuleConstants<?, ?, ?>... modules) {
+        SwerveDrivetrainConstants driveTrainConstants,
+        SwerveModuleConstants<?, ?, ?>... modules) {
         super(TalonFX::new, TalonFX::new, CANcoder::new, driveTrainConstants, modules);
         CommandScheduler.getInstance().registerSubsystem(this);
 
@@ -29,13 +29,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     private void startSimThread() {
         m_lastSimTime = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
         m_simNotifier = new Notifier(() -> {
-            final double currentTime = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
-            double deltaTime = currentTime - m_lastSimTime;
-            m_lastSimTime = currentTime;
+                final double currentTime = edu.wpi.first.wpilibj.Timer.getFPGATimestamp();
+                double deltaTime = currentTime - m_lastSimTime;
+                m_lastSimTime = currentTime;
 
-            // use the measured time delta, get battery voltage from WPILib
-            updateSimState(deltaTime, RobotController.getBatteryVoltage());
-        });
+                // use the measured time delta, get battery voltage from WPILib
+                updateSimState(deltaTime, RobotController.getBatteryVoltage());
+            });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 

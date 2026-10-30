@@ -188,3 +188,5 @@ compile_commands.json
 .factorypath
 
 src/main/java/frc/robot/BuildConstants.java
+
+.env

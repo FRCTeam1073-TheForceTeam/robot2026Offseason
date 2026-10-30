@@ -11,12 +11,12 @@ import frc.robot.subsystems.Localizer;
 
 public final class BasicAuto
 {
-  private BasicAuto()
-  {
-  }
+    private BasicAuto()
+    {
+    }
 
-  public static Command create(Drivetrain drivetrain, Localizer localizer)
-  {
-    return new DriveStraight(drivetrain, localizer);
-  }
+    public static Command create(Drivetrain drivetrain, Localizer localizer)
+    {
+        return new DriveStraight(drivetrain, localizer);
+    }
 }

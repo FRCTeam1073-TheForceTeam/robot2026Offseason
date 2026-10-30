@@ -1,18 +1,20 @@
 package frc.robot.subsystems;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.Timer;
-import java.util.ArrayList;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import frc.robot.subsystems.AprilTagFinder.VisionMeasurement;
 
 public class LocalizerTest {
@@ -52,12 +54,12 @@ public class LocalizerTest {
         localizer.setTimeGap(0.0);
         List<VisionMeasurement> measurements = new ArrayList<>();
         measurements.add(new VisionMeasurement(
-            new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
-            new Transform2d(),
-            Timer.getFPGATimestamp(),
-            1,
-            new double[]{0.1, 0.1, 0.1}
-        ));
+                new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
+                new Transform2d(),
+                Timer.getFPGATimestamp(),
+                1,
+                new double[]{0.1, 0.1, 0.1}
+            ));
         mockFinder.setMeasurements(measurements);
 
         localizer.periodic();
@@ -76,12 +78,12 @@ public class LocalizerTest {
         localizer.setTimeGap(0.0);
         List<VisionMeasurement> measurements = new ArrayList<>();
         measurements.add(new VisionMeasurement(
-            new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
-            new Transform2d(),
-            Timer.getFPGATimestamp(),
-            1,
-            new double[]{0.1, 0.1, 0.1}
-        ));
+                new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
+                new Transform2d(),
+                Timer.getFPGATimestamp(),
+                1,
+                new double[]{0.1, 0.1, 0.1}
+            ));
         mockFinder.setMeasurements(measurements);
 
         localizer.periodic();
@@ -113,12 +115,12 @@ public class LocalizerTest {
         Pose2d visionPose = new Pose2d(3.0, 4.0, new Rotation2d(0.0));
         List<VisionMeasurement> measurements = new ArrayList<>();
         measurements.add(new VisionMeasurement(
-            visionPose,
-            new Transform2d(),
-            Timer.getFPGATimestamp(),
-            1,
-            new double[]{0.1, 0.1, 0.1}
-        ));
+                visionPose,
+                new Transform2d(),
+                Timer.getFPGATimestamp(),
+                1,
+                new double[]{0.1, 0.1, 0.1}
+            ));
         mockFinder.setMeasurements(measurements);
 
         localizer.periodic();
@@ -140,12 +142,12 @@ public class LocalizerTest {
         // First measurement
         List<VisionMeasurement> measurements1 = new ArrayList<>();
         measurements1.add(new VisionMeasurement(
-            new Pose2d(2.0, 2.0, new Rotation2d(0.0)),
-            new Transform2d(),
-            Timer.getFPGATimestamp(),
-            1,
-            new double[]{0.1, 0.1, 0.1}
-        ));
+                new Pose2d(2.0, 2.0, new Rotation2d(0.0)),
+                new Transform2d(),
+                Timer.getFPGATimestamp(),
+                1,
+                new double[]{0.1, 0.1, 0.1}
+            ));
         mockFinder.setMeasurements(measurements1);
         localizer.periodic();
 
@@ -157,12 +159,12 @@ public class LocalizerTest {
         localizer.setTimeGap(0.0);
         List<VisionMeasurement> measurements2 = new ArrayList<>();
         measurements2.add(new VisionMeasurement(
-            new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
-            new Transform2d(),
-            Timer.getFPGATimestamp(),
-            1,
-            new double[]{0.1, 0.1, 0.1}
-        ));
+                new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
+                new Transform2d(),
+                Timer.getFPGATimestamp(),
+                1,
+                new double[]{0.1, 0.1, 0.1}
+            ));
         mockFinder.setMeasurements(measurements2);
         localizer.periodic();
 
@@ -177,12 +179,12 @@ public class LocalizerTest {
         localizer.setTimeGap(0.0);
         List<VisionMeasurement> measurements = new ArrayList<>();
         measurements.add(new VisionMeasurement(
-            new Pose2d(1.0, 2.0, new Rotation2d(0.0)),
-            new Transform2d(),
-            Timer.getFPGATimestamp(),
-            1,
-            new double[]{0.1, 0.1, 0.1}
-        ));
+                new Pose2d(1.0, 2.0, new Rotation2d(0.0)),
+                new Transform2d(),
+                Timer.getFPGATimestamp(),
+                1,
+                new double[]{0.1, 0.1, 0.1}
+            ));
         mockFinder.setMeasurements(measurements);
 
         localizer.periodic();
@@ -201,12 +203,12 @@ public class LocalizerTest {
         localizer.setTimeGap(0.0);
         List<VisionMeasurement> measurements = new ArrayList<>();
         measurements.add(new VisionMeasurement(
-            new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
-            new Transform2d(),
-            Timer.getFPGATimestamp(),
-            1,
-            new double[]{0.1, 0.1, 0.1}
-        ));
+                new Pose2d(5.0, 5.0, new Rotation2d(0.0)),
+                new Transform2d(),
+                Timer.getFPGATimestamp(),
+                1,
+                new double[]{0.1, 0.1, 0.1}
+            ));
         mockFinder.setMeasurements(measurements);
 
         localizer.periodic();

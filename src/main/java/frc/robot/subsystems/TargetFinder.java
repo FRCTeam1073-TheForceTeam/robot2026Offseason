@@ -14,9 +14,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.utilities.DashboardNames;
 import org.littletonrobotics.junction.Logger;
 
 public class TargetFinder extends SubsystemBase
@@ -162,5 +160,25 @@ public class TargetFinder extends SubsystemBase
         } else {
             System.out.println("TargetFinder::No Alliance Selected");
         }
+    }
+
+    void setOurHubForTest(Pose2d ourHub)
+    {
+        this.ourHub = ourHub;
+    }
+
+    void setTurretPosForTest(Pose2d turretPos)
+    {
+        this.turretPos = turretPos;
+    }
+
+    void setZoneForTest(Set<String> zone)
+    {
+        this.zone = zone;
+    }
+
+    void setOurZoneForTest(String ourZone)
+    {
+        this.ourZone = ourZone;
     }
 }

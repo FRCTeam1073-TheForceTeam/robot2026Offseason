@@ -12,40 +12,40 @@ import frc.robot.subsystems.ShooterHood;
  */
 public class ZeroHood extends Command
 {
-  private final ShooterHood shooterHood;
+    private final ShooterHood shooterHood;
 
-  public ZeroHood(ShooterHood shooterHood)
-  {
-    this.shooterHood = shooterHood;
+    public ZeroHood(ShooterHood shooterHood)
+    {
+        this.shooterHood = shooterHood;
 
-    addRequirements(shooterHood);
-  }
-
-  @Override
-  public void initialize()
-  {
-  }
-
-  @Override
-  public void execute()
-  {
-    double velocity = 0.2;
-    shooterHood.setVelocity(velocity);
-  }
-
-  @Override
-  public void end(boolean interrupted)
-  {
-    shooterHood.zero();
-    shooterHood.stop();
-  }
-
-  @Override
-  public boolean isFinished()
-  {
-    if (Math.abs(shooterHood.getTorqueNm()) > 2.2) {
-      return true;
+        addRequirements(shooterHood);
     }
-    return false;
-  }
+
+    @Override
+    public void initialize()
+    {
+    }
+
+    @Override
+    public void execute()
+    {
+        double velocity = 0.2;
+        shooterHood.setVelocity(velocity);
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        shooterHood.zero();
+        shooterHood.stop();
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        if (Math.abs(shooterHood.getTorqueNm()) > 2.2) {
+            return true;
+        }
+        return false;
+    }
 }

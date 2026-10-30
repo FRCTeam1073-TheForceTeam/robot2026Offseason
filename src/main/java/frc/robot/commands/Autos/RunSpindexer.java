@@ -12,38 +12,38 @@ import frc.robot.subsystems.Spindexer;
  */
 public class RunSpindexer extends Command
 {
-  private final Spindexer spindexer;
+    private final Spindexer spindexer;
 
-  private double targetVelocity;
+    private double targetVelocity;
 
-  public RunSpindexer(Spindexer spindexer)
-  {
-    this.spindexer = spindexer;
+    public RunSpindexer(Spindexer spindexer)
+    {
+        this.spindexer = spindexer;
 
-    addRequirements(spindexer);
-  }
+        addRequirements(spindexer);
+    }
 
-  @Override
-  public void initialize()
-  {
-    targetVelocity = 4.2;
-  }
+    @Override
+    public void initialize()
+    {
+        targetVelocity = 4.2;
+    }
 
-  @Override
-  public void execute()
-  {
-    spindexer.setVelocity(targetVelocity);
-  }
+    @Override
+    public void execute()
+    {
+        spindexer.setVelocity(targetVelocity);
+    }
 
-  @Override
-  public void end(boolean interrupted)
-  {
-    spindexer.stop();
-  }
+    @Override
+    public void end(boolean interrupted)
+    {
+        spindexer.stop();
+    }
 
-  @Override
-  public boolean isFinished()
-  {
-    return false;
-  }
+    @Override
+    public boolean isFinished()
+    {
+        return false;
+    }
 }

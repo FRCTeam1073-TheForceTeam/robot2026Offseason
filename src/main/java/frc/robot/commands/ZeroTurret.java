@@ -12,61 +12,61 @@ import frc.robot.subsystems.Turret;
  */
 public class ZeroTurret extends Command
 {
-  private static final double limitNm = 3.5;
+    private static final double limitNm = 3.5;
 
-  private final Turret turret;
+    private final Turret turret;
 
-  /**
-   * Create a ZeroTurret Command
-   *
-   * @param turret the subsystem handle.
-   * @param unsafe Don't require the subsystem. Don't use except in auto prep!
-   */
-  public ZeroTurret(Turret turret, boolean unsafe)
-  {
-    this.turret = turret;
+    /**
+     * Create a ZeroTurret Command
+     *
+     * @param turret the subsystem handle.
+     * @param unsafe Don't require the subsystem. Don't use except in auto prep!
+     */
+    public ZeroTurret(Turret turret, boolean unsafe)
+    {
+        this.turret = turret;
 
-    if (!unsafe) {
-      addRequirements(turret);
+        if (!unsafe) {
+            addRequirements(turret);
+        }
     }
-  }
 
-  public ZeroTurret(Turret turret)
-  {
-    this(turret, false);
-  }
-
-  @Override
-  public void initialize()
-  {
-    System.err.println("Zero Turret");
-  }
-
-  @Override
-  public void execute()
-  {
-    double velocity = 2.0; // TODO: change this value
-    turret.setVelocity(velocity);
-  }
-
-  @Override
-  public void end(boolean interrupted)
-  {
-    if (interrupted) {
-      System.err.println("ZeroTurret Interrupted!! ");
-    } else {
-      System.err.println("ZeroTurret Finished");
+    public ZeroTurret(Turret turret)
+    {
+        this(turret, false);
     }
-    turret.zero();
-    turret.stop();
-  }
 
-  @Override
-  public boolean isFinished()
-  {
-    if (Math.abs(turret.getTorqueNm()) > limitNm) { // TODO: change limit
-      return true;
+    @Override
+    public void initialize()
+    {
+        System.err.println("Zero Turret");
     }
-    return false;
-  }
+
+    @Override
+    public void execute()
+    {
+        double velocity = 2.0; // TODO: change this value
+        turret.setVelocity(velocity);
+    }
+
+    @Override
+    public void end(boolean interrupted)
+    {
+        if (interrupted) {
+            System.err.println("ZeroTurret Interrupted!! ");
+        } else {
+            System.err.println("ZeroTurret Finished");
+        }
+        turret.zero();
+        turret.stop();
+    }
+
+    @Override
+    public boolean isFinished()
+    {
+        if (Math.abs(turret.getTorqueNm()) > limitNm) { // TODO: change limit
+            return true;
+        }
+        return false;
+    }
 }

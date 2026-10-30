@@ -80,6 +80,11 @@ public class ZoneFinder extends SubsystemBase
         return result;
     }
 
+    void setCurrentTranslationForTest(Translation2d translation)
+    {
+        this.currentTrans = translation;
+    }
+
     @Override
     public void periodic()
     {

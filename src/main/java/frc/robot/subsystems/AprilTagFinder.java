@@ -103,19 +103,19 @@ public class AprilTagFinder extends SubsystemBase
 
         cameras.add(new RobotCamera(new PhotonCamera("Left_Front"),
                 new Transform3d(new Translation3d(Units.inchesToMeters(-8.977), Units.inchesToMeters(8.448), Units.inchesToMeters(5.152)).plus(pigeonOffset),
-                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(65)))));
+                    new Rotation3d(0, Math.toRadians(-21), Math.toRadians(65)))));
         cameras.add(new RobotCamera(new PhotonCamera("Left_Back"),
                 new Transform3d(new Translation3d(Units.inchesToMeters(-10.858), Units.inchesToMeters(7.855), Units.inchesToMeters(7.562)).plus(pigeonOffset),
-                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(150)))));
+                    new Rotation3d(0, Math.toRadians(-21), Math.toRadians(150)))));
         cameras.add(new RobotCamera(new PhotonCamera("Right_Front"),
                 new Transform3d(new Translation3d(Units.inchesToMeters(-8.977), Units.inchesToMeters(-13.448), Units.inchesToMeters(5.152)).plus(pigeonOffset),
-                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-65)))));
+                    new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-65)))));
         cameras.add(new RobotCamera(new PhotonCamera("Right_Back"),
                 new Transform3d(new Translation3d(Units.inchesToMeters(-10.858), Units.inchesToMeters(-12.855), Units.inchesToMeters(7.652)).plus(pigeonOffset),
-                        new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-150)))));
+                    new Rotation3d(0, Math.toRadians(-21), Math.toRadians(-150)))));
         cameras.add(new RobotCamera(new PhotonCamera("Turret"),
                 new Transform3d(new Translation3d(Units.inchesToMeters(-3.47), Units.inchesToMeters(-7.51), Units.inchesToMeters(12.0)).plus(pigeonOffset),
-                        new Rotation3d(0, 0, 0)),
+                    new Rotation3d(0, 0, 0)),
                 true));
 
         for (RobotCamera camera : cameras) {
@@ -256,14 +256,14 @@ public class AprilTagFinder extends SubsystemBase
                     if (processingResult.isRejected()) {
                         switch (processingResult.getRejectionReason()) {
                             case POSE_NOT_FOUND:
-                                rejectedPoseNotFound++;
-                                break;
+                            rejectedPoseNotFound++;
+                            break;
                             case AMBIGUITY:
-                                rejectedAmbiguity++;
-                                break;
+                            rejectedAmbiguity++;
+                            break;
                             case RANGE:
-                                rejectedRange++;
-                                break;
+                            rejectedRange++;
+                            break;
                         }
                     } else {
                         measurements.add(processingResult.getMeasurement());
@@ -355,7 +355,7 @@ public class AprilTagFinder extends SubsystemBase
     }
 
     Transform3d processTurretCameraTransform(String cameraName, double turretVelocityRadPerSec,
-            List<PhotonPipelineResult> results, Transform3d originalTransform)
+        List<PhotonPipelineResult> results, Transform3d originalTransform)
     {
         // If the camera is the turret but it is not zeroed/indexed skip it.
         if (!turret.hasZero()) {
@@ -386,9 +386,9 @@ public class AprilTagFinder extends SubsystemBase
         // Estimate turret angle at point of average latency from measurements:
         double turretAngle = turret.getPositionRadians() - turretVelocityRadPerSec * averageLatencySec; // TODO: Tweak this number
         Transform3d adjustedTransform = originalTransform.plus(new Transform3d(new Translation3d(), new Rotation3d(0, 0, turretAngle)))
-                .plus(new Transform3d(
-                        new Translation3d(Units.inchesToMeters(-0.136), Units.inchesToMeters(-6.125), Units.inchesToMeters(5.187)),
-                        new Rotation3d(0, Math.toRadians(-15), 0)));
+        .plus(new Transform3d(
+                new Translation3d(Units.inchesToMeters(-0.136), Units.inchesToMeters(-6.125), Units.inchesToMeters(5.187)),
+                new Rotation3d(0, Math.toRadians(-15), 0)));
 
         Logger.recordOutput("AprilTagFinder/Camera_" + cameraName + "/SkipReason", "");
         SmartDashboard.putBoolean(DashboardNames.APRIL_TAG_FINDER_USING_TURRET_CAM.getKey(), true);

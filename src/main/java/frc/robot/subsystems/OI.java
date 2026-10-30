@@ -16,376 +16,376 @@ import org.littletonrobotics.junction.Logger;
 
 public class OI extends SubsystemBase
 {
-  @AutoLog
-  public static class OIInputs
-  {
-    public double driverLeftX = 0.0;
-    public double driverLeftY = 0.0;
-    public double driverRightX = 0.0;
-    public double driverRightY = 0.0;
-    public double driverLeftTrigger = 0.0;
-    public double driverRightTrigger = 0.0;
-    public boolean driverAButton = false;
-    public boolean driverBButton = false;
-    public boolean driverXButton = false;
-    public boolean driverYButton = false;
-    public boolean driverMenuButton = false;
-    public boolean driverViewButton = false;
-    public boolean driverLeftBumper = false;
-    public boolean driverRightBumper = false;
-    public int driverDPadAngle = -1;
-    public double operatorLeftX = 0.0;
-    public double operatorLeftY = 0.0;
-    public double operatorRightX = 0.0;
-    public double operatorRightY = 0.0;
-    public double operatorLeftTrigger = 0.0;
-    public double operatorRightTrigger = 0.0;
-    public boolean operatorAButton = false;
-    public boolean operatorBButton = false;
-    public boolean operatorXButton = false;
-    public boolean operatorYButton = false;
-    public boolean operatorMenuButton = false;
-    public boolean operatorViewButton = false;
-    public boolean operatorLeftBumper = false;
-    public boolean operatorRightBumper = false;
-    public int operatorDPadAngle = -1;
-    public boolean ballisticShotMode = false;
-  }
-
-  @AutoLog
-  public static class DriverStationInputs
-  {
-    public boolean allianceKnown = false;
-    public String alliance = "Unknown";
-    public String gameSpecificMessage = "";
-    public boolean isAutonomous = false;
-    public boolean isTeleop = false;
-    public boolean isEnabled = false;
-    public double matchTime = 0.0;
-  }
-
-  private final XboxController driverController;
-  private final XboxController operatorController;
-  private final OIInputsAutoLogged inputs = new OIInputsAutoLogged();
-  private final DriverStationInputsAutoLogged dsInputs = new DriverStationInputsAutoLogged();
-
-  // TODO: make debouncers for individual buttons.
-  private final Debouncer debouncer = new Debouncer(0.05, Debouncer.DebounceType.kBoth);
-
-  private double leftXZero;
-  private double leftYZero;
-  private double rightXZero;
-  private double rightYZero;
-
-  private boolean hubActive = false;
-  private boolean lastHubActive = false;
-
-  // Top-level control of ballistic shot mode:
-  private boolean ballisticShot = true;
-  private boolean lastOperatorAButton = false;
-
-  public OI()
-  {
-    setName("OI");
-    driverController = new XboxController(0);
-    operatorController = new XboxController(1);
-  }
-
-  @Override
-  public void periodic()
-  {
-    // Populate OI inputs (joysticks + buttons)
-    inputs.driverLeftX = driverController.getLeftX();
-    inputs.driverLeftY = driverController.getLeftY();
-    inputs.driverRightX = -1 * driverController.getRightX();
-    inputs.driverRightY = driverController.getRightY();
-    inputs.driverLeftTrigger = driverController.getLeftTriggerAxis();
-    inputs.driverRightTrigger = driverController.getRightTriggerAxis();
-    inputs.driverAButton = driverController.getAButton();
-    inputs.driverBButton = driverController.getBButton();
-    inputs.driverXButton = driverController.getXButton();
-    inputs.driverYButton = driverController.getYButton();
-    inputs.driverMenuButton = driverController.getStartButton();
-    inputs.driverViewButton = driverController.getBackButton();
-    inputs.driverLeftBumper = driverController.getLeftBumperButton();
-    inputs.driverRightBumper = driverController.getRightBumperButton();
-    inputs.driverDPadAngle = driverController.getPOV();
-    inputs.operatorLeftX = -1 * operatorController.getLeftX();
-    inputs.operatorLeftY = operatorController.getLeftY();
-    inputs.operatorRightX = operatorController.getRightX();
-    inputs.operatorRightY = operatorController.getRightY();
-    inputs.operatorLeftTrigger = operatorController.getLeftTriggerAxis();
-    inputs.operatorRightTrigger = operatorController.getRightTriggerAxis();
-    inputs.operatorAButton = operatorController.getAButton();
-    inputs.operatorBButton = operatorController.getBButton();
-    inputs.operatorXButton = operatorController.getXButton();
-    inputs.operatorYButton = operatorController.getYButton();
-    inputs.operatorMenuButton = operatorController.getStartButton();
-    inputs.operatorViewButton = operatorController.getBackButton();
-    inputs.operatorLeftBumper = operatorController.getLeftBumperButton();
-    inputs.operatorRightBumper = operatorController.getRightBumperButton();
-    inputs.operatorDPadAngle = operatorController.getPOV();
-    inputs.ballisticShotMode = ballisticShot;
-    Logger.processInputs("OI", inputs);
-
-    // Populate DriverStation inputs
-    var alliance = DriverStation.getAlliance();
-    dsInputs.allianceKnown = alliance.isPresent();
-    dsInputs.alliance = alliance.isPresent() ? alliance.get().name() : "Unknown";
-    dsInputs.gameSpecificMessage = DriverStation.getGameSpecificMessage();
-    dsInputs.isAutonomous = DriverStation.isAutonomousEnabled();
-    dsInputs.isTeleop = DriverStation.isTeleopEnabled();
-    dsInputs.isEnabled = DriverStation.isEnabled();
-    dsInputs.matchTime = DriverStation.getMatchTime();
-    Logger.processInputs("DriverStation", dsInputs);
-
-    boolean aButton = operatorController.getAButton();
-    if (aButton && !lastOperatorAButton) {
-      ballisticShot = !ballisticShot;
+    @AutoLog
+    public static class OIInputs
+    {
+        public double driverLeftX = 0.0;
+        public double driverLeftY = 0.0;
+        public double driverRightX = 0.0;
+        public double driverRightY = 0.0;
+        public double driverLeftTrigger = 0.0;
+        public double driverRightTrigger = 0.0;
+        public boolean driverAButton = false;
+        public boolean driverBButton = false;
+        public boolean driverXButton = false;
+        public boolean driverYButton = false;
+        public boolean driverMenuButton = false;
+        public boolean driverViewButton = false;
+        public boolean driverLeftBumper = false;
+        public boolean driverRightBumper = false;
+        public int driverDPadAngle = -1;
+        public double operatorLeftX = 0.0;
+        public double operatorLeftY = 0.0;
+        public double operatorRightX = 0.0;
+        public double operatorRightY = 0.0;
+        public double operatorLeftTrigger = 0.0;
+        public double operatorRightTrigger = 0.0;
+        public boolean operatorAButton = false;
+        public boolean operatorBButton = false;
+        public boolean operatorXButton = false;
+        public boolean operatorYButton = false;
+        public boolean operatorMenuButton = false;
+        public boolean operatorViewButton = false;
+        public boolean operatorLeftBumper = false;
+        public boolean operatorRightBumper = false;
+        public int operatorDPadAngle = -1;
+        public boolean ballisticShotMode = false;
     }
-    lastOperatorAButton = aButton;
 
-    SmartDashboard.putBoolean(DashboardNames.OI_BALLISTIC_SHOT.getKey(), ballisticShot);
-  }
+    @AutoLog
+    public static class DriverStationInputs
+    {
+        public boolean allianceKnown = false;
+        public String alliance = "Unknown";
+        public String gameSpecificMessage = "";
+        public boolean isAutonomous = false;
+        public boolean isTeleop = false;
+        public boolean isEnabled = false;
+        public double matchTime = 0.0;
+    }
 
-  public boolean ballisticShotMode()
-  {
-    return ballisticShot;
-  }
+    private final XboxController driverController;
+    private final XboxController operatorController;
+    private final OIInputsAutoLogged inputs = new OIInputsAutoLogged();
+    private final DriverStationInputsAutoLogged dsInputs = new DriverStationInputsAutoLogged();
 
-  public double getDriverLeftX()
-  {
-    return driverController.getLeftX();
-  }
+    // TODO: make debouncers for individual buttons.
+    private final Debouncer debouncer = new Debouncer(0.05, Debouncer.DebounceType.kBoth);
 
-  public double getDriverLeftY()
-  {
-    return driverController.getLeftY();
-  }
+    private double leftXZero;
+    private double leftYZero;
+    private double rightXZero;
+    private double rightYZero;
 
-  public double getDriverRightX()
-  {
-    return -1 * driverController.getRightX();
-  }
+    private boolean hubActive = false;
+    private boolean lastHubActive = false;
 
-  public double getDriverRightY()
-  {
-    return driverController.getRightY();
-  }
+    // Top-level control of ballistic shot mode:
+    private boolean ballisticShot = true;
+    private boolean lastOperatorAButton = false;
 
-  public double getOperatorLeftX()
-  {
-    return -1 * operatorController.getLeftX();
-  }
+    public OI()
+    {
+        setName("OI");
+        driverController = new XboxController(0);
+        operatorController = new XboxController(1);
+    }
 
-  public double getOperatorLeftY()
-  {
-    return operatorController.getLeftY();
-  }
+    @Override
+    public void periodic()
+    {
+        // Populate OI inputs (joysticks + buttons)
+        inputs.driverLeftX = driverController.getLeftX();
+        inputs.driverLeftY = driverController.getLeftY();
+        inputs.driverRightX = -1 * driverController.getRightX();
+        inputs.driverRightY = driverController.getRightY();
+        inputs.driverLeftTrigger = driverController.getLeftTriggerAxis();
+        inputs.driverRightTrigger = driverController.getRightTriggerAxis();
+        inputs.driverAButton = driverController.getAButton();
+        inputs.driverBButton = driverController.getBButton();
+        inputs.driverXButton = driverController.getXButton();
+        inputs.driverYButton = driverController.getYButton();
+        inputs.driverMenuButton = driverController.getStartButton();
+        inputs.driverViewButton = driverController.getBackButton();
+        inputs.driverLeftBumper = driverController.getLeftBumperButton();
+        inputs.driverRightBumper = driverController.getRightBumperButton();
+        inputs.driverDPadAngle = driverController.getPOV();
+        inputs.operatorLeftX = -1 * operatorController.getLeftX();
+        inputs.operatorLeftY = operatorController.getLeftY();
+        inputs.operatorRightX = operatorController.getRightX();
+        inputs.operatorRightY = operatorController.getRightY();
+        inputs.operatorLeftTrigger = operatorController.getLeftTriggerAxis();
+        inputs.operatorRightTrigger = operatorController.getRightTriggerAxis();
+        inputs.operatorAButton = operatorController.getAButton();
+        inputs.operatorBButton = operatorController.getBButton();
+        inputs.operatorXButton = operatorController.getXButton();
+        inputs.operatorYButton = operatorController.getYButton();
+        inputs.operatorMenuButton = operatorController.getStartButton();
+        inputs.operatorViewButton = operatorController.getBackButton();
+        inputs.operatorLeftBumper = operatorController.getLeftBumperButton();
+        inputs.operatorRightBumper = operatorController.getRightBumperButton();
+        inputs.operatorDPadAngle = operatorController.getPOV();
+        inputs.ballisticShotMode = ballisticShot;
+        Logger.processInputs("OI", inputs);
 
-  public double getOperatorRightX()
-  {
-    return operatorController.getRightX();
-  }
+        // Populate DriverStation inputs
+        var alliance = DriverStation.getAlliance();
+        dsInputs.allianceKnown = alliance.isPresent();
+        dsInputs.alliance = alliance.isPresent() ? alliance.get().name() : "Unknown";
+        dsInputs.gameSpecificMessage = DriverStation.getGameSpecificMessage();
+        dsInputs.isAutonomous = DriverStation.isAutonomousEnabled();
+        dsInputs.isTeleop = DriverStation.isTeleopEnabled();
+        dsInputs.isEnabled = DriverStation.isEnabled();
+        dsInputs.matchTime = DriverStation.getMatchTime();
+        Logger.processInputs("DriverStation", dsInputs);
 
-  public double getOperatorRightY()
-  {
-    return operatorController.getRightY();
-  }
+        boolean aButton = operatorController.getAButton();
+        if (aButton && !lastOperatorAButton) {
+            ballisticShot = !ballisticShot;
+        }
+        lastOperatorAButton = aButton;
 
-  public double getDriverLeftTrigger()
-  {
-    return driverController.getLeftTriggerAxis();
-  }
+        SmartDashboard.putBoolean(DashboardNames.OI_BALLISTIC_SHOT.getKey(), ballisticShot);
+    }
 
-  public double getDriverRightTrigger()
-  {
-    return driverController.getRightTriggerAxis();
-  }
+    public boolean ballisticShotMode()
+    {
+        return ballisticShot;
+    }
 
-  public double getOperatorLeftTrigger()
-  {
-    return operatorController.getLeftTriggerAxis();
-  }
+    public double getDriverLeftX()
+    {
+        return driverController.getLeftX();
+    }
 
-  public double getOperatorRightTrigger()
-  {
-    return operatorController.getRightTriggerAxis();
-  }
+    public double getDriverLeftY()
+    {
+        return driverController.getLeftY();
+    }
 
-  public boolean getDriverAButton()
-  {
-    return driverController.getAButton();
-  }
+    public double getDriverRightX()
+    {
+        return -1 * driverController.getRightX();
+    }
 
-  public boolean getDriverBButton()
-  {
-    return driverController.getBButton();
-  }
+    public double getDriverRightY()
+    {
+        return driverController.getRightY();
+    }
 
-  public boolean getDriverXButton()
-  {
-    return driverController.getXButton();
-  }
+    public double getOperatorLeftX()
+    {
+        return -1 * operatorController.getLeftX();
+    }
 
-  public boolean getDriverYButton()
-  {
-    return driverController.getYButton();
-  }
+    public double getOperatorLeftY()
+    {
+        return operatorController.getLeftY();
+    }
 
-  public boolean getDriverMenuButton()
-  {
-    return driverController.getStartButton();
-  }
+    public double getOperatorRightX()
+    {
+        return operatorController.getRightX();
+    }
 
-  public boolean getDriverViewButton()
-  {
-    return driverController.getBackButton();
-  }
+    public double getOperatorRightY()
+    {
+        return operatorController.getRightY();
+    }
 
-  public boolean getDriverLeftBumper()
-  {
-    return driverController.getLeftBumperButton();
-  }
+    public double getDriverLeftTrigger()
+    {
+        return driverController.getLeftTriggerAxis();
+    }
 
-  public boolean getDriverRightBumper()
-  {
-    return driverController.getRightBumperButton();
-  }
+    public double getDriverRightTrigger()
+    {
+        return driverController.getRightTriggerAxis();
+    }
 
-  public int getDriverDPadAngle()
-  {
-    return driverController.getPOV();
-  }
+    public double getOperatorLeftTrigger()
+    {
+        return operatorController.getLeftTriggerAxis();
+    }
 
-  public boolean getDriverDPadUp()
-  {
-    return driverController.getPOV() == 0;
-  }
+    public double getOperatorRightTrigger()
+    {
+        return operatorController.getRightTriggerAxis();
+    }
 
-  public boolean getDriverDPadRight()
-  {
-    return driverController.getPOV() == 90;
-  }
+    public boolean getDriverAButton()
+    {
+        return driverController.getAButton();
+    }
 
-  public boolean getDriverDPadLeft()
-  {
-    return driverController.getPOV() == 270;
-  }
+    public boolean getDriverBButton()
+    {
+        return driverController.getBButton();
+    }
 
-  public boolean getDriverDPadDown()
-  {
-    return driverController.getPOV() == 180;
-  }
+    public boolean getDriverXButton()
+    {
+        return driverController.getXButton();
+    }
 
-  public void driverRumble()
-  {
-    driverController.setRumble(RumbleType.kBothRumble, 1.0);
-  }
+    public boolean getDriverYButton()
+    {
+        return driverController.getYButton();
+    }
 
-  public void driverStopRumble()
-  {
-    driverController.setRumble(RumbleType.kBothRumble, 0.0);
-  }
+    public boolean getDriverMenuButton()
+    {
+        return driverController.getStartButton();
+    }
 
-  public boolean driverLeftStickPress()
-  {
-    return driverController.getLeftStickButton();
-  }
+    public boolean getDriverViewButton()
+    {
+        return driverController.getBackButton();
+    }
 
-  public boolean getOperatorAButton()
-  {
-    return operatorController.getAButton();
-  }
+    public boolean getDriverLeftBumper()
+    {
+        return driverController.getLeftBumperButton();
+    }
 
-  public boolean getOperatorBButton()
-  {
-    return operatorController.getBButton();
-  }
+    public boolean getDriverRightBumper()
+    {
+        return driverController.getRightBumperButton();
+    }
 
-  public boolean getOperatorXButton()
-  {
-    return operatorController.getXButton();
-  }
+    public int getDriverDPadAngle()
+    {
+        return driverController.getPOV();
+    }
 
-  public boolean getOperatorYButton()
-  {
-    return operatorController.getYButton();
-  }
+    public boolean getDriverDPadUp()
+    {
+        return driverController.getPOV() == 0;
+    }
 
-  public boolean getOperatorMenuButton()
-  {
-    return operatorController.getStartButton();
-  }
+    public boolean getDriverDPadRight()
+    {
+        return driverController.getPOV() == 90;
+    }
 
-  public boolean getOperatorViewButton()
-  {
-    return operatorController.getBackButton();
-  }
+    public boolean getDriverDPadLeft()
+    {
+        return driverController.getPOV() == 270;
+    }
 
-  public boolean getOperatorLeftBumper()
-  {
-    return operatorController.getLeftBumperButton();
-  }
+    public boolean getDriverDPadDown()
+    {
+        return driverController.getPOV() == 180;
+    }
 
-  public boolean getOperatorRightBumper()
-  {
-    return operatorController.getRightBumperButton();
-  }
+    public void driverRumble()
+    {
+        driverController.setRumble(RumbleType.kBothRumble, 1.0);
+    }
 
-  public int getOperatorDPadAngle()
-  {
-    return operatorController.getPOV();
-  }
+    public void driverStopRumble()
+    {
+        driverController.setRumble(RumbleType.kBothRumble, 0.0);
+    }
 
-  public boolean getOperatorDPadUp()
-  {
-    return operatorController.getPOV() == 0;
-  }
+    public boolean driverLeftStickPress()
+    {
+        return driverController.getLeftStickButton();
+    }
 
-  public boolean getOperatorDPadRight()
-  {
-    return operatorController.getPOV() == 90;
-  }
+    public boolean getOperatorAButton()
+    {
+        return operatorController.getAButton();
+    }
 
-  public boolean getOperatorDPadLeft()
-  {
-    return operatorController.getPOV() == 270;
-  }
+    public boolean getOperatorBButton()
+    {
+        return operatorController.getBButton();
+    }
 
-  public boolean getOperatorDPadDown()
-  {
-    return operatorController.getPOV() == 180;
-  }
+    public boolean getOperatorXButton()
+    {
+        return operatorController.getXButton();
+    }
 
-  public void operatorRumble()
-  {
-    operatorController.setRumble(RumbleType.kBothRumble, 1.0);
-  }
+    public boolean getOperatorYButton()
+    {
+        return operatorController.getYButton();
+    }
 
-  public void operatorStopRumble()
-  {
-    operatorController.setRumble(RumbleType.kBothRumble, 0.0);
-  }
+    public boolean getOperatorMenuButton()
+    {
+        return operatorController.getStartButton();
+    }
 
-  public void zeroDriverController()
-  {
-    leftXZero = getDriverLeftX();
-    leftYZero = getDriverLeftY();
-    rightXZero = getDriverRightX();
-    rightYZero = getDriverRightY();
-  }
+    public boolean getOperatorViewButton()
+    {
+        return operatorController.getBackButton();
+    }
 
-  public void zeroOperatorController()
-  {
-    leftXZero = getOperatorLeftX();
-    leftYZero = getOperatorLeftY();
-    rightXZero = getOperatorRightX();
-    rightYZero = getOperatorRightY();
-  }
+    public boolean getOperatorLeftBumper()
+    {
+        return operatorController.getLeftBumperButton();
+    }
 
-  public void setHubActive(boolean active)
-  {
-    hubActive = active;
-  }
+    public boolean getOperatorRightBumper()
+    {
+        return operatorController.getRightBumperButton();
+    }
+
+    public int getOperatorDPadAngle()
+    {
+        return operatorController.getPOV();
+    }
+
+    public boolean getOperatorDPadUp()
+    {
+        return operatorController.getPOV() == 0;
+    }
+
+    public boolean getOperatorDPadRight()
+    {
+        return operatorController.getPOV() == 90;
+    }
+
+    public boolean getOperatorDPadLeft()
+    {
+        return operatorController.getPOV() == 270;
+    }
+
+    public boolean getOperatorDPadDown()
+    {
+        return operatorController.getPOV() == 180;
+    }
+
+    public void operatorRumble()
+    {
+        operatorController.setRumble(RumbleType.kBothRumble, 1.0);
+    }
+
+    public void operatorStopRumble()
+    {
+        operatorController.setRumble(RumbleType.kBothRumble, 0.0);
+    }
+
+    public void zeroDriverController()
+    {
+        leftXZero = getDriverLeftX();
+        leftYZero = getDriverLeftY();
+        rightXZero = getDriverRightX();
+        rightYZero = getDriverRightY();
+    }
+
+    public void zeroOperatorController()
+    {
+        leftXZero = getOperatorLeftX();
+        leftYZero = getOperatorLeftY();
+        rightXZero = getOperatorRightX();
+        rightYZero = getOperatorRightY();
+    }
+
+    public void setHubActive(boolean active)
+    {
+        hubActive = active;
+    }
 }
