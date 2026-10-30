@@ -18,65 +18,65 @@ import java.util.TreeSet;
  */
 public final class AutoCatalog
 {
-  /** Selections that run an autonomous routine (shooting, intake, and driving). */
-  private static final Set<String> ROUTINE_AUTOS = Set.of(
-      RobotContainer.centerDepotOutpost,
-      RobotContainer.centerDepotClimb,
-      RobotContainer.rightBumpSteal,
-      RobotContainer.rightTrenchHalfOutpost,
-      RobotContainer.rightTrenchHalfDouble,
-      RobotContainer.rightTrenchHalfDoubleBump,
-      RobotContainer.leftTrenchHalfDouble,
-      RobotContainer.leftTrenchHalfDoubleBump,
-      RobotContainer.leftBumpFull,
-      RobotContainer.basicAuto,
-      RobotContainer.rightBumpFollow,
-      RobotContainer.leftBumpFollow);
+    /** Selections that run an autonomous routine (shooting, intake, and driving). */
+    private static final Set<String> ROUTINE_AUTOS = Set.of(
+            RobotContainer.centerDepotOutpost,
+            RobotContainer.centerDepotClimb,
+            RobotContainer.rightBumpSteal,
+            RobotContainer.rightTrenchHalfOutpost,
+            RobotContainer.rightTrenchHalfDouble,
+            RobotContainer.rightTrenchHalfDoubleBump,
+            RobotContainer.leftTrenchHalfDouble,
+            RobotContainer.leftTrenchHalfDoubleBump,
+            RobotContainer.leftBumpFull,
+            RobotContainer.basicAuto,
+            RobotContainer.rightBumpFollow,
+            RobotContainer.leftBumpFollow);
 
-  /** Routine selections that drive along a Choreo trajectory, mapped to the .traj name. */
-  private static final Map<String, String> TRAJECTORY_FILES = Map.ofEntries(
-      entry(RobotContainer.centerDepotOutpost, "CenterDepotOutpost"),
-      entry(RobotContainer.centerDepotClimb, "CenterDepotClimb"),
-      entry(RobotContainer.rightBumpSteal, "RightBumpSteal"),
-      entry(RobotContainer.rightTrenchHalfOutpost, "RightTrenchHalfOutpost"),
-      entry(RobotContainer.rightTrenchHalfDouble, "RightTrenchHalfDouble"),
-      entry(RobotContainer.rightTrenchHalfDoubleBump, "RightTrenchHalfDoubleBump"),
-      entry(RobotContainer.leftTrenchHalfDouble, "LeftTrenchHalfDouble"),
-      entry(RobotContainer.leftTrenchHalfDoubleBump, "LeftTrenchHalfDoubleBump"),
-      entry(RobotContainer.leftBumpFull, "LeftBumpFull"),
-      entry(RobotContainer.rightBumpFollow, "RightBumpFollow"),
-      entry(RobotContainer.leftBumpFollow, "LeftBumpFollow"));
+    /** Routine selections that drive along a Choreo trajectory, mapped to the .traj name. */
+    private static final Map<String, String> TRAJECTORY_FILES = Map.ofEntries(
+            entry(RobotContainer.centerDepotOutpost, "CenterDepotOutpost"),
+            entry(RobotContainer.centerDepotClimb, "CenterDepotClimb"),
+            entry(RobotContainer.rightBumpSteal, "RightBumpSteal"),
+            entry(RobotContainer.rightTrenchHalfOutpost, "RightTrenchHalfOutpost"),
+            entry(RobotContainer.rightTrenchHalfDouble, "RightTrenchHalfDouble"),
+            entry(RobotContainer.rightTrenchHalfDoubleBump, "RightTrenchHalfDoubleBump"),
+            entry(RobotContainer.leftTrenchHalfDouble, "LeftTrenchHalfDouble"),
+            entry(RobotContainer.leftTrenchHalfDoubleBump, "LeftTrenchHalfDoubleBump"),
+            entry(RobotContainer.leftBumpFull, "LeftBumpFull"),
+            entry(RobotContainer.rightBumpFollow, "RightBumpFollow"),
+            entry(RobotContainer.leftBumpFollow, "LeftBumpFollow"));
 
-  private AutoCatalog()
-  {
-  }
+    private AutoCatalog()
+    {
+    }
 
-  /** True if this selection runs a routine, which means the command builder is used. */
-  public static boolean runsRoutine(String selection)
-  {
-    return ROUTINE_AUTOS.contains(selection);
-  }
+    /** True if this selection runs a routine, which means the command builder is used. */
+    public static boolean runsRoutine(String selection)
+    {
+        return ROUTINE_AUTOS.contains(selection);
+    }
 
-  /**
-   * The Choreo trajectory name (no extension) for a selection, or empty if the selection
-   * does not drive along a trajectory.
-   */
-  public static Optional<String> trajectoryFile(String selection)
-  {
-    return Optional.ofNullable(TRAJECTORY_FILES.get(selection));
-  }
+    /**
+     * The Choreo trajectory name (no extension) for a selection, or empty if the selection
+     * does not drive along a trajectory.
+     */
+    public static Optional<String> trajectoryFile(String selection)
+    {
+        return Optional.ofNullable(TRAJECTORY_FILES.get(selection));
+    }
 
-  /** Every distinct trajectory name that needs to be preloaded, in a stable order. */
-  public static Set<String> trajectoryFiles()
-  {
-    return new TreeSet<>(TRAJECTORY_FILES.values());
-  }
+    /** Every distinct trajectory name that needs to be preloaded, in a stable order. */
+    public static Set<String> trajectoryFiles()
+    {
+        return new TreeSet<>(TRAJECTORY_FILES.values());
+    }
 
-  /** Routine selections that run with no trajectory file (currently only basicAuto). */
-  public static Set<String> routinesWithoutTrajectory()
-  {
-    Set<String> result = new TreeSet<>(ROUTINE_AUTOS);
-    result.removeAll(TRAJECTORY_FILES.keySet());
-    return result;
-  }
+    /** Routine selections that run with no trajectory file (currently only basicAuto). */
+    public static Set<String> routinesWithoutTrajectory()
+    {
+        Set<String> result = new TreeSet<>(ROUTINE_AUTOS);
+        result.removeAll(TRAJECTORY_FILES.keySet());
+        return result;
+    }
 }

@@ -28,249 +28,249 @@ import org.littletonrobotics.urcl.URCL;
 
 public class Robot extends LoggedRobot
 {
-  private Command autonomousCommand;
+    private Command autonomousCommand;
 
-  private RobotContainer container;
+    private RobotContainer container;
 
-  private String gameData = "";
-  private double shiftTime = 0.0;
+    private String gameData = "";
+    private double shiftTime = 0.0;
 
-  public Robot() {
-    // Record metadata
-    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
-    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
-    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
-    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
-    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
-    Logger.recordMetadata(
-        "GitDirty",
-        switch (BuildConstants.DIRTY) {
-          case 0 -> "All changes committed";
-          case 1 -> "Uncommitted changes";
-          default -> "Unknown";
+    public Robot() {
+        // Record metadata
+        Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+        Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+        Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+        Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
+        Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+        Logger.recordMetadata(
+                "GitDirty",
+                switch (BuildConstants.DIRTY) {
+                    case 0 -> "All changes committed";
+                    case 1 -> "Uncommitted changes";
+                    default -> "Unknown";
         });
 
-    // Set up data receivers & replay source
-    switch (Constants.currentMode) {
-      case REAL:
-        // Running on a real robot, log to a USB stick ("/U/logs")
-        Logger.addDataReceiver(new WPILOGWriter());
-        Logger.addDataReceiver(new NT4Publisher());
-        break;
+        // Set up data receivers & replay source
+        switch (Constants.currentMode) {
+            case REAL:
+            // Running on a real robot, log to a USB stick ("/U/logs")
+            Logger.addDataReceiver(new WPILOGWriter());
+            Logger.addDataReceiver(new NT4Publisher());
+            break;
 
-      case SIM:
-        // Running a physics simulator, log to NT
-        Logger.addDataReceiver(new NT4Publisher());
-        break;
+            case SIM:
+            // Running a physics simulator, log to NT
+            Logger.addDataReceiver(new NT4Publisher());
+            break;
 
-      case REPLAY:
-        // Replaying a log, set up replay source
-        setUseTiming(false); // Run as fast as possible
-        String logPath = LogFileUtil.findReplayLog();
-        Logger.setReplaySource(new WPILOGReader(logPath));
-        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-        break;
+            case REPLAY:
+            // Replaying a log, set up replay source
+            setUseTiming(false); // Run as fast as possible
+            String logPath = LogFileUtil.findReplayLog();
+            Logger.setReplaySource(new WPILOGReader(logPath));
+            Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+            break;
+        }
+
+        // Initialize URCL
+        Logger.registerURCL(URCL.startExternal());
+        StatusLogger.disableAutoLogging(); // Disable REVLib's built-in logging
+
+        // Start AdvantageKit logger
+        Logger.start();
+    }
+    @Override
+    public void robotInit()
+    {
+        // Required to support laser-can debugging and configuration.
+        CanBridge.runTCP();
+
+        try {
+            container = new RobotContainer(); // Actually create robot container here so we can capture errors for debugging.
+            System.err.println("******* ROBOT CONTAINER CREATED ******** ");
+        } catch (RuntimeException e) {
+            System.err.println("CREATION OF ROBOT CONTAINER THREW AN EXCEPTION!: " + e.getMessage());
+        }
+
+        AutoLog.attachScheduler();
     }
 
-    // Initialize URCL
-    Logger.registerURCL(URCL.startExternal());
-    StatusLogger.disableAutoLogging(); // Disable REVLib's built-in logging
+    @Override
+    public void robotPeriodic()
+    {
+        try {
+            CommandScheduler.getInstance().run();
+        } catch (RuntimeException e) {
+            System.err.println("SCHEDULER RUN THREW EXCEPTION!: " + e.getMessage());
+        }
 
-    // Start AdvantageKit logger
-    Logger.start();
-  }
-  @Override
-  public void robotInit()
-  {
-    // Required to support laser-can debugging and configuration.
-    CanBridge.runTCP();
+        if (gameData.isEmpty()) {
+            gameData = DriverStation.getGameSpecificMessage();
+        } else {
+            switch (gameData.charAt(0)) {
+                case 'B':
+                SmartDashboard.putString(DashboardNames.AUTO_WINNERS.getKey(), "Blue");
+                break;
+                case 'R':
+                SmartDashboard.putString("Auto Winners", "Red");
+                break;
+                default:
+                SmartDashboard.putString("Auto Winners", "Somethin Went Wrong");
+                break;
+            }
 
-    try {
-      container = new RobotContainer(); // Actually create robot container here so we can capture errors for debugging.
-      System.err.println("******* ROBOT CONTAINER CREATED ******** ");
-    } catch (RuntimeException e) {
-      System.err.println("CREATION OF ROBOT CONTAINER THREW AN EXCEPTION!: " + e.getMessage());
+            SmartDashboard.putBoolean(DashboardNames.HUB_ACTIVE.getKey(), isHubActive());
+            container.setHubActive(isHubActive());
+
+            int seconds = (int) shiftTime;
+            SmartDashboard.putNumber(DashboardNames.DRIVE_SHIFT_TIME.getKey(), seconds);
+        }
     }
 
-    AutoLog.attachScheduler();
-  }
-
-  @Override
-  public void robotPeriodic()
-  {
-    try {
-      CommandScheduler.getInstance().run();
-    } catch (RuntimeException e) {
-      System.err.println("SCHEDULER RUN THREW EXCEPTION!: " + e.getMessage());
+    @Override
+    public void disabledInit()
+    {
+        System.err.println("Disabled Init...");
+        AutoLog.stop("disabled");
+        try {
+            // Delegate to container function:
+            container.disabledInit();
+        } catch (RuntimeException e) {
+            System.err.println("CONTAINER DISABLEDINIT THREW EXCEPTION!: " + e.getMessage());
+        }
     }
 
-    if (gameData.isEmpty()) {
-      gameData = DriverStation.getGameSpecificMessage();
-    } else {
-      switch (gameData.charAt(0)) {
-        case 'B':
-          SmartDashboard.putString(DashboardNames.AUTO_WINNERS.getKey(), "Blue");
-          break;
-        case 'R':
-          SmartDashboard.putString("Auto Winners", "Red");
-          break;
-        default:
-          SmartDashboard.putString("Auto Winners", "Somethin Went Wrong");
-          break;
-      }
-
-      SmartDashboard.putBoolean(DashboardNames.HUB_ACTIVE.getKey(), isHubActive());
-      container.setHubActive(isHubActive());
-
-      int seconds = (int) shiftTime;
-      SmartDashboard.putNumber(DashboardNames.DRIVE_SHIFT_TIME.getKey(), seconds);
-    }
-  }
-
-  @Override
-  public void disabledInit()
-  {
-    System.err.println("Disabled Init...");
-    AutoLog.stop("disabled");
-    try {
-      // Delegate to container function:
-      container.disabledInit();
-    } catch (RuntimeException e) {
-      System.err.println("CONTAINER DISABLEDINIT THREW EXCEPTION!: " + e.getMessage());
-    }
-  }
-
-  @Override
-  public void disabledPeriodic()
-  {
-    try {
-      // Delegate to container function:
-      container.setHaveTraj(container.disabledPeriodic());
-      SmartDashboard.putBoolean(DashboardNames.AUTO_HAVE_TRAJECTORY.getKey(), container.getHaveTraj());
-      SmartDashboard.putString(DashboardNames.AUTO_TRAJECTORY.getKey(), container.getAutoTraj());
-      SmartDashboard.putBoolean(DashboardNames.AUTO_PREWARMED.getKey(), container.isPrewarmed());
-    } catch (RuntimeException e) {
-      System.err.println("CONTAINER DISABLEDPERIODIC THREW EXCEPTION!: " + e.getMessage());
-    }
-  }
-
-  @Override
-  public void autonomousInit()
-  {
-    System.err.println("Autonomous Init...");
-    AutoLog.start();
-
-    try {
-      autonomousCommand = container.getAutonomousCommand();
-
-      if (autonomousCommand != null) {
-        AutoLog.event("scheduling auto command");
-        CommandScheduler.getInstance().schedule(autonomousCommand);
-      } else {
-        System.err.println("UNEXPLAINED MISSING AUTONOMOUS COMMAND!");
-      }
-    } catch (RuntimeException e) {
-      System.err.println("AUTONOMOUS INIT THREW EXCEPTION!: " + e.getMessage());
-    }
-  }
-
-  @Override
-  public void autonomousPeriodic()
-  {
-  }
-
-  @Override
-  public void teleopInit()
-  {
-    System.err.println("TeleopInit...");
-    AutoLog.stop("teleopInit");
-
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
-    if (autonomousCommand != null) {
-      autonomousCommand.cancel();
+    @Override
+    public void disabledPeriodic()
+    {
+        try {
+            // Delegate to container function:
+            container.setHaveTraj(container.disabledPeriodic());
+            SmartDashboard.putBoolean(DashboardNames.AUTO_HAVE_TRAJECTORY.getKey(), container.getHaveTraj());
+            SmartDashboard.putString(DashboardNames.AUTO_TRAJECTORY.getKey(), container.getAutoTraj());
+            SmartDashboard.putBoolean(DashboardNames.AUTO_PREWARMED.getKey(), container.isPrewarmed());
+        } catch (RuntimeException e) {
+            System.err.println("CONTAINER DISABLEDPERIODIC THREW EXCEPTION!: " + e.getMessage());
+        }
     }
 
-    container.teleopInit(); // Let container schedule things at start of teleop.
-  }
+    @Override
+    public void autonomousInit()
+    {
+        System.err.println("Autonomous Init...");
+        AutoLog.start();
 
-  public boolean isHubActive()
-  {
-    var alliance = DriverStation.getAlliance();
-    if (alliance.isEmpty()) {
-      return false;
+        try {
+            autonomousCommand = container.getAutonomousCommand();
+
+            if (autonomousCommand != null) {
+                AutoLog.event("scheduling auto command");
+                CommandScheduler.getInstance().schedule(autonomousCommand);
+            } else {
+                System.err.println("UNEXPLAINED MISSING AUTONOMOUS COMMAND!");
+            }
+        } catch (RuntimeException e) {
+            System.err.println("AUTONOMOUS INIT THREW EXCEPTION!: " + e.getMessage());
+        }
     }
 
-    if (DriverStation.isAutonomousEnabled()) {
-      return true;
-    }
-    if (!DriverStation.isTeleopEnabled()) {
-      return false;
-      // if we arent in teleop or auto at this point we can assume there is no hub
-    }
-    double matchTime = DriverStation.getMatchTime();
-
-    boolean weInactiveFirst = false;
-    if (!gameData.isEmpty()) {
-      if (gameData.charAt(0) == 'R' && alliance.get() == Alliance.Blue) {
-        weInactiveFirst = true;
-      } else if (gameData.charAt(0) == 'B' && alliance.get() == Alliance.Red) {
-        weInactiveFirst = true;
-      }
-    } else {
-      // gamedata is invalid default to true
-      return true;
+    @Override
+    public void autonomousPeriodic()
+    {
     }
 
-    // We know if we're inactive first:
-    boolean shift1Active = !weInactiveFirst;
+    @Override
+    public void teleopInit()
+    {
+        System.err.println("TeleopInit...");
+        AutoLog.stop("teleopInit");
 
-    if (matchTime > 130) {
-      shiftTime = matchTime - 130;
-      return true;
-    } else if (matchTime > 105) {
-      shiftTime = matchTime - 105;
-      return shift1Active;
-    } else if (matchTime > 80) {
-      shiftTime = matchTime - 80;
-      return !shift1Active;
-    } else if (matchTime > 55) {
-      shiftTime = matchTime - 55;
-      return shift1Active;
-    } else if (matchTime > 30) {
-      shiftTime = matchTime - 30;
-      return !shift1Active;
-    } else {
-      shiftTime = matchTime;
-      return true;
+        // This makes sure that the autonomous stops running when
+        // teleop starts running. If you want the autonomous to
+        // continue until interrupted by another command, remove
+        // this line or comment it out.
+        if (autonomousCommand != null) {
+            autonomousCommand.cancel();
+        }
+
+        container.teleopInit(); // Let container schedule things at start of teleop.
     }
-  }
 
-  @Override
-  public void teleopPeriodic()
-  {
-  }
+    public boolean isHubActive()
+    {
+        var alliance = DriverStation.getAlliance();
+        if (alliance.isEmpty()) {
+            return false;
+        }
 
-  @Override
-  public void testInit()
-  {
-    container.testInit(); // Initialize test mode.
-  }
+        if (DriverStation.isAutonomousEnabled()) {
+            return true;
+        }
+        if (!DriverStation.isTeleopEnabled()) {
+            return false;
+            // if we arent in teleop or auto at this point we can assume there is no hub
+        }
+        double matchTime = DriverStation.getMatchTime();
 
-  @Override
-  public void testPeriodic()
-  {
-  }
+        boolean weInactiveFirst = false;
+        if (!gameData.isEmpty()) {
+            if (gameData.charAt(0) == 'R' && alliance.get() == Alliance.Blue) {
+                weInactiveFirst = true;
+            } else if (gameData.charAt(0) == 'B' && alliance.get() == Alliance.Red) {
+                weInactiveFirst = true;
+            }
+        } else {
+            // gamedata is invalid default to true
+            return true;
+        }
 
-  @Override
-  public void simulationInit()
-  {
-  }
+        // We know if we're inactive first:
+        boolean shift1Active = !weInactiveFirst;
 
-  @Override
-  public void simulationPeriodic()
-  {
-  }
+        if (matchTime > 130) {
+            shiftTime = matchTime - 130;
+            return true;
+        } else if (matchTime > 105) {
+            shiftTime = matchTime - 105;
+            return shift1Active;
+        } else if (matchTime > 80) {
+            shiftTime = matchTime - 80;
+            return !shift1Active;
+        } else if (matchTime > 55) {
+            shiftTime = matchTime - 55;
+            return shift1Active;
+        } else if (matchTime > 30) {
+            shiftTime = matchTime - 30;
+            return !shift1Active;
+        } else {
+            shiftTime = matchTime;
+            return true;
+        }
+    }
+
+    @Override
+    public void teleopPeriodic()
+    {
+    }
+
+    @Override
+    public void testInit()
+    {
+        container.testInit(); // Initialize test mode.
+    }
+
+    @Override
+    public void testPeriodic()
+    {
+    }
+
+    @Override
+    public void simulationInit()
+    {
+    }
+
+    @Override
+    public void simulationPeriodic()
+    {
+    }
 }

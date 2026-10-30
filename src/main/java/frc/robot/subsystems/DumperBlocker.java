@@ -248,7 +248,7 @@ public class DumperBlocker extends SubsystemBase
         tempSig.refresh();
         supplyCurrentSig.refresh();
         statorCurrentSig.refresh();
-    
+
         if (mode == Mode.POSITION) {
             double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
             double gravityVolts = gravityFeedforward(getPositionRadians());
@@ -280,7 +280,7 @@ public class DumperBlocker extends SubsystemBase
                 dumperBlockerMotor.getMotorVoltage().getValueAsDouble());
             SmartDashboard.putNumber("DumperBlocker/ProfileSetpoint",
                 dumperBlockerMotor.getClosedLoopReference().getValueAsDouble());
-        } 
+        }
 
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_VELOCITY.getKey(), getVelocityRadPerSec());
         SmartDashboard.putNumber(DashboardNames.DUMPER_BLOCKER_TORQUE_CURRENT.getKey(), getTorqueCurrent());

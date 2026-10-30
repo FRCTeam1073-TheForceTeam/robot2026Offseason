@@ -16,7 +16,7 @@ public class DumperBlockerTeleop extends Command
     private final DumperBlocker dumperBlocker;
     private final Intake intake;
     private final OI oi;
-    
+
     private boolean extended = false;
     private boolean lastAButton = false;
 
@@ -47,7 +47,7 @@ public class DumperBlockerTeleop extends Command
 
         if (!lastAButton && aButton) {
             extended = !extended;
-        } 
+        }
 
         lastAButton = aButton;
 
@@ -82,4 +82,3 @@ public class DumperBlockerTeleop extends Command
         return false;
     }
 }
-
