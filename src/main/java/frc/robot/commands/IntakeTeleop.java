@@ -16,8 +16,10 @@ public class IntakeTeleop extends Command
   private final ZoneFinder zone;
 
   private boolean positionIn = true;
+  private boolean slowIn = false; // Bringing the intake in slowly (hopper full).
   private boolean lastBumperRight = false; // For click detect on button A.
   private boolean lastAButton = false;
+  private boolean lastBButton = false;
 
   public IntakeTeleop(Intake intake, OI oi, ZoneFinder zone)
   {
@@ -38,6 +40,7 @@ public class IntakeTeleop extends Command
   {
     boolean bumperRight = oi.getDriverRightBumper();
     boolean aButton = oi.getDriverAButton();
+    boolean bButton = oi.getDriverBButton();
     /* 
     if (zone.getZones().contains("TRENCH")) {
       positionIn = false;
@@ -45,16 +48,28 @@ public class IntakeTeleop extends Command
     if (!lastBumperRight && bumperRight) {
       // Toggle position:
       positionIn = !positionIn;
+      slowIn = false;
     }
     else if (!lastAButton && aButton) {
       positionIn = true;
+      slowIn = false;
+    }
+    else if (!lastBButton && bButton) {
+      // Slow stow for when the hopper is full. Still counts as "in" for the bumper toggle.
+      positionIn = true;
+      slowIn = true;
     }
 
     lastBumperRight = bumperRight; // Keep track of button for toggle.
     lastAButton = aButton;
+    lastBButton = bButton;
 
     if (positionIn) {
-      intake.setPosition(Intake.stowedPositionRadians);
+      if (slowIn) {
+        intake.setPositionSlow(Intake.stowedPositionRadians);
+      } else {
+        intake.setPosition(Intake.stowedPositionRadians);
+      }
     } else {
       if (Math.abs(intake.getPositionRadians()) <= 0.2) {
         intake.stop();
