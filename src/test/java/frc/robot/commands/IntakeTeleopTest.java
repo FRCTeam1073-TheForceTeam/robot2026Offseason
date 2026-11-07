@@ -135,7 +135,7 @@ public class IntakeTeleopTest
         verify(mockIntake).setPosition(Math.toRadians(-122.0));
 
         when(mockOI.getDriverRightBumper()).thenReturn(true);
-        when(mockIntake.getPositionRadians()).thenReturn(0.3);
+        when(mockIntake.getPositionRadians()).thenReturn(0.5);
         cmd.execute();
         verify(mockIntake).setPosition(Math.toRadians(-0.1));
 
@@ -159,7 +159,7 @@ public class IntakeTeleopTest
         verify(mockIntake).setPosition(Math.toRadians(-122.0));
 
         when(mockOI.getDriverRightBumper()).thenReturn(true);
-        when(mockIntake.getPositionRadians()).thenReturn(0.3);
+        when(mockIntake.getPositionRadians()).thenReturn(0.5);
         cmd.execute();
         verify(mockIntake).setPosition(Math.toRadians(-0.1));
 

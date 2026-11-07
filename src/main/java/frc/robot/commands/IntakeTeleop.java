@@ -71,7 +71,7 @@ public class IntakeTeleop extends Command
                 intake.setPosition(Intake.stowedPositionRadians);
             }
         } else {
-            if (Math.abs(intake.getPositionRadians()) <= 0.2) {
+            if (Math.abs(intake.getPositionRadians()) <= 0.4) {
                 intake.stop();
             } else {
                 intake.setPosition(Intake.deployedPositionRadians);
