@@ -25,6 +25,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
 
+import org.ironmaple.simulation.SimulatedArena;
+
 public class Robot extends LoggedRobot
 {
   private boolean firstInit = true;
@@ -270,5 +272,10 @@ public class Robot extends LoggedRobot
   @Override
   public void simulationPeriodic()
   {
-  }
-}
+    SimulatedArena.getInstance().simulationPeriodic();
+    // Get the positions of the fuel (both on the field and in the air)
+    Pose3d[] fuelPoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Fuel");
+    // Publish to telemetry using AdvantageKit
+    Logger.recordOutput("FieldSimulation/FuelPositions", fuelPoses);
+  }}
+
