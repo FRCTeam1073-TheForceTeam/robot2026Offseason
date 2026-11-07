@@ -22,7 +22,7 @@ public class TeleopDrive extends Command
     public static final double JOYSTICK_DEADZONE = 0.15;
 
     private static final double maximumLinearVelocity = 4.5;
-    private static final double maximumRotationVelocity = 2.0 * Math.PI;
+    private static final double maximumRotationVelocity = 3.0 * Math.PI;
 
     private final Drivetrain drivetrain;
     private final OI oi;

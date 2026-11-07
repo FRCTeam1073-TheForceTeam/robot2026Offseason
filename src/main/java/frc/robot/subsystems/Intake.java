@@ -54,6 +54,8 @@ public class Intake extends SubsystemBase
     public static final double deployedPositionRadians = Math.toRadians(-0.1);
     /** How far short of stowed still counts as all the way in. */
     public static final double stowedToleranceRadians = 0.15;
+    /** Setpoint ramp rate for a slow stow, used when the hopper is full. */
+    public static final double slowStowRateRadPerSec = 0.75;
 
     private enum Mode { NONE, VELOCITY, POSITION }
 
@@ -65,11 +67,13 @@ public class Intake extends SubsystemBase
     private final PositionVoltage commandPositionVoltage = new PositionVoltage(0).withSlot(0);
     private final VelocityVoltage commandVelocityVoltage = new VelocityVoltage(0).withSlot(1);
     private final SlewRateLimiter limiter = new SlewRateLimiter(9.0); // was 5 radians before
+    private final SlewRateLimiter slowLimiter = new SlewRateLimiter(slowStowRateRadPerSec);
     private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
 
     private Mode mode = Mode.NONE;
     private double targetVelocity = 0.0;
     private double targetPosition = 0.0;
+    private boolean slow = false;
 
     private boolean hasZero = false;
     private double position = 0.0;
@@ -163,6 +167,15 @@ public class Intake extends SubsystemBase
     {
         mode = Mode.POSITION;
         targetPosition = radians;
+        slow = false;
+    }
+
+    // Same as setPosition(), but ramps the setpoint at slowStowRateRadPerSec. Used to bring the intake in gently.
+    public void setPositionSlow(double radians)
+    {
+        mode = Mode.POSITION;
+        targetPosition = radians;
+        slow = true;
     }
 
     public void stop()
@@ -235,9 +248,18 @@ public class Intake extends SubsystemBase
             leadMotor.setControl(commandVelocityVoltage.withVelocity(motorVelocity));
             followMotor.setControl(new Follower(leadMotor.getDeviceID(), MotorAlignmentValue.Opposed));
             limiter.reset(position); // Keep the limiter in sync in the other control mode.
+            slowLimiter.reset(position);
         } else if (mode == Mode.POSITION) {
-            double limitedIntakeTarget =
-                computePositionCommandRadians(limiter, targetPosition, minPositionRadians, maxPositionRadians);
+            double limitedIntakeTarget;
+            if (slow) {
+                double clampedCommand = MathUtil.clamp(targetPosition, minPositionRadians, maxPositionRadians);
+                limitedIntakeTarget = slowLimiter.calculate(clampedCommand);
+                limiter.reset(limitedIntakeTarget); // Fast limiter picks up where the slow one left off.
+            } else {
+                limitedIntakeTarget =
+                    computePositionCommandRadians(limiter, targetPosition, minPositionRadians, maxPositionRadians);
+                slowLimiter.reset(limitedIntakeTarget); // Slow limiter picks up where the fast one left off.
+            }
 
             double motorPosition = limitedIntakeTarget * gearRatio / (2.0 * Math.PI);
 
@@ -247,9 +269,11 @@ public class Intake extends SubsystemBase
             leadMotor.setControl(new NeutralOut());
             followMotor.setControl(new NeutralOut());
             limiter.reset(position); // Keep the limiter in sync in other control mode.
+            slowLimiter.reset(position);
         }
 
         Logger.recordOutput("Intake/Mode", mode.name());
+        Logger.recordOutput("Intake/Slow", slow);
         Logger.recordOutput("Intake/TargetPosition", limiter.lastValue());
     }
 }
